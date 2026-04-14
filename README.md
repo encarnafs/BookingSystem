@@ -23,7 +23,7 @@ Este proyecto está diseñado para ser escalable, mantenible y fácil de extende
 
 🏛️ Arquitectura
 
-El proyecto sigue la estructura clásica de Clean Architecture:
+El proyecto sigue la estructura clásica de Clean Architecture, separando responsabilidades en capas independientes:
 Código
 
 src/
@@ -32,6 +32,18 @@ src/
  ├── BookingSystem.Domain        → Entidades, Value Objects, reglas de negocio
  └── BookingSystem.Infrastructure→ EF Core, repositorios, persistencia
 
+📐 Diagrama de Arquitectura (Mermaid)
+
+GitHub renderiza este diagrama automáticamente:
+mermaid
+
+flowchart TD
+    A[API Layer] --> B[Application Layer]
+    B --> C[Domain Layer]
+    B --> D[Infrastructure Layer]
+    D --> C
+
+📦 Capas del Proyecto
 ✔️ Domain
 
 Contiene la lógica de negocio pura:
@@ -40,33 +52,42 @@ Contiene la lógica de negocio pura:
 
     Value Objects: DateRange
 
-    Reglas de negocio (métodos como Confirm(), Cancel(), UpdateDates())
+    Reglas de negocio:
+
+        Confirmar reservas
+
+        Cancelar reservas
+
+        Actualizar fechas
+
+        Validar solapamientos
+
+        Validar estados
 
 ✔️ Application
 
-Contiene los casos de uso:
+Contiene los casos de uso (CQRS):
+Commands
 
-    Commands:
+    CreateBooking
 
-        CreateBooking
+    UpdateBookingDates
 
-        UpdateBookingDates
+    UpdateBookingComments
 
-        UpdateBookingComments
+    ConfirmBooking
 
-        ConfirmBooking
+    CancelBooking
 
-        CancelBooking
+Queries
 
-    Queries:
+    GetBookingById
 
-        GetBookingById
+    GetBookingsByRoomId
 
-        GetBookingsByRoomId
+    GetBookingsByClientId
 
-        GetBookingsByClientId
-
-        GetBookingsInDateRange
+    GetBookingsInDateRange
 
 Incluye también:
 
@@ -98,7 +119,7 @@ Implementa:
 
 Expondrá los endpoints REST usando:
 
-    Minimal APIs o Controllers (según prefieras)
+    Minimal APIs o Controllers
 
     MediatR para enviar Commands/Queries
 
@@ -153,4 +174,4 @@ Command	CancelBooking
 🤝 Contribuciones
 
 Este proyecto está en desarrollo activo.
-Las contribuciones, sugerencias y mejoras son bienvenidas
+Las contribuciones, sugerencias y mejoras son bienvenidas.
