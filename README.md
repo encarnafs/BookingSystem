@@ -1,49 +1,48 @@
-📘 BookingSystem API
+# 📘 BookingSystem API
 
-API para la gestión de reservas de salas de reuniones, desarrollada con .NET 9, siguiendo los principios de Clean Architecture y Domain-Driven Design (DDD).
+API para la **gestión de reservas de salas de reuniones**, desarrollada con **.NET 9**, siguiendo los principios de **Clean Architecture** y **Domain-Driven Design (DDD)**.
 
-Este proyecto está diseñado para ser escalable, mantenible y fácil de extender, aplicando patrones modernos como CQRS, MediatR, Value Objects y Repositorios.
-🚀 Tecnologías
+Este proyecto está diseñado para ser **escalable**, **mantenible** y **fácil de extender**, aplicando patrones modernos como CQRS, MediatR, Value Objects y Repositorios.
 
-    .NET 9
+---
 
-    C#
+## 🚀 Tecnologías
 
-    Clean Architecture
+- **.NET 9**
+- **C#**
+- **Clean Architecture**
+- **Domain-Driven Design (DDD)**
+- **CQRS + MediatR**
+- **Entity Framework Core**
+- **SQL Server**
+- **FluentValidation**
 
-    Domain-Driven Design (DDD)
+---
 
-    CQRS + MediatR
+## 🏛️ Arquitectura
 
-    Entity Framework Core
-
-    SQL Server
-
-    FluentValidation
-
-🏛️ Arquitectura
-
-El proyecto sigue la estructura clásica de Clean Architecture, separando responsabilidades en capas independientes:
-Código
-
+El proyecto sigue la estructura clásica de **Clean Architecture**, separando responsabilidades en capas independientes:
+```
 src/
- ├── BookingSystem.Api           → Capa de presentación (endpoints)
- ├── BookingSystem.Application   → Casos de uso (Commands, Queries, Handlers)
- ├── BookingSystem.Domain        → Entidades, Value Objects, reglas de negocio
- └── BookingSystem.Infrastructure→ EF Core, repositorios, persistencia
+├── BookingSystem.Api           → Capa de presentación (endpoints)
+├── BookingSystem.Application   → Casos de uso (Commands, Queries, Handlers)
+├── BookingSystem.Domain        → Entidades, Value Objects, reglas de negocio
+└── BookingSystem.Infrastructure→ EF Core, repositorios, persistencia
+```
+---
 
-📐 Diagrama de Arquitectura (Mermaid)
-
-GitHub renderiza este diagrama automáticamente:
-mermaid
-
+## 📊 Diagrama de Arquitectura (Mermaid)
+```mermaid
 flowchart TD
     A[API Layer] --> B[Application Layer]
     B --> C[Domain Layer]
-    B --> D[Infrastructure Layer]
+    D[Infrastructure Layer] --> B
     D --> C
+```
 
-📦 Capas del Proyecto
+---
+
+## 📦 Capas del Proyecto
 ✔️ Domain
 
 Contiene la lógica de negocio pura:
@@ -125,19 +124,24 @@ Expondrá los endpoints REST usando:
 
     Manejo global de excepciones
 
-📅 Casos de uso implementados
-🔹 Bookings
-Tipo	Caso de uso
-Query	GetBookingById
-Query	GetBookingsByRoomId
-Query	GetBookingsByClientId
-Query	GetBookingsInDateRange
-Command	CreateBooking
-Command	UpdateBookingDates
-Command	UpdateBookingComments
-Command	ConfirmBooking
-Command	CancelBooking
-🧠 Reglas de negocio principales
+## 📅 Casos de uso implementados
+
+### 🔹 Bookings
+
+| Tipo     | Caso de uso               |
+|----------|----------------------------|
+| Query    | GetBookingById             |
+| Query    | GetBookingsByRoomId        |
+| Query    | GetBookingsByClientId      |
+| Query    | GetBookingsInDateRange     |
+| Command  | CreateBooking              |
+| Command  | UpdateBookingDates         |
+| Command  | UpdateBookingComments      |
+| Command  | ConfirmBooking             |
+| Command  | CancelBooking              |
+
+
+## 🧠 Reglas de negocio principales
 
     No se pueden crear reservas solapadas en la misma sala
 
@@ -151,7 +155,7 @@ Command	CancelBooking
 
     DateRange garantiza que Start < End
 
-🗄️ Persistencia
+## 🗄️ Persistencia
 
     EF Core con SQL Server
 
@@ -159,7 +163,7 @@ Command	CancelBooking
 
     Repositorios implementados siguiendo interfaces de Application
 
-📦 Próximos pasos
+## 📦 Próximos pasos
 
     Implementar los repositorios en Infrastructure
 
@@ -171,7 +175,7 @@ Command	CancelBooking
 
     Añadir tests de integración
 
-🤝 Contribuciones
+## 🤝 Contribuciones
 
 Este proyecto está en desarrollo activo.
 Las contribuciones, sugerencias y mejoras son bienvenidas.
