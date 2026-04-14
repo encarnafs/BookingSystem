@@ -10,4 +10,24 @@
     <ProjectReference Include="..\BookingSystem.Domain\BookingSystem.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Clients\Commands\" />
+    <Folder Include="Clients\Dtos\" />
+    <Folder Include="Clients\Queries\" />
+    <Folder Include="Common\Mappings\" />
+    <Folder Include="Common\Behaviors\" />
+    <Folder Include="Rooms\Commands\" />
+    <Folder Include="Rooms\Dtos\" />
+    <Folder Include="Rooms\Queries\" />
+    <Folder Include="Users\Commands\" />
+    <Folder Include="Users\Dtos\" />
+    <Folder Include="Users\Queries\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
+    <PackageReference Include="MediatR" Version="14.1.0" />
+    <PackageReference Include="MediatR.Contracts" Version="2.0.1" />
+  </ItemGroup>
+
 </Project>

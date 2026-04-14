@@ -1,11 +1,9 @@
 ﻿namespace BookingSystem.Domain.ValueObjects;
 
-public sealed class DateRange
+public class DateRange
 {
     public DateTime Start { get; }
     public DateTime End { get; }
-
-    private DateRange() { }
 
     public DateRange(DateTime start, DateTime end)
     {
