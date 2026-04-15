@@ -1,48 +1,40 @@
-# 📘 BookingSystem API
+📘 BookingSystem API
 
-API para la **gestión de reservas de salas de reuniones**, desarrollada con **.NET 9**, siguiendo los principios de **Clean Architecture** y **Domain-Driven Design (DDD)**.
+API para la gestión de reservas de salas de reuniones, desarrollada con .NET 9, siguiendo los principios de Clean Architecture y Domain-Driven Design (DDD).
 
-Este proyecto está diseñado para ser **escalable**, **mantenible** y **fácil de extender**, aplicando patrones modernos como CQRS, MediatR, Value Objects y Repositorios.
+El objetivo del proyecto es construir un backend escalable, mantenible y extensible, aplicando patrones modernos como CQRS, MediatR, Value Objects, Repositorios, Validaciones, y EF Core con Owned Types.
+🚀 Tecnologías
 
----
+    .NET 9
 
-## 🚀 Tecnologías
+    C#
 
-- **.NET 9**
-- **C#**
-- **Clean Architecture**
-- **Domain-Driven Design (DDD)**
-- **CQRS + MediatR**
-- **Entity Framework Core**
-- **SQL Server**
-- **FluentValidation**
+    Clean Architecture
 
----
+    Domain-Driven Design (DDD)
 
-## 🏛️ Arquitectura
+    CQRS + MediatR
 
-El proyecto sigue la estructura clásica de **Clean Architecture**, separando responsabilidades en capas independientes:
-```
+    Entity Framework Core 9
+
+    SQL Server
+
+    FluentValidation
+
+    Minimal APIs / Controllers
+
+🏛️ Arquitectura del Proyecto
+
+El proyecto sigue la estructura clásica de Clean Architecture:
+Código
+
 src/
-├── BookingSystem.Api           → Capa de presentación (endpoints)
-├── BookingSystem.Application   → Casos de uso (Commands, Queries, Handlers)
-├── BookingSystem.Domain        → Entidades, Value Objects, reglas de negocio
-└── BookingSystem.Infrastructure→ EF Core, repositorios, persistencia
-```
----
+├── BookingSystem.Api             → Capa de presentación (endpoints)
+├── BookingSystem.Application     → Casos de uso (Commands, Queries, Handlers)
+├── BookingSystem.Domain          → Entidades, Value Objects, reglas de negocio
+└── BookingSystem.Infrastructure  → EF Core, repositorios, persistencia
 
-## 📊 Diagrama de Arquitectura (Mermaid)
-```mermaid
-flowchart TD
-    A[API Layer] --> B[Application Layer]
-    B --> C[Domain Layer]
-    D[Infrastructure Layer] --> B
-    D --> C
-```
-
----
-
-## 📦 Capas del Proyecto
+📦 Capas del Proyecto
 ✔️ Domain
 
 Contiene la lógica de negocio pura:
@@ -53,20 +45,20 @@ Contiene la lógica de negocio pura:
 
     Reglas de negocio:
 
-        Confirmar reservas
+        Validación de solapamientos
 
-        Cancelar reservas
+        Confirmación y cancelación de reservas
 
-        Actualizar fechas
+        Actualización de fechas
 
-        Validar solapamientos
+        Estados válidos
 
-        Validar estados
+        Garantía de que Start < End en DateRange
 
 ✔️ Application
 
-Contiene los casos de uso (CQRS):
-Commands
+Implementa los casos de uso mediante CQRS:
+🔹 Commands
 
     CreateBooking
 
@@ -78,7 +70,7 @@ Commands
 
     CancelBooking
 
-Queries
+🔹 Queries
 
     GetBookingById
 
@@ -88,21 +80,27 @@ Queries
 
     GetBookingsInDateRange
 
-Incluye también:
+Incluye además:
 
     Validadores con FluentValidation
 
     Interfaces de repositorios
 
-    Excepciones personalizadas
+    Excepciones personalizadas (NotFoundException, ValidationException, etc.)
 
 ✔️ Infrastructure
 
-Implementa:
+Implementa la persistencia:
 
     ApplicationDbContext
 
-    Configuración EF Core (incluyendo DateRange como Owned Type)
+    Configuración EF Core, incluyendo:
+
+        DateRange como Owned Type
+
+        Mapeo de entidades
+
+        Migración inicial
 
     Repositorios:
 
@@ -114,6 +112,12 @@ Implementa:
 
         UserRepository
 
+Base de datos generada con:
+Código
+
+dotnet ef migrations add InitialCreate
+dotnet ef database update
+
 ✔️ API
 
 Expondrá los endpoints REST usando:
@@ -124,48 +128,67 @@ Expondrá los endpoints REST usando:
 
     Manejo global de excepciones
 
-## 📅 Casos de uso implementados
+    Documentación con Swagger (pendiente)
 
-### 🔹 Bookings
-
-| Tipo     | Caso de uso               |
-|----------|----------------------------|
-| Query    | GetBookingById             |
-| Query    | GetBookingsByRoomId        |
-| Query    | GetBookingsByClientId      |
-| Query    | GetBookingsInDateRange     |
-| Command  | CreateBooking              |
-| Command  | UpdateBookingDates         |
-| Command  | UpdateBookingComments      |
-| Command  | ConfirmBooking             |
-| Command  | CancelBooking              |
-
-
-## 🧠 Reglas de negocio principales
+📅 Casos de Uso Implementados
+🔹 Bookings
+Tipo	Caso de uso
+Query	GetBookingById
+Query	GetBookingsByRoomId
+Query	GetBookingsByClientId
+Query	GetBookingsInDateRange
+Command	CreateBooking
+Command	UpdateBookingDates
+Command	UpdateBookingComments
+Command	ConfirmBooking
+Command	CancelBooking
+🧠 Reglas de Negocio Principales
 
     No se pueden crear reservas solapadas en la misma sala
 
     No se puede modificar una reserva cancelada
 
-    No se puede modificar una reserva ya finalizada
+    No se puede modificar una reserva finalizada
 
     Solo se pueden confirmar reservas en estado Pending
 
-    No se puede cancelar una reserva ya finalizada
+    No se puede cancelar una reserva finalizada
 
     DateRange garantiza que Start < End
 
-## 🗄️ Persistencia
+🗄️ Persistencia
 
     EF Core con SQL Server
 
     DateRange mapeado como Owned Type
 
-    Repositorios implementados siguiendo interfaces de Application
+    Migración inicial aplicada correctamente
 
-## 📦 Próximos pasos
+    Repositorios implementados siguiendo las interfaces de Application
 
-    Implementar los repositorios en Infrastructure
+🔧 Configuración de la cadena de conexión (User Secrets)
+
+Este proyecto utiliza User Secrets para almacenar la cadena de conexión durante el desarrollo.
+1. Abrir User Secrets
+
+En Visual Studio:
+Código
+
+Right click → BookingSystem.Api → Manage User Secrets
+
+2. Añadir una cadena de conexión (ejemplo)
+json
+
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Server=(localdb)\\MSSQLLocalDB;Database=BookingSystemDb;Trusted_Connection=True;"
+  }
+}
+
+    ⚠️ No publiques tu cadena real en GitHub.
+    Este ejemplo es solo para desarrollo local.
+
+📦 Próximos pasos
 
     Crear los endpoints en la API
 
@@ -175,7 +198,11 @@ Expondrá los endpoints REST usando:
 
     Añadir tests de integración
 
-## 🤝 Contribuciones
+    Añadir Swagger profesional
 
-Este proyecto está en desarrollo activo.
+    Añadir CI/CD (GitHub Actions)
+
+🤝 Contribuciones
+
+Proyecto en desarrollo activo.
 Las contribuciones, sugerencias y mejoras son bienvenidas.
