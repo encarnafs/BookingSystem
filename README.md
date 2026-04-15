@@ -1,3 +1,4 @@
+
 📘 BookingSystem API
 
 API para la gestión de reservas de salas de reuniones, desarrollada con .NET 9, siguiendo los principios de Clean Architecture y Domain-Driven Design (DDD).
