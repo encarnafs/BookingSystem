@@ -1,7 +1,9 @@
 ﻿using BookingSystem.Api.Requests.Auth;
 using BookingSystem.Application.Auth.Commands.Login;
 using BookingSystem.Application.Auth.Commands.Register;
+using BookingSystem.Application.Common.Interfaces;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BookingSystem.Api.Controllers;
@@ -33,5 +35,18 @@ public class AuthController : ControllerBase
             new LoginCommand(request.Email, request.Password));
 
         return Ok(new { Token = token });
+    }
+
+    // Este endpoint es solo para fines de prueba para verificar que la autenticación funciona y para ver la información del usuario actual.
+    [Authorize]
+    [HttpGet("me")]
+    public IActionResult Me([FromServices] ICurrentUserService currentUser)
+    {
+        return Ok(new
+        {
+            currentUser.UserId,
+            currentUser.Email,
+            currentUser.Role
+        });
     }
 }

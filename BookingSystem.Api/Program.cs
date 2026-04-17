@@ -24,6 +24,9 @@ builder.Services.AddOpenApi();
 builder.Services.AddTransient<ExceptionHandlingMiddleware>();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
+
 builder.Services.AddProblemDetails();
 
 // MediatR
