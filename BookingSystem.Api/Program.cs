@@ -1,14 +1,16 @@
 using BookingSystem.Api.Middleware;
 using BookingSystem.Application.Bookings.Commands.CreateBooking;
 using BookingSystem.Application.Common.Interfaces;
+using BookingSystem.Infrastructure.Authentication;
 using BookingSystem.Infrastructure.Persistence;
 using BookingSystem.Infrastructure.Services;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using System.Text;
-using BookingSystem.Infrastructure.Authentication;
+using BookingSystem.Api.Authorization;
 using System.Reflection;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -70,9 +72,14 @@ builder.Services
         };
     });
 
-//Activar autorización
-builder.Services.AddAuthorization();
-
+// Authorization Policies
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("CanCancelBooking", policy =>
+        policy.Requirements.Add(new CanCancelBookingRequirement()));
+});
+// Registrar el handler de autorización
+builder.Services.AddScoped<IAuthorizationHandler, CanCancelBookingHandler>();
 
 // 4. Registrar servicios de autenticación
 builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();

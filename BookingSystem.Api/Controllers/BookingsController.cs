@@ -19,10 +19,12 @@ namespace BookingSystem.Api.Controllers;
 public class BookingsController : ControllerBase
 {
     private readonly ISender _sender;
+    private readonly IAuthorizationService _authorizationService;
 
-    public BookingsController(ISender sender)
+    public BookingsController(ISender sender, IAuthorizationService authorizationService)
     {
         _sender = sender;
+        _authorizationService = authorizationService;
     }
 
     [HttpGet("{id:guid}")]
@@ -95,9 +97,22 @@ public class BookingsController : ControllerBase
         return NoContent();
     }
 
-    [HttpPost("{id:guid}/cancel")]
+    // ¿Por qué no usamos [Authorize(Policy = "...")] aquí?
+    // Porque esa sintaxis no permite pasar el bookingId al handler.
+    // Y mi policy necesita el ID de la reserva para consultar el repositorio.
+        [HttpPost("{id:guid}/cancel")]
     public async Task<IActionResult> Cancel(Guid id)
     {
+        // Ejecutar la policy con el bookingId como resource
+        var authorizationResult = await _authorizationService.AuthorizeAsync(
+            User,
+            id, // resource
+            "CanCancelBooking"
+        );
+
+        if (!authorizationResult.Succeeded)
+            return Forbid();
+
         await _sender.Send(new CancelBookingCommand(id));
         return NoContent();
     }

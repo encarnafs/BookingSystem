@@ -22,6 +22,7 @@ public class LoginHandler : IRequestHandler<LoginCommand, string>
             request.Password,
             cancellationToken);
 
+        //Cambiar el error a devolver con formato Json
         if (user is null)
             throw new Exception("Credenciales inválidas.");
 
