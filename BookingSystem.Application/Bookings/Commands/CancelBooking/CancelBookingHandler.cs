@@ -16,7 +16,7 @@ public class CancelBookingHandler : IRequestHandler<CancelBookingCommand>
     public async Task Handle(CancelBookingCommand request, CancellationToken cancellationToken)
     {
         // 1. Obtener la reserva
-        var booking = await _bookingRepository.GetByIdAsync(request.BookingId);
+        var booking = await _bookingRepository.GetByIdAsync(request.BookingId, cancellationToken);
         if (booking is null)
             throw new NotFoundException("Booking", request.BookingId);
 
@@ -24,6 +24,6 @@ public class CancelBookingHandler : IRequestHandler<CancelBookingCommand>
         booking.Cancel();
 
         // 3. Guardar cambios
-        await _bookingRepository.UpdateAsync(booking);
+        await _bookingRepository.UpdateAsync(booking, cancellationToken);
     }
 }

@@ -24,12 +24,12 @@ public class GetBookingsByClientIdHandler
         CancellationToken cancellationToken)
     {
         // 1. Validar que el cliente existe
-        var client = await _clientRepository.GetByIdAsync(request.ClientId);
+        var client = await _clientRepository.GetByIdAsync(request.ClientId, cancellationToken);
         if (client is null)
             throw new NotFoundException("Client", request.ClientId);
 
         // 2. Obtener reservas del cliente
-        var bookings = await _bookingRepository.GetByClientAsync(request.ClientId);
+        var bookings = await _bookingRepository.GetByClientAsync(request.ClientId, cancellationToken);
 
         // 3. Mapear a DTO
         return bookings

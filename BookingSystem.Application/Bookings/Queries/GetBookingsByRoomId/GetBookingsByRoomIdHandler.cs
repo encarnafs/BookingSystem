@@ -24,12 +24,12 @@ public class GetBookingsByRoomIdHandler
         CancellationToken cancellationToken)
     {
         // 1. Validar que la sala existe
-        var room = await _roomRepository.GetByIdAsync(request.RoomId);
+        var room = await _roomRepository.GetByIdAsync(request.RoomId, cancellationToken);
         if (room is null)
             throw new NotFoundException("Room", request.RoomId);
 
         // 2. Obtener reservas de la sala
-        var bookings = await _bookingRepository.GetByRoomAsync(request.RoomId);
+        var bookings = await _bookingRepository.GetByRoomAsync(request.RoomId, cancellationToken);
 
         // 3. Mapear a DTO
         return bookings

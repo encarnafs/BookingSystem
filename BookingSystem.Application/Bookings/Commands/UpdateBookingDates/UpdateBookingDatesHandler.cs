@@ -17,7 +17,7 @@ public class UpdateBookingDatesHandler : IRequestHandler<UpdateBookingDatesComma
     public async Task Handle(UpdateBookingDatesCommand request, CancellationToken cancellationToken)
     {
         // 1. Obtener la reserva
-        var booking = await _bookingRepository.GetByIdAsync(request.BookingId);
+        var booking = await _bookingRepository.GetByIdAsync(request.BookingId, cancellationToken);
         if (booking is null)
             throw new NotFoundException("Booking", request.BookingId);
 
@@ -28,7 +28,8 @@ public class UpdateBookingDatesHandler : IRequestHandler<UpdateBookingDatesComma
         var existsOverlap = await _bookingRepository.ExistsOverlappingBookingAsync(
             booking.RoomId,
             request.Start,
-            request.End
+            request.End,
+            cancellationToken
         );
 
         if (existsOverlap)
@@ -38,7 +39,7 @@ public class UpdateBookingDatesHandler : IRequestHandler<UpdateBookingDatesComma
         booking.UpdateDates(newDateRange);
 
         // 5. Guardar cambios
-        await _bookingRepository.UpdateAsync(booking);
+        await _bookingRepository.UpdateAsync(booking, cancellationToken);
 
     }
 }

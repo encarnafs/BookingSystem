@@ -1,30 +1,46 @@
 ﻿using BookingSystem.Application.Common.Interfaces;
 using BookingSystem.Domain.Entities;
+using BookingSystem.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 
-namespace BookingSystem.Infrastructure.Persistence.Repositories;
-
-public class RoomRepository : IRoomRepository
+namespace BookingSystem.Infrastructure.Persistence.Repositories
 {
-    private readonly ApplicationDbContext _context;
-
-    public RoomRepository(ApplicationDbContext context)
+    public class RoomRepository : IRoomRepository
     {
-        _context = context;
-    }
+        private readonly ApplicationDbContext _dbContext;
 
-    public async Task<Room?> GetByIdAsync(Guid id)
-        => await _context.Rooms.FirstOrDefaultAsync(r => r.Id == id);
+        public RoomRepository(ApplicationDbContext dbContext)
+        {
+            _dbContext = dbContext;
+        }
 
-    public async Task AddAsync(Room room)
-    => await _context.Rooms.AddAsync(room);
+        public async Task AddAsync(Room room, CancellationToken cancellationToken)
+        {
+            await _dbContext.Rooms.AddAsync(room, cancellationToken);
+            await _dbContext.SaveChangesAsync(cancellationToken);
+        }
 
-    public async Task<IEnumerable<Room>> GetAllAsync()
-        => await _context.Rooms.ToListAsync();
+        public async Task<Room?> GetByIdAsync(Guid id, CancellationToken cancellationToken)
+        {
+            return await _dbContext.Rooms
+                .AsNoTracking()
+                .FirstOrDefaultAsync(r => r.Id == id, cancellationToken);
+        }
+        public async Task<IEnumerable<Room>> GetAllAsync(CancellationToken cancellationToken)
+        {
+            return await _dbContext.Rooms
+                .AsNoTracking()
+                .ToListAsync(cancellationToken);
+        }
 
-    public async Task UpdateAsync(Room room)
-    {
-        _context.Rooms.Update(room);
-        await _context.SaveChangesAsync();
+        public async Task UpdateAsync(Room room, CancellationToken cancellationToken)
+        {
+            _dbContext.Rooms.Update(room);
+            await _dbContext.SaveChangesAsync(cancellationToken);
+        }
     }
 }

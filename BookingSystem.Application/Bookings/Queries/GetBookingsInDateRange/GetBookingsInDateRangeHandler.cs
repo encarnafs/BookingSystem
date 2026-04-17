@@ -20,7 +20,8 @@ public class GetBookingsInDateRangeHandler
     {
         var bookings = await _bookingRepository.GetInDateRangeAsync(
             request.Start,
-            request.End
+            request.End,
+            cancellationToken
         );
 
         return bookings

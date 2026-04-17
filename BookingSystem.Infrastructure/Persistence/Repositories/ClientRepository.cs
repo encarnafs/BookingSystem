@@ -13,15 +13,15 @@ public class ClientRepository : IClientRepository
         _context = context;
     }
 
-    public async Task<Client?> GetByIdAsync(Guid id)
-        => await _context.Clients.FirstOrDefaultAsync(c => c.Id == id);
+    public async Task<Client?> GetByIdAsync(Guid id, CancellationToken cancellationToken)
+        => await _context.Clients.FirstOrDefaultAsync(c => c.Id == id, cancellationToken: cancellationToken);
 
-    public async Task AddAsync(Client client)
-    => await _context.Clients.AddAsync(client);
+    public async Task AddAsync(Client client, CancellationToken cancellationToken)
+    => await _context.Clients.AddAsync(client, cancellationToken);
 
-    public async Task UpdateAsync(Client client)
+    public async Task UpdateAsync(Client client, CancellationToken cancellationToken)
     {
         _context.Clients.Update(client);
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(cancellationToken);
     }
 }

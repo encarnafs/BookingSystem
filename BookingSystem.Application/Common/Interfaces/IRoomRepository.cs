@@ -4,8 +4,8 @@ namespace BookingSystem.Application.Common.Interfaces;
 
 public interface IRoomRepository
 {
-    Task<Room?> GetByIdAsync(Guid id);
-    Task<IEnumerable<Room>> GetAllAsync();
-    Task AddAsync(Room room);
-    Task UpdateAsync(Room room);
+    Task<Room?> GetByIdAsync(Guid id, CancellationToken cancellationToken);
+    Task<IEnumerable<Room>> GetAllAsync(CancellationToken cancellationToken);
+    Task AddAsync(Room room, CancellationToken cancellationToken);
+    Task UpdateAsync(Room room, CancellationToken cancellationToken);
 }

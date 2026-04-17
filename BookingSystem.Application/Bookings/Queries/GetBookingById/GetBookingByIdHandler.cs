@@ -18,7 +18,7 @@ public class GetBookingByIdHandler
         GetBookingByIdQuery request,
         CancellationToken cancellationToken)
     {
-        var booking = await _bookingRepository.GetByIdAsync(request.Id);
+        var booking = await _bookingRepository.GetByIdAsync(request.Id, cancellationToken);
 
         if (booking is null)
             return null;

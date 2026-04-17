@@ -16,7 +16,7 @@ public class UpdateBookingCommentsHandler : IRequestHandler<UpdateBookingComment
     public async Task Handle(UpdateBookingCommentsCommand request, CancellationToken cancellationToken)
     {
         // 1. Obtener la reserva
-        var booking = await _bookingRepository.GetByIdAsync(request.BookingId);
+        var booking = await _bookingRepository.GetByIdAsync(request.BookingId, cancellationToken);
         if (booking is null)
             throw new NotFoundException("Booking", request.BookingId);
 
@@ -24,6 +24,6 @@ public class UpdateBookingCommentsHandler : IRequestHandler<UpdateBookingComment
         booking.UpdateComments(request.Comments);
 
         // 3. Guardar cambios
-        await _bookingRepository.UpdateAsync(booking);
+        await _bookingRepository.UpdateAsync(booking, cancellationToken);
     }
 }
