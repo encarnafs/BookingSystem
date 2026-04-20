@@ -1,4 +1,5 @@
 ﻿using BookingSystem.Application.Bookings.Commands.CreateBooking;
+using BookingSystem.Application.Bookings.Dtos;
 using BookingSystem.Application.Common.Exceptions;
 using BookingSystem.Application.Common.Interfaces;
 using BookingSystem.Domain.Entities;
@@ -6,7 +7,7 @@ using BookingSystem.Domain.ValueObjects;
 using MediatR;
 
 namespace BookingSystem.Application.Bookings.Commands.CreateBooking;
-public class CreateBookingHandler : IRequestHandler<CreateBookingCommand, Guid>
+public class CreateBookingHandler : IRequestHandler<CreateBookingCommand, BookingDto>
 {
     private readonly IBookingRepository _bookingRepository;
     private readonly IRoomRepository _roomRepository;
@@ -28,7 +29,7 @@ public class CreateBookingHandler : IRequestHandler<CreateBookingCommand, Guid>
         _currentUser = currentUser;
     }
 
-    public async Task<Guid> Handle(CreateBookingCommand request, CancellationToken cancellationToken)
+    public async Task<BookingDto> Handle(CreateBookingCommand request, CancellationToken cancellationToken)
     {
         var room = await _roomRepository.GetByIdAsync(request.RoomId, cancellationToken);
         if (room is null) throw new NotFoundException("Room", request.RoomId);
@@ -36,7 +37,10 @@ public class CreateBookingHandler : IRequestHandler<CreateBookingCommand, Guid>
         var client = await _clientRepository.GetByIdAsync(request.ClientId, cancellationToken);
         if (client is null) throw new NotFoundException("Client", request.ClientId);
 
-        var createdByUserId = _currentUser.UserId ?? Guid.Empty;
+        var createdByUserId =
+            Guid.TryParse(_currentUser.UserId, out var parsedUserId)
+                ? parsedUserId
+                : Guid.Empty;
 
         if (createdByUserId != Guid.Empty)
         {
@@ -69,7 +73,17 @@ public class CreateBookingHandler : IRequestHandler<CreateBookingCommand, Guid>
 
         await _bookingRepository.AddAsync(booking, cancellationToken);
 
-        return booking.Id;
+        return new BookingDto
+        {
+            Id = booking.Id,
+            RoomId = booking.RoomId,
+            ClientId = booking.ClientId,
+            CreatedByUserId = booking.CreatedByUserId,
+            Start = booking.DateRange.Start,
+            End = booking.DateRange.End,
+            Comments = booking.Comments
+        };
+
     }
 }
 

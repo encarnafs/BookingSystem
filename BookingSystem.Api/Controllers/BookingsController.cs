@@ -1,12 +1,16 @@
-﻿using BookingSystem.Api.Requests.Bookings;
+﻿
+using BookingSystem.Api.Mappers;
+using BookingSystem.Api.Requests.Bookings;
 using BookingSystem.Application.Bookings.Commands.CancelBooking;
 using BookingSystem.Application.Bookings.Commands.ConfirmBooking;
 using BookingSystem.Application.Bookings.Commands.CreateBooking;
+using BookingSystem.Application.Bookings.Commands.UpdateBooking;
 using BookingSystem.Application.Bookings.Commands.UpdateBookingComments;
 using BookingSystem.Application.Bookings.Commands.UpdateBookingDates;
 using BookingSystem.Application.Bookings.Queries.GetBookingById;
 using BookingSystem.Application.Bookings.Queries.GetBookingsByClientId;
 using BookingSystem.Application.Bookings.Queries.GetBookingsByRoomId;
+using BookingSystem.Application.Common.Interfaces;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -20,41 +24,46 @@ public class BookingsController : ControllerBase
 {
     private readonly ISender _sender;
     private readonly IAuthorizationService _authorizationService;
+    private readonly ICurrentUserService _currentUser;
 
-    public BookingsController(ISender sender, IAuthorizationService authorizationService)
+    public BookingsController(ISender sender, IAuthorizationService authorizationService, ICurrentUserService currentUser)
     {
         _sender = sender;
         _authorizationService = authorizationService;
+        _currentUser = currentUser;
     }
 
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> GetById(Guid id)
     {
         var result = await _sender.Send(new GetBookingByIdQuery(id));
-        return Ok(result);
+        return Ok(result.ToResponse());
     }
 
     [HttpGet("room/{roomId:guid}")]
     public async Task<IActionResult> GetByRoom(Guid roomId)
     {
         var result = await _sender.Send(new GetBookingsByRoomIdQuery(roomId));
-        return Ok(result);
+        return Ok(result.Select(b => b.ToResponse()));
     }
 
     [HttpGet("client/{clientId:guid}")]
     public async Task<IActionResult> GetByClient(Guid clientId)
     {
         var result = await _sender.Send(new GetBookingsByClientIdQuery(clientId));
-        return Ok(result);
+        return Ok(result.Select(b => b.ToResponse()));
     }
 
     [HttpPost]
     public async Task<IActionResult> Create(CreateBookingRequest request)
     {
+        if (_currentUser.UserId is null)
+            return Unauthorized();
+
         var command = new CreateBookingCommand(
             request.RoomId,
-            request.ClientId,
-            Guid.Empty,
+            Guid.Parse(_currentUser.UserId), // el usuario autenticado
+            Guid.Empty,                      // employeeId si lo usas
             request.Start,
             request.End,
             request.Comments
@@ -62,8 +71,10 @@ public class BookingsController : ControllerBase
 
         var result = await _sender.Send(command);
 
-        return CreatedAtAction(nameof(GetById), new { id = result }, result);
+        return CreatedAtAction(nameof(GetById), new { id = result }, result.ToResponse());
+
     }
+
 
     [HttpPut("{id:guid}/dates")]
     public async Task<IActionResult> UpdateDates(Guid id, UpdateBookingDatesRequest request)
@@ -116,4 +127,23 @@ public class BookingsController : ControllerBase
         await _sender.Send(new CancelBookingCommand(id));
         return NoContent();
     }
+
+
+    [HttpPut("{id:guid}")]
+    public async Task<IActionResult> Update(Guid id, UpdateBookingRequest request, CancellationToken cancellationToken)
+    {
+        var command = new UpdateBookingCommand(
+            id,
+            request.RoomId,
+            request.ClientId,
+            request.DateRange,
+            request.Comments
+        );
+
+        await _sender.Send(command, cancellationToken);
+
+        return NoContent();
+    }
+
+
 }

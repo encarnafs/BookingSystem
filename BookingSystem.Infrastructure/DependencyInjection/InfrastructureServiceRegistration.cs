@@ -1,9 +1,10 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
+﻿using BookingSystem.Application.Common.Interfaces;
 using BookingSystem.Infrastructure.Persistence;
 using BookingSystem.Infrastructure.Persistence.Repositories;
-using BookingSystem.Application.Common.Interfaces;
+using BookingSystem.Infrastructure.Services;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BookingSystem.Infrastructure.DependencyInjection;
 
@@ -20,6 +21,8 @@ public static class InfrastructureServiceRegistration
         services.AddScoped<IRoomRepository, RoomRepository>();
         services.AddScoped<IClientRepository, ClientRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IEmailService, FakeEmailService>();
+
 
         return services;
     }

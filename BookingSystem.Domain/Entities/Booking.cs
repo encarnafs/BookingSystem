@@ -1,9 +1,11 @@
 ﻿using BookingSystem.Domain.Enums;
+using BookingSystem.Domain.Events;
 using BookingSystem.Domain.ValueObjects;
+using BookingSystem.Domain.Abstractions;
 
 namespace BookingSystem.Domain.Entities;
 
-public class Booking
+public class Booking: IHasDomainEvents
 {
     public Guid Id { get; private set; }
     public Guid RoomId { get; private set; }
@@ -14,8 +16,29 @@ public class Booking
     public string? Comments { get; private set; }
     public DateTime CreatedAt { get; private set; }
 
+    //DOMAIN EVENTS IMPLEMENTATION
+    // ⭐⭐ 1. Lista interna de Domain Events
+    private readonly List<object> _domainEvents = new();
+
+    // ⭐⭐ 2. Exponerlos como solo lectura
+    public IReadOnlyCollection<object> DomainEvents => _domainEvents.AsReadOnly();
+
+    // ⭐⭐ 3. Método para añadir eventos
+    protected void AddDomainEvent(object eventItem)
+    {
+        _domainEvents.Add(eventItem);
+    }
+
+    // ⭐ Método para limpiarlos (lo usará EF Core)
+    public void ClearDomainEvents()
+    {
+        _domainEvents.Clear();
+    }
+    //
+
     // Constructor privado para EF Core
     private Booking() { }
+
 
     // Constructor principal
     public Booking(Guid roomId, Guid clientId, Guid createdByUserId, DateRange dateRange, string? comments = null)
@@ -37,6 +60,9 @@ public class Booking
         Comments = comments;
         Status = BookingStatus.Pending;
         CreatedAt = DateTime.UtcNow;
+
+        // ⭐ Aquí emitimos el Domain Event (sólo se registra, no se publica)
+        AddDomainEvent(new BookingCreatedEvent(Id));
     }
 
     public void UpdateDates(DateRange newDateRange)
@@ -70,4 +96,25 @@ public class Booking
 
         Status = BookingStatus.Confirmed;
     }
+
+    public void Update(Guid roomId, Guid clientId, DateRange newDateRange, string? comments)
+    {
+        if (Status == BookingStatus.Cancelled)
+            throw new InvalidOperationException("No se puede modificar una reserva cancelada");
+
+        if (DateRange.End < DateTime.UtcNow)
+            throw new InvalidOperationException("No se puede modificar una reserva que ya ha finalizado");
+
+        if (roomId == Guid.Empty)
+            throw new ArgumentException("El RoomId NO puede estar vacío");
+
+        if (clientId == Guid.Empty)
+            throw new ArgumentException("El ClientId NO puede estar vacío");
+
+        RoomId = roomId;
+        ClientId = clientId;
+        DateRange = newDateRange;
+        Comments = comments;
+    }
+
 }

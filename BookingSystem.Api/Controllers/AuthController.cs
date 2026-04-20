@@ -1,4 +1,5 @@
 ﻿using BookingSystem.Api.Requests.Auth;
+using BookingSystem.Api.Responses.Auth;
 using BookingSystem.Application.Auth.Commands.Login;
 using BookingSystem.Application.Auth.Commands.Register;
 using BookingSystem.Application.Common.Interfaces;
@@ -42,11 +43,17 @@ public class AuthController : ControllerBase
     [HttpGet("me")]
     public IActionResult Me([FromServices] ICurrentUserService currentUser)
     {
-        return Ok(new
+        if (currentUser.UserId is null)
+            return Unauthorized();
+
+        var response = new UserProfileResponse
         {
-            currentUser.UserId,
-            currentUser.Email,
-            currentUser.Role
-        });
+            UserId = currentUser.UserId,
+            Email = currentUser.Email ?? string.Empty,
+            Role = currentUser.Role ?? string.Empty
+        };
+
+        return Ok(response);
     }
+
 }

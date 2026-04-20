@@ -3,7 +3,6 @@ using BookingSystem.Application.Bookings.Commands.CreateBooking;
 using BookingSystem.Application.Common.Interfaces;
 using BookingSystem.Infrastructure.Authentication;
 using BookingSystem.Infrastructure.Persistence;
-using BookingSystem.Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
@@ -11,6 +10,7 @@ using Microsoft.IdentityModel.Tokens;
 using BookingSystem.Api.Authorization;
 using System.Reflection;
 using System.Text;
+using BookingSystem.Api.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,6 +24,7 @@ builder.Services.AddOpenApi();
 builder.Services.AddTransient<ExceptionHandlingMiddleware>();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 
+//Servicio que permite acceder al HttpContext desde clases que NO son controladores. Sin esto, sólo los controladores tendrían acceso a HttpContext.User, HttpContext.Request, etc. Al registrar IHttpContextAccessor, podemos inyectar ICurrentUserService en cualquier clase (como handlers de MediatR) para obtener información del usuario actual sin acoplar esa clase a ASP.NET Core.
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 

@@ -1,4 +1,5 @@
-﻿using MediatR;
+﻿using BookingSystem.Application.Bookings.Dtos;
+using MediatR;
 
 namespace BookingSystem.Application.Bookings.Commands.CreateBooking;
 
@@ -9,4 +10,4 @@ public record CreateBookingCommand(
     DateTime Start,
     DateTime End,
     string? Comments
-) : IRequest<Guid>;
+) : IRequest<BookingDto>;
