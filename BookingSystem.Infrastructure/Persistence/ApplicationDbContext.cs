@@ -39,7 +39,7 @@ public class ApplicationDbContext : DbContext
         // 2. Recogemos las entidades que tienen Domain Events
         var domainEntities = ChangeTracker
             .Entries<IHasDomainEvents>()
-            .Where(e => e.Entity.DomainEvents.Any())
+            .Where(e => e.Entity.DomainEvents.Count != 0)
             .ToList();
 
         // 3. Extraemos todos los Domain Events

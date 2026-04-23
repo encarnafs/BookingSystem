@@ -41,7 +41,9 @@ public class GetBookingsByRoomIdHandler
                 CreatedByUserId = b.CreatedByUserId,
                 Start = b.DateRange.Start,
                 End = b.DateRange.End,
-                Comments = b.Comments
+                Comments = b.Comments,
+                Status = b.Status.ToString(),
+                CreatedAt = b.CreatedAt
             })
             .ToList();
     }

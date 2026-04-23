@@ -11,17 +11,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Clients\Commands\" />
-    <Folder Include="Clients\Dtos\" />
-    <Folder Include="Clients\Queries\" />
     <Folder Include="Common\Mappings\" />
     <Folder Include="Common\Behaviors\" />
-    <Folder Include="Rooms\Commands\" />
-    <Folder Include="Rooms\Dtos\" />
-    <Folder Include="Rooms\Queries\" />
-    <Folder Include="Users\Commands\" />
-    <Folder Include="Users\Dtos\" />
-    <Folder Include="Users\Queries\" />
   </ItemGroup>
 
   <ItemGroup>

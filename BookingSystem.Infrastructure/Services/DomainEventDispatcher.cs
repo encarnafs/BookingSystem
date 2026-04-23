@@ -4,7 +4,7 @@ using BookingSystem.Domain.Events;
 using MediatR;
 using System.Threading.Tasks;
 
-namespace BookingSystem.Application.Common.Events;
+namespace BookingSystem.Infrastructure.Services;
 
 public class DomainEventDispatcher : IDomainEventDispatcher
 {

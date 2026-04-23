@@ -9,4 +9,6 @@ public class BookingDto
     public DateTime Start { get; set; }
     public DateTime End { get; set; }
     public string? Comments { get; set; }
+    public string Status { get; set; } = default!;
+    public DateTime CreatedAt { get; set; }
 }

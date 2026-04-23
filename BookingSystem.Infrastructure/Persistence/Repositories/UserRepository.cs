@@ -14,7 +14,10 @@ public class UserRepository : IUserRepository
         => await _context.Users.FirstOrDefaultAsync(u => u.Id == id, cancellationToken: cancellationToken);
 
     public async Task AddAsync(User user, CancellationToken cancellationToken)
-    => await _context.Users.AddAsync(user, cancellationToken);
+    { 
+        await _context.Users.AddAsync(user, cancellationToken);
+        await _context.SaveChangesAsync(cancellationToken);
+    }
 
     public async Task<User?> GetByUsernameAsync(string username, CancellationToken cancellationToken)
         => await _context.Users.FirstOrDefaultAsync(u => u.Username == username, cancellationToken: cancellationToken);

@@ -1,30 +1,35 @@
+锘縰sing BookingSystem.Api.Authorization;
 using BookingSystem.Api.Middleware;
+using BookingSystem.Api.Services;
 using BookingSystem.Application.Bookings.Commands.CreateBooking;
 using BookingSystem.Application.Common.Interfaces;
 using BookingSystem.Infrastructure.Authentication;
+using BookingSystem.Infrastructure.DependencyInjection;
 using BookingSystem.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using BookingSystem.Api.Authorization;
 using System.Reflection;
 using System.Text;
-using BookingSystem.Api.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // =========================
-// 1. CONFIGURACI覰 DE SERVICIOS
+// 1. CONFIGURACI脫N DE SERVICIOS
 // =========================
 
-// OpenAPI / Swagger
-builder.Services.AddOpenApi();
+// OpenAPI
+//builder.Services.AddOpenApi();
+
+// Swagger
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 
 builder.Services.AddTransient<ExceptionHandlingMiddleware>();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 
-//Servicio que permite acceder al HttpContext desde clases que NO son controladores. Sin esto, s髄o los controladores tendr韆n acceso a HttpContext.User, HttpContext.Request, etc. Al registrar IHttpContextAccessor, podemos inyectar ICurrentUserService en cualquier clase (como handlers de MediatR) para obtener informaci髇 del usuario actual sin acoplar esa clase a ASP.NET Core.
+//Servicio que permite acceder al HttpContext desde clases que NO son controladores. Sin esto, s贸lo los controladores tendr铆an acceso a HttpContext.User, HttpContext.Request, etc. Al registrar IHttpContextAccessor, podemos inyectar ICurrentUserService en cualquier clase (como handlers de MediatR) para obtener informaci贸n del usuario actual sin acoplar esa clase a ASP.NET Core.
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 
@@ -34,7 +39,10 @@ builder.Services.AddProblemDetails();
 builder.Services.AddMediatR(cfg =>
     cfg.RegisterServicesFromAssembly(typeof(CreateBookingCommand).Assembly));
 
-// DbContext con cadena de conexi髇 segura
+// Registrar servicios de infraestructura (repositorios, servicios, etc.)
+builder.Services.AddInfrastructure(builder.Configuration);
+
+// DbContext con cadena de conexi贸n segura
 var connectionString =
     builder.Configuration.GetConnectionString("DefaultConnection")
     ?? Environment.GetEnvironmentVariable("BOOKING_DB_CONNECTION");
@@ -43,17 +51,17 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
 
 // =========================
-// . CONFIGURACI覰 JWT
+// . CONFIGURACI脫N JWT
 // =========================
 // 1. Cargar JwtSettings (Issuer, Audience, ExpiryMinutes + Secret desde User Secrets)
 var jwtSettings = new JwtSettings();
 builder.Configuration.GetSection("JwtSettings").Bind(jwtSettings);
 
-// 2. Registrar JwtSettings para inyecci髇
+// 2. Registrar JwtSettings para inyecci贸n
 builder.Services.Configure<JwtSettings>(
     builder.Configuration.GetSection("JwtSettings"));
 
-// 3. Configurar autenticaci髇 JWT y Authorization
+// 3. Configurar autenticaci贸n JWT y Authorization
 builder.Services
     .AddAuthentication(options =>
     {
@@ -77,18 +85,16 @@ builder.Services
     });
 
 // Authorization Policies
-builder.Services.AddAuthorization(options =>
-{
-    options.AddPolicy("CanCancelBooking", policy =>
+builder.Services.AddAuthorizationBuilder()
+    .AddPolicy("CanCancelBooking", policy =>
         policy.Requirements.Add(new CanCancelBookingRequirement()));
-});
-// Registrar el handler de autorizaci髇
+
+// Registrar el handler de autorizaci贸n
 builder.Services.AddScoped<IAuthorizationHandler, CanCancelBookingHandler>();
 
-// 4. Registrar servicios de autenticaci髇
+// 4. Registrar servicios de autenticaci贸n
 builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
 builder.Services.AddScoped<IAuthService, AuthService>();
-
 
 // Controllers / Minimal APIs
 builder.Services.AddControllers();
@@ -101,14 +107,15 @@ var app = builder.Build();
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-}
+app.UseSwagger();
+app.UseSwaggerUI();
+
+// OpenAPI 
+//app.MapOpenApi();
 
 app.UseHttpsRedirection();
 
-// Activar autenticaci髇 y autorizaci髇
+// Activar autenticaci贸n y autorizaci贸n
 app.UseAuthentication();
 app.UseAuthorization();
 

@@ -52,6 +52,9 @@ public class Booking: IHasDomainEvents
         if (createdByUserId == Guid.Empty)
             throw new ArgumentException("El CreatedByUserId NO puede estar vacío");
 
+        if (dateRange is null)
+            throw new ArgumentException("El DateRange NO puede estar vacío");
+
         Id = Guid.NewGuid();
         RoomId = roomId;
         ClientId = clientId;
@@ -110,6 +113,9 @@ public class Booking: IHasDomainEvents
 
         if (clientId == Guid.Empty)
             throw new ArgumentException("El ClientId NO puede estar vacío");
+
+        if (newDateRange is null)
+            throw new ArgumentException("El NewDateRange NO puede estar vacío");  
 
         RoomId = roomId;
         ClientId = clientId;

@@ -1,5 +1,4 @@
-﻿using System.Threading.Tasks;
-
+﻿
 namespace BookingSystem.Application.Common.Interfaces;
 
 public interface IDomainEventDispatcher
