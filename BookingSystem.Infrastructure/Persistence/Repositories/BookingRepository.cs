@@ -22,13 +22,14 @@ namespace BookingSystem.Infrastructure.Persistence.Repositories
         public async Task AddAsync(Booking booking, CancellationToken cancellationToken)
         {
             await _dbContext.Bookings.AddAsync(booking, cancellationToken);
-            await _dbContext.SaveChangesAsync(cancellationToken);
         }
 
         public async Task<Booking?> GetByIdAsync(Guid id, CancellationToken cancellationToken)
         {
             return await _dbContext.Bookings
                 .AsNoTracking()
+                .Include(b => b.Room)
+                .Include(b => b.Client)
                 .FirstOrDefaultAsync(b => b.Id == id, cancellationToken);
         }
 
@@ -36,6 +37,8 @@ namespace BookingSystem.Infrastructure.Persistence.Repositories
         {
             return await _dbContext.Bookings
                 .AsNoTracking()
+                .Include(b => b.Room)
+                .Include(b => b.Client)
                 .Where(b => b.RoomId == roomId)
                 .ToListAsync(cancellationToken);
         }
@@ -44,6 +47,8 @@ namespace BookingSystem.Infrastructure.Persistence.Repositories
         {
             return await _dbContext.Bookings
                 .AsNoTracking()
+                .Include(b => b.Room)
+                .Include(b => b.Client)
                 .Where(b => b.ClientId == clientId)
                 .ToListAsync(cancellationToken);
         }
@@ -52,6 +57,8 @@ namespace BookingSystem.Infrastructure.Persistence.Repositories
         {
             return await _dbContext.Bookings
                 .AsNoTracking()
+                .Include(b => b.Room)
+                .Include(b => b.Client)
                 .Where(b => b.DateRange.Start < end && b.DateRange.End > start)
                 .ToListAsync(cancellationToken);
         }
@@ -80,10 +87,10 @@ namespace BookingSystem.Infrastructure.Persistence.Repositories
                     cancellationToken);
         }
 
-        public async Task UpdateAsync(Booking booking, CancellationToken cancellationToken)
+        public  Task UpdateAsync(Booking booking, CancellationToken cancellationToken)
         {
             _dbContext.Bookings.Update(booking);
-            await _dbContext.SaveChangesAsync(cancellationToken);
+            return Task.CompletedTask;
         }
     }
 }

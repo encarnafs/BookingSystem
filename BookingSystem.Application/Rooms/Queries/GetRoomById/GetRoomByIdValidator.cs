@@ -13,7 +13,6 @@ public class GetRoomByIdValidator : AbstractValidator<GetRoomByIdQuery>
     public GetRoomByIdValidator()
     {
         RuleFor(x => x.Id)
-            .NotEmpty().WithMessage("El Id de la sala es obligatorio")
-            .Must(id => Guid.TryParse(id.ToString(), out _)).WithMessage("El Id debe ser un GUID válido");
+            .NotEmpty().WithMessage("El Id de la sala es obligatorio.");
     }
 }

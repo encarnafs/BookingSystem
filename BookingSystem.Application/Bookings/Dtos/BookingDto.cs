@@ -11,4 +11,6 @@ public class BookingDto
     public string? Comments { get; set; }
     public string Status { get; set; } = default!;
     public DateTime CreatedAt { get; set; }
+    public string RoomName { get; set; } = default!;
+    public string ClientFullName { get; set; } = default!;
 }

@@ -5,6 +5,7 @@ namespace BookingSystem.Application.Common.Interfaces;
 public interface IBookingRepository
 {
     Task<Booking?> GetByIdAsync(Guid id, CancellationToken cancellationToken);
+    Task<IEnumerable<Booking>> GetAllAsync(CancellationToken cancellationToken);
     Task<IEnumerable<Booking>> GetByRoomAsync(Guid roomId, CancellationToken cancellationToken);
     Task<IEnumerable<Booking>> GetByClientAsync(Guid clientId, CancellationToken cancellationToken);
     Task<IEnumerable<Booking>> GetInDateRangeAsync(DateTime start, DateTime end, CancellationToken cancellationToken);

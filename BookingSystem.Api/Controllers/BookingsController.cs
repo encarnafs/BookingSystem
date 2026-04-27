@@ -10,7 +10,10 @@ using BookingSystem.Application.Bookings.Commands.UpdateBookingDates;
 using BookingSystem.Application.Bookings.Queries.GetBookingById;
 using BookingSystem.Application.Bookings.Queries.GetBookingsByClientId;
 using BookingSystem.Application.Bookings.Queries.GetBookingsByRoomId;
+using BookingSystem.Application.Bookings.Queries.GetAllBookings;
+using BookingSystem.Application.Bookings.Queries.GetBookingsInDateRange;
 using BookingSystem.Application.Common.Interfaces;
+using BookingSystem.Domain.ValueObjects;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -54,20 +57,27 @@ public class BookingsController : ControllerBase
         return Ok(result.Select(b => b.ToResponse()));
     }
 
+    [HttpGet]
+    public async Task<IActionResult> GetAll()
+    {
+        var result = await _sender.Send(new GetAllBookingsQuery());
+        return Ok(result.Select(b => b.ToResponse()));
+    }
+
+    [HttpGet("daterange")]
+    public async Task<IActionResult> GetInDateRange([FromQuery] DateTime start, [FromQuery] DateTime end)
+    {
+        var result = await _sender.Send(new GetBookingsInDateRangeQuery(start, end));
+        return Ok(result.Select(b => b.ToResponse()));
+    }
+
     [HttpPost]
     public async Task<IActionResult> Create(CreateBookingRequest request)
     {
         if (_currentUser.UserId is null)
             return Unauthorized();
 
-        var command = new CreateBookingCommand(
-            request.RoomId,
-            Guid.Parse(_currentUser.UserId), // el usuario autenticado
-            Guid.Empty,                      // employeeId si lo usas
-            request.Start,
-            request.End,
-            request.Comments
-        );
+        var command = request.ToCommand(Guid.Parse(_currentUser.UserId));
 
         var result = await _sender.Send(command);
 
@@ -92,10 +102,7 @@ public class BookingsController : ControllerBase
     [HttpPatch("{id:guid}/comments")]
     public async Task<IActionResult> UpdateComments(Guid id, UpdateBookingCommentsRequest request)
     {
-        var command = new UpdateBookingCommentsCommand(
-            id,
-            request.Comments
-        );
+        var command = request.ToCommand(id);
 
         await _sender.Send(command);
         return NoContent();
@@ -132,18 +139,10 @@ public class BookingsController : ControllerBase
     [HttpPut("{id:guid}")]
     public async Task<IActionResult> Update(Guid id, UpdateBookingRequest request, CancellationToken cancellationToken)
     {
-        var command = new UpdateBookingCommand(
-            id,
-            request.RoomId,
-            request.ClientId,
-            request.DateRange,
-            request.Comments
-        );
+        var command = request.ToCommand(id);
 
         await _sender.Send(command, cancellationToken);
 
         return NoContent();
     }
-
-
 }

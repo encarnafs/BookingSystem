@@ -19,12 +19,11 @@ public class ClientRepository : IClientRepository
     public async Task AddAsync(Client client, CancellationToken cancellationToken)
     {
         await _context.Clients.AddAsync(client, cancellationToken);
-        await _context.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task UpdateAsync(Client client, CancellationToken cancellationToken)
+    public Task UpdateAsync(Client client, CancellationToken cancellationToken)
     {
         _context.Clients.Update(client);
-        await _context.SaveChangesAsync(cancellationToken);
+        return Task.CompletedTask;
     }
 }

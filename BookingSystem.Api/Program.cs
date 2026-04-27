@@ -3,6 +3,7 @@ using BookingSystem.Api.Middleware;
 using BookingSystem.Api.Services;
 using BookingSystem.Application.Bookings.Commands.CreateBooking;
 using BookingSystem.Application.Common.Interfaces;
+using BookingSystem.Application.DependencyInjection;
 using BookingSystem.Infrastructure.Authentication;
 using BookingSystem.Infrastructure.DependencyInjection;
 using BookingSystem.Infrastructure.Persistence;
@@ -35,10 +36,8 @@ builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 
 builder.Services.AddProblemDetails();
 
-// MediatR
-builder.Services.AddMediatR(cfg =>
-    cfg.RegisterServicesFromAssembly(typeof(CreateBookingCommand).Assembly));
-
+// Registrar servicios de aplicación (handlers, validadores, etc.)
+builder.Services.AddApplication();
 // Registrar servicios de infraestructura (repositorios, servicios, etc.)
 builder.Services.AddInfrastructure(builder.Configuration);
 

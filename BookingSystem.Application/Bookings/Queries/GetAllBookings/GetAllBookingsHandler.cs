@@ -2,27 +2,20 @@
 using BookingSystem.Application.Common.Interfaces;
 using MediatR;
 
-namespace BookingSystem.Application.Bookings.Queries.GetBookingsInDateRange;
+namespace BookingSystem.Application.Bookings.Queries.GetAllBookings;
 
-public class GetBookingsInDateRangeHandler
-    : IRequestHandler<GetBookingsInDateRangeQuery, List<BookingDto>>
+public class GetAllBookingsHandler : IRequestHandler<GetAllBookingsQuery, IReadOnlyList<BookingDto>>
 {
     private readonly IBookingRepository _bookingRepository;
 
-    public GetBookingsInDateRangeHandler(IBookingRepository bookingRepository)
+    public GetAllBookingsHandler(IBookingRepository bookingRepository)
     {
         _bookingRepository = bookingRepository;
     }
 
-    public async Task<List<BookingDto>> Handle(
-        GetBookingsInDateRangeQuery request,
-        CancellationToken cancellationToken)
+    public async Task<IReadOnlyList<BookingDto>> Handle(GetAllBookingsQuery request, CancellationToken cancellationToken)
     {
-        var bookings = await _bookingRepository.GetInDateRangeAsync(
-            request.Start,
-            request.End,
-            cancellationToken
-        );
+        var bookings = await _bookingRepository.GetAllAsync(cancellationToken);
 
         return bookings
             .Select(b => new BookingDto
@@ -34,8 +27,8 @@ public class GetBookingsInDateRangeHandler
                 Start = b.DateRange.Start,
                 End = b.DateRange.End,
                 Comments = b.Comments,
-                Status = b.Status.ToString(),
                 CreatedAt = b.CreatedAt,
+                Status = b.Status.ToString(),
                 RoomName = b.Room.Name,
                 ClientFullName = b.Client.FullName
             })

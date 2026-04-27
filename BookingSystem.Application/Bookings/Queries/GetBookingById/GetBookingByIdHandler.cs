@@ -33,7 +33,9 @@ public class GetBookingByIdHandler
             End = booking.DateRange.End,
             Comments = booking.Comments,
             Status = booking.Status.ToString(),
-            CreatedAt = booking.CreatedAt
+            CreatedAt = booking.CreatedAt,
+            RoomName = booking.Room.Name,
+            ClientFullName = booking.Client.FullName
         };
     }
 }

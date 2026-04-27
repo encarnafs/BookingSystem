@@ -9,7 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace BookingSystem.Infrastructure.DependencyInjection;
 
-public static class InfrastructureServiceRegistration
+public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(
         this IServiceCollection services, IConfiguration configuration)

@@ -16,6 +16,11 @@ public class Booking: IHasDomainEvents
     public string? Comments { get; private set; }
     public DateTime CreatedAt { get; private set; }
 
+    // ⭐⭐ PROPIEDADES DE NAVEGACIÓN
+    public Room Room { get; private set; } = default!;
+    public Client Client { get; private set; } = default!;
+
+
     //DOMAIN EVENTS IMPLEMENTATION
     // ⭐⭐ 1. Lista interna de Domain Events
     private readonly List<object> _domainEvents = new();

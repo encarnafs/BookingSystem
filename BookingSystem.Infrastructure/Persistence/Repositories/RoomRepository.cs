@@ -21,7 +21,6 @@ namespace BookingSystem.Infrastructure.Persistence.Repositories
         public async Task AddAsync(Room room, CancellationToken cancellationToken)
         {
             await _dbContext.Rooms.AddAsync(room, cancellationToken);
-            await _dbContext.SaveChangesAsync(cancellationToken);
         }
 
         public async Task<Room?> GetByIdAsync(Guid id, CancellationToken cancellationToken)
@@ -37,10 +36,10 @@ namespace BookingSystem.Infrastructure.Persistence.Repositories
                 .ToListAsync(cancellationToken);
         }
 
-        public async Task UpdateAsync(Room room, CancellationToken cancellationToken)
+        public Task UpdateAsync(Room room, CancellationToken cancellationToken)
         {
             _dbContext.Rooms.Update(room);
-            await _dbContext.SaveChangesAsync(cancellationToken);
+            return Task.CompletedTask;
         }
     }
 }
