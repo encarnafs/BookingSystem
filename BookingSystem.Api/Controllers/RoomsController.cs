@@ -1,7 +1,8 @@
 ﻿using BookingSystem.Api.Mappers;
 using BookingSystem.Api.Requests.Rooms;
-using BookingSystem.Application.Rooms.Queries.GetRoomById;
+using BookingSystem.Application.Rooms.Queries.CheckAvailability;
 using BookingSystem.Application.Rooms.Queries.GetAllRooms;
+using BookingSystem.Application.Rooms.Queries.GetRoomById;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -54,5 +55,17 @@ public class RoomsController : ControllerBase
 
         return Ok(response);
     }
+
+    [HttpGet("{roomId:guid}/availability")]
+    public async Task<IActionResult> CheckAvailability(
+    Guid roomId,
+    [FromQuery] DateTime start,
+    [FromQuery] DateTime end)
+    {
+        var dto = await _mediator.Send(new CheckRoomAvailabilityQuery(roomId, start, end));
+        return Ok(dto.ToResponse());
+    }
+
+
 }
 

@@ -2,6 +2,7 @@
 using BookingSystem.Api.Responses.Auth;
 using BookingSystem.Application.Auth.Commands.Login;
 using BookingSystem.Application.Auth.Commands.Register;
+using BookingSystem.Application.Auth.Responses;
 using BookingSystem.Application.Common.Interfaces;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -23,22 +24,21 @@ public class AuthController : ControllerBase
     [HttpPost("register")]
     public async Task<IActionResult> Register(RegisterRequest request)
     {
-        var token = await _mediator.Send(
+        AuthResponse response = await _mediator.Send(
             new RegisterCommand(request.Username, request.Email, request.Password));
 
-        return Ok(new { Token = token });
+        return Ok(response);
     }
 
     [HttpPost("login")]
     public async Task<IActionResult> Login(LoginRequest request)
     {
-        var token = await _mediator.Send(
+        AuthResponse response = await _mediator.Send(
             new LoginCommand(request.Email, request.Password));
 
-        return Ok(new { Token = token });
+        return Ok(response);
     }
 
-    // Este endpoint es solo para fines de prueba para verificar que la autenticación funciona y para ver la información del usuario actual.
     [Authorize]
     [HttpGet("me")]
     public IActionResult Me([FromServices] ICurrentUserService currentUser)
@@ -55,5 +55,5 @@ public class AuthController : ControllerBase
 
         return Ok(response);
     }
-
 }
+

@@ -37,6 +37,18 @@ public class Client
         Email = email;
         PhoneNumber = phoneNumber;
     }
+
+    public void Update(string fullName, string email, string phoneNumber)
+    {
+        if (string.IsNullOrWhiteSpace(fullName))
+            throw new ArgumentException("El nombre NO puede estar vacío");
+
+        FullName = fullName;
+        Email = new Email(email);
+        PhoneNumber = new PhoneNumber(phoneNumber);
+    }
+
+
 }
 
 

@@ -46,4 +46,12 @@ public class User
 
         Role = newRole;
     }
+
+    public void UpdateEmail(string newEmail)
+    {
+        if (string.IsNullOrWhiteSpace(newEmail))
+            throw new ArgumentException("El email NO puede estar vacío");
+
+        Email = newEmail;
+    }
 }

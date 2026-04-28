@@ -1,10 +1,11 @@
 ﻿using BookingSystem.Application.Auth.Commands.Register;
+using BookingSystem.Application.Auth.Responses;
 using BookingSystem.Application.Common.Interfaces;
 using MediatR;
 
 namespace BookingSystem.Application.Auth.Commands.Register;
 
-public class RegisterHandler : IRequestHandler<RegisterCommand, string>
+public class RegisterHandler : IRequestHandler<RegisterCommand, AuthResponse>
 {
     private readonly IAuthService _authService;
     private readonly IJwtTokenGenerator _jwt;
@@ -15,18 +16,27 @@ public class RegisterHandler : IRequestHandler<RegisterCommand, string>
         _jwt = jwt;
     }
 
-    public async Task<string> Handle(RegisterCommand request, CancellationToken cancellationToken)
+    public async Task<AuthResponse> Handle(RegisterCommand request, CancellationToken cancellationToken)
     {
-        var userId = await _authService.RegisterAsync(
+        var user = await _authService.RegisterAsync(
             request.Username,
             request.Email,
             request.Password,
             cancellationToken);
 
-        return _jwt.GenerateToken(
-            userId,
-            request.Email,
-            request.Username,
-            "User");
+        var token = _jwt.GenerateToken(
+            user.Id,
+            user.Email,
+            user.Username,
+            user.Role);
+
+        return new AuthResponse
+        {
+            Token = token,
+            Id = user.Id,
+            Username = user.Username,
+            Email = user.Email,
+            Role = user.Role
+        };
     }
 }

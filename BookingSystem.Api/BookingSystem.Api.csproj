@@ -24,9 +24,4 @@
     <ProjectReference Include="..\BookingSystem.Infrastructure\BookingSystem.Infrastructure.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Requests\Clients\" />
-    <Folder Include="Requests\Users\" />
-  </ItemGroup>
-
 </Project>

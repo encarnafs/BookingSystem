@@ -26,4 +26,11 @@ public class ClientRepository : IClientRepository
         _context.Clients.Update(client);
         return Task.CompletedTask;
     }
+
+    public async Task<List<Client>> GetAllAsync(CancellationToken cancellationToken)
+    {
+        return await _context.Clients
+            .ToListAsync(cancellationToken);
+    }
+
 }

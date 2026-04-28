@@ -77,7 +77,7 @@ public class BookingsController : ControllerBase
         if (_currentUser.UserId is null)
             return Unauthorized();
 
-        var command = request.ToCommand(Guid.Parse(_currentUser.UserId));
+        var command = request.ToCommand(_currentUser.UserId.Value);
 
         var result = await _sender.Send(command);
 

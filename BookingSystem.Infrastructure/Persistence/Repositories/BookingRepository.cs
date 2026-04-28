@@ -92,5 +92,12 @@ namespace BookingSystem.Infrastructure.Persistence.Repositories
             _dbContext.Bookings.Update(booking);
             return Task.CompletedTask;
         }
+
+        public async Task<List<Booking>> GetAllAsync(CancellationToken cancellationToken)
+        {
+            return await _dbContext.Bookings
+                .ToListAsync(cancellationToken);
+        }
+
     }
 }

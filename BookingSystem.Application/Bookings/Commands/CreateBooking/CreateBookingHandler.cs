@@ -37,10 +37,7 @@ public class CreateBookingHandler : IRequestHandler<CreateBookingCommand, Bookin
         var client = await _clientRepository.GetByIdAsync(request.ClientId, cancellationToken);
         if (client is null) throw new NotFoundException("Client", request.ClientId);
 
-        var createdByUserId =
-            Guid.TryParse(_currentUser.UserId, out var parsedUserId)
-                ? parsedUserId
-                : Guid.Empty;
+        var createdByUserId = _currentUser.UserId ?? Guid.Empty;
 
         if (createdByUserId != Guid.Empty)
         {

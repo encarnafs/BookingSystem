@@ -1,23 +1,29 @@
-﻿using BookingSystem.Application.Common.Interfaces;
-using System.Security.Claims;
+﻿using System.Security.Claims;
+using BookingSystem.Application.Common.Interfaces;
 
 namespace BookingSystem.Api.Services;
 
 public class CurrentUserService : ICurrentUserService
 {
-    private readonly IHttpContextAccessor _httpContextAccessor;
+    public Guid? UserId { get; }
+    public string? Email { get; }
+    public string? Role { get; }
 
     public CurrentUserService(IHttpContextAccessor httpContextAccessor)
     {
-        _httpContextAccessor = httpContextAccessor;
+        var user = httpContextAccessor.HttpContext?.User;
+
+        if (user?.Identity?.IsAuthenticated == true)
+        {
+            var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var emailClaim = user.FindFirst(ClaimTypes.Email)?.Value;
+            var roleClaim = user.FindFirst(ClaimTypes.Role)?.Value;
+
+            if (Guid.TryParse(userIdClaim, out var id))
+                UserId = id;
+
+            Email = emailClaim;
+            Role = roleClaim;
+        }
     }
-
-    public string? UserId =>
-        _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier);
-
-    public string? Email =>
-        _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.Email);
-
-    public string? Role =>
-        _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.Role);
 }

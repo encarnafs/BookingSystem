@@ -16,7 +16,7 @@ public class AuthService : IAuthService
         _context = context;
     }
 
-    public async Task<Guid> RegisterAsync(string username, string email, string password, CancellationToken cancellationToken)
+    public async Task<User> RegisterAsync(string username, string email, string password, CancellationToken cancellationToken)
     {
         if (await _context.Users.AnyAsync(u => u.Email == email, cancellationToken))
             throw new Exception("El email ya está registrado.");
@@ -28,7 +28,7 @@ public class AuthService : IAuthService
         _context.Users.Add(user);
         await _context.SaveChangesAsync(cancellationToken);
 
-        return user.Id;
+        return user;
     }
 
     public async Task<User?> ValidateUserAsync(string email, string password, CancellationToken cancellationToken)
