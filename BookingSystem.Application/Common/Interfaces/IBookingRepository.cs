@@ -11,6 +11,6 @@ public interface IBookingRepository
     Task<IEnumerable<Booking>> GetInDateRangeAsync(DateTime start, DateTime end, CancellationToken cancellationToken);
     Task AddAsync(Booking booking, CancellationToken cancellationToken);
     Task UpdateAsync(Booking booking, CancellationToken cancellationToken);
-    Task<bool> ExistsOverlappingBookingAsync(Guid roomId, DateTime start, DateTime end, CancellationToken cancellationToken);
+    Task<bool> ExistsOverlappingBookingAsync(Guid roomId, DateTime start, DateTime end, Guid? excludeBookingId, CancellationToken cancellationToken);
     Task<int> CountBookingsForClientOnDateAsync(Guid clientId, DateTime date, CancellationToken cancellationToken);
 }

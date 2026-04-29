@@ -18,40 +18,42 @@ public static class BookingMapper
 
     public static CreateBookingCommand ToCommand(this CreateBookingRequest request, Guid currentUserId)
     {
+        var clientId = request.ClientId ?? currentUserId;
+
         return new CreateBookingCommand(
             request.RoomId,
-            currentUserId,
-            Guid.Empty, // employeeId si lo usas
+            clientId,
+            request.Start,
+            request.End,
+            request.Comments
+            );
+    }
+
+    public static UpdateBookingCommand ToCommand(this UpdateBookingRequest request, Guid clientId)
+    {
+        return new UpdateBookingCommand(
+            request.Id,
+            request.RoomId,
+            clientId,            // viene del booking existente
             request.Start,
             request.End,
             request.Comments
         );
     }
 
-    public static UpdateBookingCommand ToCommand(this UpdateBookingRequest request, Guid id)
-    {
-        return new UpdateBookingCommand(
-            id,
-            request.RoomId,
-            request.ClientId,
-            new DateRange(request.Start, request.End),
-            request.Comments
-        );
-    }
-
-    public static UpdateBookingDatesCommand ToCommand(this UpdateBookingDatesRequest request, Guid id)
+    public static UpdateBookingDatesCommand ToCommand(this UpdateBookingDatesRequest request)
     {
         return new UpdateBookingDatesCommand(
-            id,
+            request.Id,
             request.Start,
             request.End
         );
     }
 
-    public static UpdateBookingCommentsCommand ToCommand(this UpdateBookingCommentsRequest request, Guid id)
+    public static UpdateBookingCommentsCommand ToCommand(this UpdateBookingCommentsRequest request)
     {
         return new UpdateBookingCommentsCommand(
-            id,
+            request.Id,
             request.Comments
         );
     }

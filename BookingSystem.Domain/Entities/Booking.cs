@@ -86,8 +86,12 @@ public class Booking: IHasDomainEvents
 
     public void UpdateComments(string? comments)
     {
+        if (Status == BookingStatus.Cancelled)
+            throw new InvalidOperationException("No se pueden modificar comentarios de una reserva cancelada.");
+
         Comments = comments;
     }
+
 
     public void Cancel()
     {
@@ -100,10 +104,14 @@ public class Booking: IHasDomainEvents
     public void Confirm()
     {
         if (Status == BookingStatus.Cancelled)
-            throw new InvalidOperationException("No se puede confirmar una reserva cancelada");
+            throw new InvalidOperationException("No se puede confirmar una reserva cancelada.");
+
+        if (Status == BookingStatus.Confirmed)
+            throw new InvalidOperationException("La reserva ya está confirmada.");
 
         Status = BookingStatus.Confirmed;
     }
+
 
     public void Update(Guid roomId, Guid clientId, DateRange newDateRange, string? comments)
     {

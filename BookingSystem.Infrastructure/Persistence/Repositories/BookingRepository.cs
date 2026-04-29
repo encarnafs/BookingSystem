@@ -63,14 +63,15 @@ namespace BookingSystem.Infrastructure.Persistence.Repositories
                 .ToListAsync(cancellationToken);
         }
 
-        public async Task<bool> ExistsOverlappingBookingAsync(Guid roomId, DateTime start, DateTime end, CancellationToken cancellationToken)
+        public async Task<bool> ExistsOverlappingBookingAsync(Guid roomId, DateTime start, DateTime end, Guid? excludeBookingId, CancellationToken cancellationToken)
         {
             return await _dbContext.Bookings
                 .AsNoTracking()
                 .AnyAsync(b =>
                     b.RoomId == roomId &&
+                    b.Id != excludeBookingId && // excluir la propia reserva
                     b.DateRange.Start < end &&
-                    b.DateRange.End > start,
+                    start < b.DateRange.End,
                     cancellationToken);
         }
 

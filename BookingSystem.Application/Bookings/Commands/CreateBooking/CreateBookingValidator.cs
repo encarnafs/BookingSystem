@@ -8,7 +8,6 @@ public class CreateBookingValidator : AbstractValidator<CreateBookingCommand>
     {
         RuleFor(x => x.RoomId).NotEmpty();
         RuleFor(x => x.ClientId).NotEmpty();
-        RuleFor(x => x.CreatedByUserId).NotEmpty();
         RuleFor(x => x.Start).LessThan(x => x.End)
             .WithMessage("La fecha de inicio debe ser anterior a la fecha de fin");
     }

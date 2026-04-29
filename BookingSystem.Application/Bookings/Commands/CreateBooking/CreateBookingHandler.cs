@@ -31,35 +31,41 @@ public class CreateBookingHandler : IRequestHandler<CreateBookingCommand, Bookin
 
     public async Task<BookingDto> Handle(CreateBookingCommand request, CancellationToken cancellationToken)
     {
-        var room = await _roomRepository.GetByIdAsync(request.RoomId, cancellationToken);
-        if (room is null) throw new NotFoundException("Room", request.RoomId);
+        // 1. Validar Room
+        var room = await _roomRepository.GetByIdAsync(request.RoomId, cancellationToken)
+            ?? throw new NotFoundException("Room", request.RoomId);
 
-        var client = await _clientRepository.GetByIdAsync(request.ClientId, cancellationToken);
-        if (client is null) throw new NotFoundException("Client", request.ClientId);
+        // 2. Validar Client
+        var client = await _clientRepository.GetByIdAsync(request.ClientId, cancellationToken)
+            ?? throw new NotFoundException("Client", request.ClientId);
 
+        // 3. Obtener el usuario creador (si viene del token)
         var createdByUserId = _currentUser.UserId ?? Guid.Empty;
 
         if (createdByUserId != Guid.Empty)
         {
-            var user = await _userRepository.GetByIdAsync(createdByUserId, cancellationToken);
-            if (user is null) throw new NotFoundException("User", createdByUserId);
+            // Esto valida que el usuario existe sin crear una variable innecesaria.
+            _ = await _userRepository.GetByIdAsync(createdByUserId, cancellationToken)
+                ?? throw new NotFoundException("User", createdByUserId);
+
         }
 
-        if (request.Start >= request.End)
-            throw new ValidationException("Fecha Start debe ser antes de Fecha End");
-
+        // 4. Crear DateRange (el VO valida fechas inválidas)
         var dateRange = new DateRange(request.Start, request.End);
 
-        bool overlaps = await _bookingRepository.ExistsOverlappingBookingAsync(
+        // 5. Validar solapamientos
+        var overlaps = await _bookingRepository.ExistsOverlappingBookingAsync(
             request.RoomId,
             request.Start,
             request.End,
+            null, // No excluir ninguna reserva (es creación)
             cancellationToken
         );
 
         if (overlaps)
             throw new ValidationException("La sala ya está reservada para las fechas seleccionadas");
 
+        // 6. Crear la reserva usando el dominio
         var booking = new Booking(
             room.Id,
             client.Id,
@@ -68,8 +74,10 @@ public class CreateBookingHandler : IRequestHandler<CreateBookingCommand, Bookin
             request.Comments
         );
 
+        // 7. Guardar
         await _bookingRepository.AddAsync(booking, cancellationToken);
 
+        // 8. Devolver DTO
         return new BookingDto
         {
             Id = booking.Id,
@@ -82,7 +90,7 @@ public class CreateBookingHandler : IRequestHandler<CreateBookingCommand, Bookin
             Status = booking.Status.ToString(),
             CreatedAt = booking.CreatedAt
         };
-
     }
+
 }
 

@@ -6,6 +6,7 @@ public  record UpdateBookingCommand(
     Guid Id,
     Guid RoomId,
     Guid ClientId,
-    DateRange DateRange,
+    DateTime Start,
+    DateTime End,
     string? Comments
 ) : IRequest<Unit>;
