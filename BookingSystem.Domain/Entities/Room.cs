@@ -1,4 +1,6 @@
-﻿namespace BookingSystem.Domain.Entities;
+﻿using BookingSystem.Domain.Exceptions;
+
+namespace BookingSystem.Domain.Entities;
 
 public class Room
 {
@@ -14,44 +16,33 @@ public class Room
     // Constructor principal
     public Room(string name, int capacity, string? description = null)
     {
-        if (string.IsNullOrWhiteSpace(name))
-            throw new ArgumentException("El nombre de la sala NO puede ser vacío");
-
-        if (capacity <= 0)
-            throw new ArgumentException("La capacidad debe ser mayor que cero");
+        Name = NormalizeName(name);
+        Capacity = ValidateCapacity(capacity);
+        Description = NormalizeDescription(description);
+        IsActive = true;
 
         Id = Guid.NewGuid();
-        Name = name;
-        Capacity = capacity;
-        Description = description;
-        IsActive = true;
     }
 
     public void UpdateName(string newName)
     {
-        if (string.IsNullOrWhiteSpace(newName))
-            throw new ArgumentException("El nombre de la sala NO puede ser vacío");
-
-        Name = newName;
+        Name = NormalizeName(newName);
     }
 
     public void UpdateCapacity(int newCapacity)
     {
-        if (newCapacity <= 0)
-            throw new ArgumentException("La capacidad debe ser mayor que cero");
-
-        Capacity = newCapacity;
+        Capacity = ValidateCapacity(newCapacity);
     }
 
     public void UpdateDescription(string? newDescription)
     {
-        Description = newDescription;
+        Description = NormalizeDescription(newDescription);
     }
 
     public void Activate()
     {
         if (IsActive)
-            throw new InvalidOperationException("La sala ya está activa");
+            throw new InvalidRoomStateException("La sala ya está activa.");
 
         IsActive = true;
     }
@@ -59,8 +50,35 @@ public class Room
     public void Deactivate()
     {
         if (!IsActive)
-            throw new InvalidOperationException("La sala ya está inactiva");
+            throw new InvalidRoomStateException("La sala ya está inactiva.");
 
         IsActive = false;
     }
+
+    private static string NormalizeName(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            throw new InvalidRoomNameException("El nombre de la sala no puede estar vacío.");
+
+        var normalized = name.Trim();
+
+        if (normalized.Length < 2)
+            throw new InvalidRoomNameException("El nombre de la sala es demasiado corto.");
+
+        return normalized;
+    }
+
+    private static int ValidateCapacity(int capacity)
+    {
+        if (capacity <= 0)
+            throw new InvalidRoomCapacityException("La capacidad debe ser mayor que cero.");
+
+        return capacity;
+    }
+
+    private static string? NormalizeDescription(string? description)
+    {
+        return description?.Trim();
+    }
+}
 }

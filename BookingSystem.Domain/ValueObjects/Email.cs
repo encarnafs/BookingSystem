@@ -7,7 +7,7 @@ public sealed class Email
 {
     private static readonly Regex EmailRegex =
         new(@"^[^@\s]+@[^@\s]+\.[^@\s]+$", RegexOptions.Compiled);
-    public string Value { get; }
+    public string Value { get; private set; } = default!;
 
     private Email() { } // Constructor vacío para EF Core
 
@@ -25,4 +25,9 @@ public sealed class Email
     }
 
     public override string ToString() => Value;
+
+    public static implicit operator Email(string v)
+    {
+        throw new NotImplementedException();
+    }
 }

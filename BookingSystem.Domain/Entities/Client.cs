@@ -1,4 +1,5 @@
 ﻿using BookingSystem.Domain.ValueObjects;
+using BookingSystem.Domain.Exceptions;
 
 namespace BookingSystem.Domain.Entities;
 
@@ -15,40 +16,43 @@ public class Client
     // Constructor principal
     public Client(string fullName, Email email, PhoneNumber phoneNumber)
     {
-        if (string.IsNullOrWhiteSpace(fullName))
-            throw new ArgumentException("El nombre del cliente NO puede estar vacío");
+        FullName = NormalizeName(fullName);
+        Email = email ?? throw new InvalidClientStateException("El email no puede ser nulo.");
+        PhoneNumber = phoneNumber ?? throw new InvalidClientStateException("El teléfono no puede ser nulo.");
 
         Id = Guid.NewGuid();
-        FullName = fullName;
-        Email = email;
-        PhoneNumber = phoneNumber;
     }
 
     public void UpdateName(string newName)
     {
-        if (string.IsNullOrWhiteSpace(newName))
-            throw new ArgumentException("El nombre del cliente NO puede estar vacío");
-
-        FullName = newName;
+        FullName = NormalizeName(newName);
     }
 
     public void UpdateContactInfo(Email email, PhoneNumber phoneNumber)
     {
-        Email = email;
-        PhoneNumber = phoneNumber;
+        Email = email ?? throw new InvalidClientStateException("El email no puede ser nulo.");
+        PhoneNumber = phoneNumber ?? throw new InvalidClientStateException("El teléfono no puede ser nulo.");
     }
 
-    public void Update(string fullName, string email, string phoneNumber)
+    public void Update(string fullName, Email email, PhoneNumber phoneNumber)
     {
-        if (string.IsNullOrWhiteSpace(fullName))
-            throw new ArgumentException("El nombre NO puede estar vacío");
-
-        FullName = fullName;
-        Email = new Email(email);
-        PhoneNumber = new PhoneNumber(phoneNumber);
+        FullName = NormalizeName(fullName);
+        Email = email ?? throw new InvalidClientStateException("El email no puede ser nulo.");
+        PhoneNumber = phoneNumber ?? throw new InvalidClientStateException("El teléfono no puede ser nulo.");
     }
 
+    private static string NormalizeName(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            throw new InvalidClientNameException("El nombre del cliente no puede estar vacío.");
 
+        var normalized = name.Trim();
+
+        if (normalized.Length < 2)
+            throw new InvalidClientNameException("El nombre del cliente es demasiado corto.");
+
+        return normalized;
+    }
 }
 
 

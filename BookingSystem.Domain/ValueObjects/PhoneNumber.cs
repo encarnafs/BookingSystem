@@ -7,7 +7,7 @@ public sealed class PhoneNumber
     // Acepta números internacionales con +, espacios y guiones
     private static readonly Regex PhoneRegex =
         new(@"^\+?[0-9\s\-]{6,20}$", RegexOptions.Compiled);
-    public string Value { get; }
+    public string Value { get; private set; } = default!;
 
     private PhoneNumber() { }
 

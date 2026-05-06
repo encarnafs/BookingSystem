@@ -1,57 +1,71 @@
-﻿namespace BookingSystem.Domain.Entities;
+﻿using BookingSystem.Domain.ValueObjects;
+using BookingSystem.Domain.Exceptions;
 
+namespace BookingSystem.Domain.Entities;
 public class User
 {
     public Guid Id { get; private set; }
     public string Username { get; private set; } = default!;
-    public string Email { get; private set; } = default!;
+    public Email Email { get; private set; } = default!;
     public string PasswordHash { get; private set; } = default!;
     public string Role { get; private set; } = default!;
 
     private User() { }
 
-    public User(string username, string email, string passwordHash, string role)
+    public User(string username, Email email, string passwordHash, string role)
     {
-        if (string.IsNullOrWhiteSpace(username))
-            throw new ArgumentException("El nombre de usuario NO puede estar vacío");
-
-        if (string.IsNullOrWhiteSpace(email))
-            throw new ArgumentException("El email NO puede estar vacío");
-
-        if (string.IsNullOrWhiteSpace(passwordHash))
-            throw new ArgumentException("El hash de la contraseña NO puede estar vacío");
-
-        if (string.IsNullOrWhiteSpace(role))
-            throw new ArgumentException("El rol NO puede estar vacío");
+        Username = NormalizeUsername(username);
+        Email = email ?? throw new InvalidUserStateException("El email no puede ser nulo.");
+        PasswordHash = ValidatePasswordHash(passwordHash);
+        Role = NormalizeRole(role);
 
         Id = Guid.NewGuid();
-        Username = username;
-        Email = email;
-        PasswordHash = passwordHash;
-        Role = role;
     }
 
     public void ChangePassword(string newPasswordHash)
     {
-        if (string.IsNullOrWhiteSpace(newPasswordHash))
-            throw new ArgumentException("El hash de la contraseña NO puede estar vacío");
-
-        PasswordHash = newPasswordHash;
+        PasswordHash = ValidatePasswordHash(newPasswordHash);
     }
 
     public void AssignRole(string newRole)
     {
-        if (string.IsNullOrWhiteSpace(newRole))
-            throw new ArgumentException("El rol NO puede estar vacío");
-
-        Role = newRole;
+        Role = NormalizeRole(newRole);
     }
 
     public void UpdateEmail(string newEmail)
     {
-        if (string.IsNullOrWhiteSpace(newEmail))
-            throw new ArgumentException("El email NO puede estar vacío");
+        Email = newEmail ?? throw new InvalidUserStateException("El email no puede ser nulo.");
+    }
 
-        Email = newEmail;
+    private static string NormalizeUsername(string username)
+    {
+        if (string.IsNullOrWhiteSpace(username))
+            throw new InvalidUserNameException("El nombre de usuario no puede estar vacío.");
+
+        var normalized = username.Trim();
+
+        if (normalized.Length < 3)
+            throw new InvalidUserNameException("El nombre de usuario es demasiado corto.");
+
+        return normalized;
+    }
+
+    private static string NormalizeRole(string role)
+    {
+        if (string.IsNullOrWhiteSpace(role))
+            throw new InvalidUserRoleException("El rol no puede estar vacío.");
+
+        return role.Trim();
+    }
+
+    private static string ValidatePasswordHash(string hash)
+    {
+        if (string.IsNullOrWhiteSpace(hash))
+            throw new InvalidUserPasswordException("El hash de la contraseña no puede estar vacío.");
+
+        if (hash.Length < 20)
+            throw new InvalidUserPasswordException("El hash de la contraseña no es válido.");
+
+        return hash;
     }
 }
