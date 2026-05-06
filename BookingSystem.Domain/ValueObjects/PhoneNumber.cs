@@ -1,20 +1,33 @@
-﻿namespace BookingSystem.Domain.ValueObjects;
+﻿using BookingSystem.Domain.Exceptions;
+using System.Text.RegularExpressions;
 
+namespace BookingSystem.Domain.ValueObjects;
 public sealed class PhoneNumber
 {
-    public string Value { get; private set; } = default!;
+    // Acepta números internacionales con +, espacios y guiones
+    private static readonly Regex PhoneRegex =
+        new(@"^\+?[0-9\s\-]{6,20}$", RegexOptions.Compiled);
+    public string Value { get; }
 
     private PhoneNumber() { }
 
     public PhoneNumber(string value)
     {
         if (string.IsNullOrWhiteSpace(value))
-            throw new ArgumentException("Phone Number no puede estar vacío");
+            throw new InvalidPhoneNumberException("El número de teléfono no puede estar vacío.");
 
-        if (value.Length < 6)
-            throw new ArgumentException("Phone number es demasiado corto");
+        var normalized = Normalize(value);
 
-        Value = value;
+        if (!PhoneRegex.IsMatch(normalized))
+            throw new InvalidPhoneNumberException($"El número '{value}' no es válido.");
+
+        Value = normalized;
+    }
+
+    private static string Normalize(string input)
+    {
+        // Elimina espacios y guiones
+        return input.Replace(" ", "").Replace("-", "");
     }
 
     public override string ToString() => Value;

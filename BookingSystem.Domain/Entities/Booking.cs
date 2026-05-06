@@ -2,6 +2,7 @@
 using BookingSystem.Domain.Events;
 using BookingSystem.Domain.ValueObjects;
 using BookingSystem.Domain.Abstractions;
+using BookingSystem.Domain.Exceptions;
 
 namespace BookingSystem.Domain.Entities;
 
@@ -49,16 +50,17 @@ public class Booking: IHasDomainEvents
     public Booking(Guid roomId, Guid clientId, Guid createdByUserId, DateRange dateRange, string? comments = null)
     {
         if (roomId == Guid.Empty)
-            throw new ArgumentException("El RoomId NO puede estar vacío");
+            throw new InvalidBookingStateException("El RoomId no puede estar vacío.");
 
         if (clientId == Guid.Empty)
-            throw new ArgumentException("El ClientId NO puede estar vacío");
+            throw new InvalidBookingStateException("El ClientId no puede estar vacío.");
 
         if (createdByUserId == Guid.Empty)
-            throw new ArgumentException("El CreatedByUserId NO puede estar vacío");
+            throw new InvalidBookingStateException("El CreatedByUserId no puede estar vacío.");
 
         if (dateRange is null)
-            throw new ArgumentException("El DateRange NO puede estar vacío");
+            throw new InvalidBookingStateException("El DateRange no puede ser nulo.");
+
 
         Id = Guid.NewGuid();
         RoomId = roomId;
@@ -76,10 +78,10 @@ public class Booking: IHasDomainEvents
     public void UpdateDates(DateRange newDateRange)
     {
         if (Status == BookingStatus.Cancelled)
-            throw new InvalidOperationException("No se puede modificar una reserva cancelada");
+            throw new InvalidBookingStateException("No se pueden modificar fechas de una reserva cancelada.");
 
         if (DateRange.End < DateTime.UtcNow)
-            throw new InvalidOperationException("No se puede modificar una reserva que ya ha finalizado");
+            throw new InvalidBookingStateException("No se puede modificar una reserva que ya ha finalizado.");
 
         DateRange = newDateRange;
     }
@@ -87,7 +89,7 @@ public class Booking: IHasDomainEvents
     public void UpdateComments(string? comments)
     {
         if (Status == BookingStatus.Cancelled)
-            throw new InvalidOperationException("No se pueden modificar comentarios de una reserva cancelada.");
+            throw new InvalidBookingStateException("No se pueden modificar comentarios de una reserva cancelada.");
 
         Comments = comments;
     }
@@ -96,7 +98,7 @@ public class Booking: IHasDomainEvents
     public void Cancel()
     {
         if (Status == BookingStatus.Cancelled)
-            throw new InvalidOperationException("La reserva ya está cancelada");
+            throw new BookingAlreadyCancelledException(Id);
 
         Status = BookingStatus.Cancelled;
     }
@@ -104,10 +106,10 @@ public class Booking: IHasDomainEvents
     public void Confirm()
     {
         if (Status == BookingStatus.Cancelled)
-            throw new InvalidOperationException("No se puede confirmar una reserva cancelada.");
+            throw new InvalidBookingStateException("No se puede confirmar una reserva cancelada.");
 
         if (Status == BookingStatus.Confirmed)
-            throw new InvalidOperationException("La reserva ya está confirmada.");
+            throw new BookingAlreadyConfirmedException(Id);
 
         Status = BookingStatus.Confirmed;
     }
@@ -116,19 +118,19 @@ public class Booking: IHasDomainEvents
     public void Update(Guid roomId, Guid clientId, DateRange newDateRange, string? comments)
     {
         if (Status == BookingStatus.Cancelled)
-            throw new InvalidOperationException("No se puede modificar una reserva cancelada");
+            throw new InvalidBookingStateException("No se puede actualizar una reserva cancelada.");
 
         if (DateRange.End < DateTime.UtcNow)
-            throw new InvalidOperationException("No se puede modificar una reserva que ya ha finalizado");
+            throw new InvalidBookingStateException("No se puede modificar una reserva que ya ha finalizado");
 
         if (roomId == Guid.Empty)
-            throw new ArgumentException("El RoomId NO puede estar vacío");
+            throw new InvalidBookingStateException("El RoomId no puede estar vacío.");
 
         if (clientId == Guid.Empty)
-            throw new ArgumentException("El ClientId NO puede estar vacío");
+            throw new InvalidBookingStateException("El ClientId no puede estar vacío.");
 
         if (newDateRange is null)
-            throw new ArgumentException("El NewDateRange NO puede estar vacío");  
+            throw new InvalidBookingStateException("El DateRange no puede ser nulo.");
 
         RoomId = roomId;
         ClientId = clientId;

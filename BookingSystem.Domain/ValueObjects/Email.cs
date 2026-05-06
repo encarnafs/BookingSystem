@@ -1,22 +1,27 @@
-﻿
+﻿using BookingSystem.Domain.Exceptions;
+using System.Text.RegularExpressions;
 
 namespace BookingSystem.Domain.ValueObjects;
 
 public sealed class Email
 {
-    public string Value { get; private set; } = default!;
+    private static readonly Regex EmailRegex =
+        new(@"^[^@\s]+@[^@\s]+\.[^@\s]+$", RegexOptions.Compiled);
+    public string Value { get; }
 
     private Email() { } // Constructor vacío para EF Core
 
     public Email(string value)
     {
         if (string.IsNullOrWhiteSpace(value))
-            throw new ArgumentException("Email NO puede estar vacío");
+            throw new InvalidEmailException("El email no puede estar vacío.");
 
-        if (!value.Contains("@"))
-            throw new ArgumentException("Formato Email inválido");
+        var normalized = value.Trim().ToLowerInvariant();
 
-        Value = value.Trim().ToLower();
+        if (!EmailRegex.IsMatch(normalized))
+            throw new InvalidEmailException($"El email '{value}' no tiene un formato válido.");
+
+        Value = normalized;
     }
 
     public override string ToString() => Value;
