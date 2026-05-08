@@ -16,6 +16,8 @@ public class ApplicationDbContext : DbContext, IUnitOfWork
     public DbSet<Room> Rooms => Set<Room>();
     public DbSet<Client> Clients => Set<Client>();
     public DbSet<User> Users => Set<User>();
+    public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+
 
     // Configuración del modelo
     protected override void OnModelCreating(ModelBuilder builder)
