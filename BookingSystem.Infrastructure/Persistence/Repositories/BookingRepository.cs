@@ -97,6 +97,7 @@ namespace BookingSystem.Infrastructure.Persistence.Repositories
         public async Task<List<Booking>> GetAllAsync(CancellationToken cancellationToken)
         {
             return await _dbContext.Bookings
+                .AsNoTracking()
                 .ToListAsync(cancellationToken);
         }
 

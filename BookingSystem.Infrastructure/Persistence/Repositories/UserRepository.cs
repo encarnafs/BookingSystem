@@ -11,33 +11,37 @@ public class UserRepository : IUserRepository
     public UserRepository(ApplicationDbContext context) => _context = context;
 
     public async Task<User?> GetByIdAsync(Guid id, CancellationToken cancellationToken)
-        => await _context.Users.FirstOrDefaultAsync(u => u.Id == id, cancellationToken: cancellationToken);
+        => await _context.Users
+            .AsNoTracking()
+            .FirstOrDefaultAsync(u => u.Id == id, cancellationToken);
 
     public async Task<List<User>> GetAllAsync(CancellationToken cancellationToken)
-    {
-        return await _context.Users
+        => await _context.Users
+            .AsNoTracking()
             .ToListAsync(cancellationToken);
-    }
 
-    public async Task UpdateAsync(User user, CancellationToken cancellationToken)
+    public Task UpdateAsync(User user, CancellationToken cancellationToken)
     {
         _context.Users.Update(user);
-        await _context.SaveChangesAsync(cancellationToken);
+        return Task.CompletedTask;
     }
-
 
     public async Task AddAsync(User user, CancellationToken cancellationToken)
-    { 
-        await _context.Users.AddAsync(user, cancellationToken);
-    }
+        => await _context.Users.AddAsync(user, cancellationToken);
 
     public async Task<User?> GetByUsernameAsync(string username, CancellationToken cancellationToken)
-        => await _context.Users.FirstOrDefaultAsync(u => u.Username == username, cancellationToken: cancellationToken);
+        => await _context.Users
+            .AsNoTracking()
+            .FirstOrDefaultAsync(u => u.Username == username, cancellationToken);
 
     public async Task<bool> ExistsByEmailAsync(string email, CancellationToken cancellationToken)
-        => await _context.Users.AnyAsync(u => u.Email.Value == email, cancellationToken: cancellationToken);
+        => await _context.Users
+            .AsNoTracking()
+            .AnyAsync(u => u.Email.Value == email, cancellationToken);
 
     public async Task<bool> ExistsByUsernameAsync(string username, CancellationToken cancellationToken)
-        => await _context.Users.AnyAsync(u => u.Username == username, cancellationToken: cancellationToken);
-
+        => await _context.Users
+            .AsNoTracking()
+            .AnyAsync(u => u.Username == username, cancellationToken);
 }
+

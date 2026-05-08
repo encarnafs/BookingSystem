@@ -1,5 +1,6 @@
 ﻿using BookingSystem.Application.Common.Interfaces;
 using BookingSystem.Domain.Entities;
+using BookingSystem.Domain.ValueObjects;
 using BookingSystem.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
@@ -18,12 +19,14 @@ public class AuthService : IAuthService
 
     public async Task<User> RegisterAsync(string username, string email, string password, CancellationToken cancellationToken)
     {
-        if (await _context.Users.AnyAsync(u => u.Email.Value == email, cancellationToken))
+        var emailVO = Email.Create(email);
+
+        if (await _context.Users.AnyAsync(u => u.Email.Value == emailVO.Value, cancellationToken))
             throw new Exception("El email ya está registrado.");
 
         var passwordHash = HashPassword(password);
 
-        var user = new User(username, email, passwordHash, role: "User");
+        var user = new User(username, emailVO, passwordHash, role: "User");
 
         _context.Users.Add(user);
         await _context.SaveChangesAsync(cancellationToken);

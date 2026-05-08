@@ -38,7 +38,7 @@ public class ChangeUserRoleHandler : IRequestHandler<ChangeUserRoleCommand, User
             };
 
         // Actualizar rol
-        user.Role = request.NewRole;
+        user.AssignRole(request.NewRole);
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 

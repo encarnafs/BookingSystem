@@ -23,7 +23,7 @@ public class DeleteUserHandler : IRequestHandler<DeleteUserCommand, UserDto>
 
     public async Task<UserDto> Handle(DeleteUserCommand request, CancellationToken cancellationToken)
     {
-        var user = await _userRepository.GetByIdAsync(request.UserId)
+        var user = await _userRepository.GetByIdAsync(request.UserId, cancellationToken)
             ?? throw new Exception($"Usuario con ID {request.UserId} no encontrado.");
 
         if (user.IsDeleted)

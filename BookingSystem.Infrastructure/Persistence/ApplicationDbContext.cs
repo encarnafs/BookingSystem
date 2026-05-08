@@ -1,10 +1,11 @@
 ﻿using BookingSystem.Application.Common.Interfaces;
 using BookingSystem.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
+using System.Reflection;
 
 namespace BookingSystem.Infrastructure.Persistence;
 
-public class ApplicationDbContext : DbContext, IUnitOfWork
+public class ApplicationDbContext : DbContext
 {
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
         : base(options)
@@ -22,16 +23,7 @@ public class ApplicationDbContext : DbContext, IUnitOfWork
     // Configuración del modelo
     protected override void OnModelCreating(ModelBuilder builder)
     {
-        // Aplica automáticamente TODAS las configuraciones de IEntityTypeConfiguration<T>
-        // dentro del ensamblado de Infrastructure.
-        builder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
-
+        builder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
         base.OnModelCreating(builder);
-    }
-
-    public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
-    {
-        // 1. Guardamos primero los cambios en la base de datos
-        return await base.SaveChangesAsync(cancellationToken);
     }
 }

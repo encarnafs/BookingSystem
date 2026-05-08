@@ -29,7 +29,7 @@ namespace BookingSystem.Infrastructure.Persistence.Repositories
                 .AsNoTracking()
                 .FirstOrDefaultAsync(r => r.Id == id, cancellationToken);
         }
-        public async Task<IEnumerable<Room>> GetAllAsync(CancellationToken cancellationToken)
+        public async Task<IList<Room>> GetAllAsync(CancellationToken cancellationToken)
         {
             return await _dbContext.Rooms
                 .AsNoTracking()

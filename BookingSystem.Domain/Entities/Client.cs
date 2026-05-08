@@ -9,6 +9,8 @@ public class Client
     public string FullName { get; private set; } = default!;
     public Email Email { get; private set; } = default!;
     public PhoneNumber PhoneNumber { get; private set; } = default!;
+    public bool IsActive { get; private set; }
+    public bool IsDeleted { get; private set; } = false;
 
     // Constructor privado para EF Core
     private Client() { }
@@ -19,8 +21,10 @@ public class Client
         FullName = NormalizeName(fullName);
         Email = email ?? throw new InvalidClientStateException("El email no puede ser nulo.");
         PhoneNumber = phoneNumber ?? throw new InvalidClientStateException("El teléfono no puede ser nulo.");
-
+               
         Id = Guid.NewGuid();
+        IsActive = true;
+        IsDeleted = false;
     }
 
     public void UpdateName(string newName)
@@ -36,9 +40,8 @@ public class Client
 
     public void Update(string fullName, Email email, PhoneNumber phoneNumber)
     {
-        FullName = NormalizeName(fullName);
-        Email = email ?? throw new InvalidClientStateException("El email no puede ser nulo.");
-        PhoneNumber = phoneNumber ?? throw new InvalidClientStateException("El teléfono no puede ser nulo.");
+        UpdateName(fullName);
+        UpdateContactInfo(email, phoneNumber);
     }
 
     private static string NormalizeName(string name)
@@ -52,6 +55,17 @@ public class Client
             throw new InvalidClientNameException("El nombre del cliente es demasiado corto.");
 
         return normalized;
+    }
+
+    public void Disable()
+    {
+        IsActive = false;
+    }
+
+    public void MarkAsDeleted()
+    {
+        IsActive = false;
+        IsDeleted = true;
     }
 }
 

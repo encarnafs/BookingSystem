@@ -43,9 +43,9 @@ public class UpdateUserHandler : IRequestHandler<UpdateUserCommand, UserDto>
         };
 
         // Actualizar campos
-        user.Username = request.Username;
-        user.Email = new Email(request.Email);
-        user.Role = request.Role;
+        user.ChangeUsername(request.Username);
+        user.UpdateEmail(Email.Create(request.Email));
+        user.AssignRole(request.Role);
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 

@@ -6,6 +6,6 @@ public record UpdateRoomCommand(
     Guid Id,
     string Name,
     int Capacity,
-    string? Description,
+    string Description,
     bool IsActive
 ) : IRequest;

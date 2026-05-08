@@ -8,13 +8,10 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
 {
     public void Configure(EntityTypeBuilder<User> builder)
     {
-        // Nombre explícito de la tabla
         builder.ToTable("Users");
 
-        // Clave primaria
         builder.HasKey(u => u.Id);
 
-        // Username: requerido y único
         builder.Property(u => u.Username)
                .IsRequired()
                .HasMaxLength(100);
@@ -23,15 +20,30 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
                .IsUnique()
                .HasDatabaseName("IX_User_Username");
 
-        // PasswordHash: requerido y con longitud fija razonable
-        // (normalmente hashes tipo bcrypt/argon2 tienen longitudes conocidas)
+        // Email VO (ESTO ES LO QUE FALTABA)
+        builder.OwnsOne(u => u.Email, email =>
+        {
+            email.Property(e => e.Value)
+                 .HasColumnName("Email")
+                 .IsRequired()
+                 .HasMaxLength(200);
+        });
+
         builder.Property(u => u.PasswordHash)
                .IsRequired()
                .HasMaxLength(200);
 
-        // Role: requerido y con longitud limitada
         builder.Property(u => u.Role)
                .IsRequired()
                .HasMaxLength(50);
+
+        builder.Property(u => u.IsActive)
+               .IsRequired();
+
+        builder.Property(u => u.IsDeleted)
+               .IsRequired();
+
+        builder.HasQueryFilter(u => !u.IsDeleted);
     }
 }
+

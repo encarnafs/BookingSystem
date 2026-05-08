@@ -25,7 +25,7 @@ public static class DependencyInjection
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IEmailService, FakeEmailService>();
         services.AddScoped<IPasswordHasher, PasswordHasher>();
-
+        services.AddScoped<IAuditService, AuditService>();
 
         return services;
     }

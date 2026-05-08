@@ -1,5 +1,6 @@
 ﻿using BookingSystem.Application.Common.Interfaces;
 using BookingSystem.Domain.Entities;
+using BookingSystem.Domain.ValueObjects;
 using Microsoft.EntityFrameworkCore;
 
 namespace BookingSystem.Infrastructure.Persistence.Repositories;
@@ -14,7 +15,20 @@ public class ClientRepository : IClientRepository
     }
 
     public async Task<Client?> GetByIdAsync(Guid id, CancellationToken cancellationToken)
-        => await _context.Clients.FirstOrDefaultAsync(c => c.Id == id, cancellationToken: cancellationToken);
+    {
+        return await _context.Clients
+            .AsNoTracking()
+            .Where(c => !c.IsDeleted)
+            .FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
+    }
+
+    public async Task<List<Client>> GetAllAsync(CancellationToken cancellationToken)
+    {
+        return await _context.Clients
+            .AsNoTracking()
+            .Where(c => !c.IsDeleted)
+            .ToListAsync(cancellationToken);
+    }
 
     public async Task AddAsync(Client client, CancellationToken cancellationToken)
     {
@@ -27,10 +41,23 @@ public class ClientRepository : IClientRepository
         return Task.CompletedTask;
     }
 
-    public async Task<List<Client>> GetAllAsync(CancellationToken cancellationToken)
+    public async Task<bool> ExistsByEmailAsync(Email email, CancellationToken cancellationToken)
     {
+        var normalized = email.Value;
+
         return await _context.Clients
-            .ToListAsync(cancellationToken);
+            .AsNoTracking()
+            .Where(c => !c.IsDeleted)
+            .AnyAsync(c => c.Email.Value == normalized, cancellationToken);
     }
 
+    public async Task<bool> ExistsByPhoneAsync(PhoneNumber phone, CancellationToken cancellationToken)
+    {
+        var normalized = phone.Value;
+
+        return await _context.Clients
+            .AsNoTracking()
+            .Where(c => !c.IsDeleted)
+            .AnyAsync(c => c.PhoneNumber.Value == normalized, cancellationToken);
+    }
 }

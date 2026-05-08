@@ -7,10 +7,14 @@ namespace BookingSystem.Application.Rooms.Commands.UpdateRoom;
 public class UpdateRoomHandler : IRequestHandler<UpdateRoomCommand>
 {
     private readonly IRoomRepository _roomRepository;
+    private readonly IUnitOfWork _unitOfWork;
 
-    public UpdateRoomHandler(IRoomRepository roomRepository)
+    public UpdateRoomHandler(
+        IRoomRepository roomRepository,
+        IUnitOfWork unitOfWork)
     {
         _roomRepository = roomRepository;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task Handle(UpdateRoomCommand request, CancellationToken cancellationToken)
@@ -20,25 +24,20 @@ public class UpdateRoomHandler : IRequestHandler<UpdateRoomCommand>
         if (room is null)
             throw new NotFoundException("Room", request.Id);
 
-        // 🔹 Actualizar nombre
         room.UpdateName(request.Name);
-
-        // 🔹 Actualizar capacidad
         room.UpdateCapacity(request.Capacity);
-
-        // 🔹 Actualizar descripción
         room.UpdateDescription(request.Description);
 
-        // 🔹 Activar / desactivar según corresponda
         if (request.IsActive && !room.IsActive)
             room.Activate();
 
         if (!request.IsActive && room.IsActive)
             room.Deactivate();
 
-        // 🔹 Guardar cambios
         await _roomRepository.UpdateAsync(room, cancellationToken);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
     }
 }
+
 
 

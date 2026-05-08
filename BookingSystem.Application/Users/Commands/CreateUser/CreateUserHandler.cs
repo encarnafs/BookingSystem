@@ -35,7 +35,7 @@ public class CreateUserHandler : IRequestHandler<CreateUserCommand, UserDto>
         // Hash temporal
         var fakeHash = $"HASHED_{request.Password}";
 
-        var email = new Email(request.Email);
+        var email = Email.Create(request.Email);
 
         var user = new User(
             request.Username,

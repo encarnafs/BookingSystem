@@ -1,16 +1,19 @@
 ﻿using BookingSystem.Application.Common.Interfaces;
+using BookingSystem.Application.Rooms.Commands.CreateRoom;
 using BookingSystem.Domain.Entities;
 using MediatR;
-
-namespace BookingSystem.Application.Rooms.Commands.CreateRoom;
 
 public class CreateRoomHandler : IRequestHandler<CreateRoomCommand, Guid>
 {
     private readonly IRoomRepository _roomRepository;
+    private readonly IUnitOfWork _unitOfWork;
 
-    public CreateRoomHandler(IRoomRepository roomRepository)
+    public CreateRoomHandler(
+        IRoomRepository roomRepository,
+        IUnitOfWork unitOfWork)
     {
         _roomRepository = roomRepository;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task<Guid> Handle(CreateRoomCommand request, CancellationToken cancellationToken)
@@ -22,6 +25,7 @@ public class CreateRoomHandler : IRequestHandler<CreateRoomCommand, Guid>
         );
 
         await _roomRepository.AddAsync(room, cancellationToken);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         return room.Id;
     }

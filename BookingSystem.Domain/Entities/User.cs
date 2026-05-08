@@ -2,17 +2,17 @@
 using BookingSystem.Domain.Exceptions;
 
 namespace BookingSystem.Domain.Entities;
+
 public class User
 {
-    public Guid Id { get; set; }
-    public string Username { get; set; } = default!;
-    public Email Email { get; set; } = default!;
+    public Guid Id { get; private set; }
+    public string Username { get; private set; } = default!;
+    public Email Email { get; private set; } = default!;
     public string PasswordHash { get; private set; } = default!;
-    public string Role { get; set; } = default!;
+    public string Role { get; private set; } = default!;
     public bool IsActive { get; private set; } = true;
     public bool IsDeleted { get; private set; } = false;
 
-    // ✅ Método para desactivar usuario. Mantiene la encapsulación y evita modificar directamente la propiedad IsActive desde fuera de la clase.
     public void Disable()
     {
         IsActive = false;
@@ -30,7 +30,6 @@ public class User
         Id = Guid.NewGuid();
     }
 
-    //Método para cambiar la contraseña. Asegura que el nuevo hash de contraseña sea válido antes de asignarlo.
     public void ChangePassword(string newHash)
     {
         PasswordHash = ValidatePasswordHash(newHash);
@@ -41,6 +40,10 @@ public class User
         Role = NormalizeRole(newRole);
     }
 
+    public void ChangeUsername(string newUsername)
+    {
+        Username = NormalizeUsername(newUsername);
+    }
     public void UpdateEmail(Email newEmail)
     {
         Email = newEmail ?? throw new InvalidUserStateException("El email no puede ser nulo.");
@@ -83,3 +86,4 @@ public class User
         IsDeleted = true;
     }
 }
+

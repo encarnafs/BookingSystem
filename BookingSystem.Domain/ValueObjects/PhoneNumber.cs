@@ -2,16 +2,21 @@
 using System.Text.RegularExpressions;
 
 namespace BookingSystem.Domain.ValueObjects;
-public sealed class PhoneNumber
+
+public sealed class PhoneNumber : IEquatable<PhoneNumber>
 {
-    // Acepta números internacionales con +, espacios y guiones
+    // Solo números, con + opcional al inicio, entre 6 y 20 dígitos
     private static readonly Regex PhoneRegex =
-        new(@"^\+?[0-9\s\-]{6,20}$", RegexOptions.Compiled);
-    public string Value { get; private set; } = default!;
+        new(@"^\+?[0-9]{6,20}$", RegexOptions.Compiled);
 
-    private PhoneNumber() { }
+    public string Value { get; }
 
-    public PhoneNumber(string value)
+    private PhoneNumber(string value)
+    {
+        Value = value;
+    }
+
+    public static PhoneNumber Create(string value)
     {
         if (string.IsNullOrWhiteSpace(value))
             throw new InvalidPhoneNumberException("El número de teléfono no puede estar vacío.");
@@ -21,7 +26,7 @@ public sealed class PhoneNumber
         if (!PhoneRegex.IsMatch(normalized))
             throw new InvalidPhoneNumberException($"El número '{value}' no es válido.");
 
-        Value = normalized;
+        return new PhoneNumber(normalized);
     }
 
     private static string Normalize(string input)
@@ -31,4 +36,11 @@ public sealed class PhoneNumber
     }
 
     public override string ToString() => Value;
+
+    public override bool Equals(object? obj) => Equals(obj as PhoneNumber);
+
+    public bool Equals(PhoneNumber? other) =>
+        other is not null && Value == other.Value;
+
+    public override int GetHashCode() => Value.GetHashCode();
 }
