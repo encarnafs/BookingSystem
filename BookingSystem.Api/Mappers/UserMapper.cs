@@ -12,7 +12,14 @@ public static class UserMapper
         => new(request.Username, request.Email, request.Password, request.Role);
 
     public static UpdateUserCommand ToCommand(this UpdateUserRequest request, Guid id)
-        => new(id, request.Email);
+    => new()
+    {
+        Id = id,
+        Username = request.Username,
+        Email = request.Email,
+        Role = request.Role
+    };
+
 
     public static UserResponse ToResponse(this UserDto dto)
         => new()

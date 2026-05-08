@@ -24,7 +24,7 @@ public class BookingConfirmedHandler : INotificationHandler<BookingConfirmedNoti
         _logger.LogInformation("Iniciando envío de email por confirmación de reserva {BookingId}", notification.BookingId);
 
         await _emailService.SendAsync(
-            to: "admin@bookingsystem.com",
+            to: "encarnifs@gmail.com",
             subject: "Reserva confirmada",
             body: $"La reserva con ID {notification.BookingId} ha sido confirmada.");
 

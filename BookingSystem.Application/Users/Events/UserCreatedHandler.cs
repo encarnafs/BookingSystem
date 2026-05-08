@@ -33,7 +33,7 @@ public class UserCreatedHandler : INotificationHandler<UserCreatedNotification>
             newValues: new { Created = DateTime.UtcNow });
 
         await _emailService.SendAsync(
-            to: "admin@bookingsystem.com",
+            to: "encarnifs@gmail.com",
             subject: "Nuevo usuario creado",
             body: $"Se ha creado el usuario con ID {notification.UserId}.");
     }

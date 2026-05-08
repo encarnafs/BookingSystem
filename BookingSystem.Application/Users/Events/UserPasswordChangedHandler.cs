@@ -33,7 +33,7 @@ public class UserPasswordChangedHandler : INotificationHandler<UserPasswordChang
             newValues: new { Password = "********" });
 
         await _emailService.SendAsync(
-            to: "admin@bookingsystem.com",
+            to: "encarnifs@gmail.com",
             subject: "Cambio de contraseña detectado",
             body: $"El usuario con ID {notification.UserId} ha cambiado su contraseña.");
     }

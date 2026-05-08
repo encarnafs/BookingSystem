@@ -33,4 +33,11 @@ public class UserRepository : IUserRepository
 
     public async Task<User?> GetByUsernameAsync(string username, CancellationToken cancellationToken)
         => await _context.Users.FirstOrDefaultAsync(u => u.Username == username, cancellationToken: cancellationToken);
+
+    public async Task<bool> ExistsByEmailAsync(string email, CancellationToken cancellationToken)
+        => await _context.Users.AnyAsync(u => u.Email.Value == email, cancellationToken: cancellationToken);
+
+    public async Task<bool> ExistsByUsernameAsync(string username, CancellationToken cancellationToken)
+        => await _context.Users.AnyAsync(u => u.Username == username, cancellationToken: cancellationToken);
+
 }

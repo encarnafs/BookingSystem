@@ -24,7 +24,7 @@ public class BookingCommentsUpdatedHandler : INotificationHandler<BookingComment
         _logger.LogInformation("Iniciando envío de email por actualización de comentarios {BookingId}", notification.BookingId);
 
         await _emailService.SendAsync(
-            to: "admin@bookingsystem.com",
+            to: "encarnifs@gmail.com",
             subject: "Comentarios de reserva actualizados",
             body: $"Los comentarios de la reserva con ID {notification.BookingId} han sido actualizados.");
 

@@ -27,7 +27,7 @@ public class BookingCreatedHandler : INotificationHandler<BookingCreatedNotifica
 
         // 3. Envío del email
         await _emailService.SendAsync(
-            to: "admin@bookingsystem.com",
+            to: "encarnifs@gmail.com",
             subject: "Nueva reserva creada",
             body: $"Se ha creado la reserva con ID {notification.BookingId}");
 

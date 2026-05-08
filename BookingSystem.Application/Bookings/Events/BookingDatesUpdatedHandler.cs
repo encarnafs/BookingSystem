@@ -24,7 +24,7 @@ public class BookingDatesUpdatedHandler : INotificationHandler<BookingDatesUpdat
         _logger.LogInformation("Iniciando envío de email por actualización de fechas {BookingId}", notification.BookingId);
 
         await _emailService.SendAsync(
-            to: "admin@bookingsystem.com",
+            to: "encarnifs@gmail.com",
             subject: "Fechas de reserva actualizadas",
             body: $"Las fechas de la reserva con ID {notification.BookingId} han sido actualizadas.");
 
