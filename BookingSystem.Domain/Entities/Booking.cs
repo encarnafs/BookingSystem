@@ -1,12 +1,10 @@
 ﻿using BookingSystem.Domain.Enums;
-using BookingSystem.Domain.Events;
 using BookingSystem.Domain.ValueObjects;
-using BookingSystem.Domain.Abstractions;
 using BookingSystem.Domain.Exceptions;
 
 namespace BookingSystem.Domain.Entities;
 
-public class Booking: IHasDomainEvents
+public class Booking
 {
     public Guid Id { get; private set; }
     public Guid RoomId { get; private set; }
@@ -21,30 +19,8 @@ public class Booking: IHasDomainEvents
     public Room Room { get; private set; } = default!;
     public Client Client { get; private set; } = default!;
 
-
-    //DOMAIN EVENTS IMPLEMENTATION
-    // ⭐⭐ 1. Lista interna de Domain Events
-    private readonly List<object> _domainEvents = new();
-
-    // ⭐⭐ 2. Exponerlos como solo lectura
-    public IReadOnlyCollection<object> DomainEvents => _domainEvents.AsReadOnly();
-
-    // ⭐⭐ 3. Método para añadir eventos
-    protected void AddDomainEvent(object eventItem)
-    {
-        _domainEvents.Add(eventItem);
-    }
-
-    // ⭐ Método para limpiarlos (lo usará EF Core)
-    public void ClearDomainEvents()
-    {
-        _domainEvents.Clear();
-    }
-    //
-
     // Constructor privado para EF Core
     private Booking() { }
-
 
     // Constructor principal
     public Booking(Guid roomId, Guid clientId, Guid createdByUserId, DateRange dateRange, string? comments = null)
@@ -61,7 +37,6 @@ public class Booking: IHasDomainEvents
         if (dateRange is null)
             throw new InvalidBookingStateException("El DateRange no puede ser nulo.");
 
-
         Id = Guid.NewGuid();
         RoomId = roomId;
         ClientId = clientId;
@@ -70,9 +45,6 @@ public class Booking: IHasDomainEvents
         Comments = comments;
         Status = BookingStatus.Pending;
         CreatedAt = DateTime.UtcNow;
-
-        // ⭐ Aquí emitimos el Domain Event (sólo se registra, no se publica)
-        AddDomainEvent(new BookingCreatedEvent(Id));
     }
 
     public void UpdateDates(DateRange newDateRange)
@@ -80,7 +52,8 @@ public class Booking: IHasDomainEvents
         if (Status == BookingStatus.Cancelled)
             throw new InvalidBookingStateException("No se pueden modificar fechas de una reserva cancelada.");
 
-        if (DateRange.End < DateTime.UtcNow)
+        // ⭐ Validar contra el nuevo rango, no el antiguo
+        if (newDateRange.End < DateTime.UtcNow)
             throw new InvalidBookingStateException("No se puede modificar una reserva que ya ha finalizado.");
 
         DateRange = newDateRange;
@@ -93,7 +66,6 @@ public class Booking: IHasDomainEvents
 
         Comments = comments;
     }
-
 
     public void Cancel()
     {
@@ -114,13 +86,13 @@ public class Booking: IHasDomainEvents
         Status = BookingStatus.Confirmed;
     }
 
-
     public void Update(Guid roomId, Guid clientId, DateRange newDateRange, string? comments)
     {
         if (Status == BookingStatus.Cancelled)
             throw new InvalidBookingStateException("No se puede actualizar una reserva cancelada.");
 
-        if (DateRange.End < DateTime.UtcNow)
+        // ⭐ Validar contra el nuevo rango, no el antiguo
+        if (newDateRange.End < DateTime.UtcNow)
             throw new InvalidBookingStateException("No se puede modificar una reserva que ya ha finalizado");
 
         if (roomId == Guid.Empty)
@@ -129,13 +101,9 @@ public class Booking: IHasDomainEvents
         if (clientId == Guid.Empty)
             throw new InvalidBookingStateException("El ClientId no puede estar vacío.");
 
-        if (newDateRange is null)
-            throw new InvalidBookingStateException("El DateRange no puede ser nulo.");
-
         RoomId = roomId;
         ClientId = clientId;
         DateRange = newDateRange;
         Comments = comments;
     }
-
 }

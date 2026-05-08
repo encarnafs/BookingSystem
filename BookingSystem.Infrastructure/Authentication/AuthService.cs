@@ -18,7 +18,7 @@ public class AuthService : IAuthService
 
     public async Task<User> RegisterAsync(string username, string email, string password, CancellationToken cancellationToken)
     {
-        if (await _context.Users.AnyAsync(u => u.Email == email, cancellationToken))
+        if (await _context.Users.AnyAsync(u => u.Email.Value == email, cancellationToken))
             throw new Exception("El email ya está registrado.");
 
         var passwordHash = HashPassword(password);
@@ -34,7 +34,7 @@ public class AuthService : IAuthService
     public async Task<User?> ValidateUserAsync(string email, string password, CancellationToken cancellationToken)
     {
         var user = await _context.Users
-            .FirstOrDefaultAsync(u => u.Email == email, cancellationToken);
+            .FirstOrDefaultAsync(u => u.Email.Value == email, cancellationToken);
 
         if (user is null)
             return null;

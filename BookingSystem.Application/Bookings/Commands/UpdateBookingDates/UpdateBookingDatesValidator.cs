@@ -6,7 +6,7 @@ public class UpdateBookingDatesValidator : AbstractValidator<UpdateBookingDatesC
 {
     public UpdateBookingDatesValidator()
     {
-        RuleFor(x => x.BookingId)
+        RuleFor(x => x.Id)
             .NotEmpty().WithMessage("El BookingId es obligatorio.");
 
         RuleFor(x => x.Start)

@@ -28,7 +28,7 @@ public class GetUserByIdHandler : IRequestHandler<GetUserByIdQuery, UserDto>
         {
             Id = user.Id,
             Username = user.Username,
-            Email = user.Email,
+            Email = user.Email.Value,
             Role = user.Role
         };
     }

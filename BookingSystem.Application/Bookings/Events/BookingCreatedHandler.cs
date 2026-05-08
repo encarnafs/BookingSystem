@@ -19,13 +19,20 @@ public class BookingCreatedHandler : INotificationHandler<BookingCreatedNotifica
 
     public async Task Handle(BookingCreatedNotification notification, CancellationToken cancellationToken)
     {
-        // 1. Log
+        // 1. Log de inicio del handler
         _logger.LogInformation("Reserva creada con ID: {BookingId}", notification.BookingId);
 
-        // 2. Email falso
+        // 2. Log de inicio del envío del email
+        _logger.LogInformation("Iniciando envío de email por creación de reserva {BookingId}", notification.BookingId);
+
+        // 3. Envío del email
         await _emailService.SendAsync(
             to: "admin@bookingsystem.com",
             subject: "Nueva reserva creada",
             body: $"Se ha creado la reserva con ID {notification.BookingId}");
+
+        // 4. Log de éxito del envío
+        _logger.LogInformation("Email enviado por la creación de la reserva {BookingId}", notification.BookingId);
+
     }
 }

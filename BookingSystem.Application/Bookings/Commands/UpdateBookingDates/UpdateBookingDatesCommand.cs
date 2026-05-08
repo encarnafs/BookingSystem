@@ -3,7 +3,7 @@
 namespace BookingSystem.Application.Bookings.Commands.UpdateBookingDates;
 
 public record UpdateBookingDatesCommand(
-    Guid BookingId,
+    Guid Id,
     DateTime Start,
     DateTime End
 ) : IRequest;

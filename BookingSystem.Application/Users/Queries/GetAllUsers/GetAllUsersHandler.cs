@@ -21,7 +21,7 @@ public class GetAllUsersHandler : IRequestHandler<GetAllUsersQuery, List<UserDto
         {
             Id = u.Id,
             Username = u.Username,
-            Email = u.Email,
+            Email = u.Email.Value,
             Role = u.Role
         }).ToList();
     }

@@ -1,5 +1,4 @@
 ﻿using BookingSystem.Application.Common.Interfaces;
-using BookingSystem.Domain.Abstractions; // ⭐ Necesario para IHasDomainEvents
 using BookingSystem.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
@@ -7,12 +6,9 @@ namespace BookingSystem.Infrastructure.Persistence;
 
 public class ApplicationDbContext : DbContext, IUnitOfWork
 {
-    private readonly IDomainEventDispatcher _domainEventDispatcher;
-
-    public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options, IDomainEventDispatcher domainEventDispatcher)
+    public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
         : base(options)
     {
-        _domainEventDispatcher = domainEventDispatcher; 
     }
 
     // DbSets: representan las tablas principales del sistema
@@ -34,28 +30,6 @@ public class ApplicationDbContext : DbContext, IUnitOfWork
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         // 1. Guardamos primero los cambios en la base de datos
-        var result = await base.SaveChangesAsync(cancellationToken);
-
-        // 2. Recogemos las entidades que tienen Domain Events
-        var domainEntities = ChangeTracker
-            .Entries<IHasDomainEvents>()
-            .Where(e => e.Entity.DomainEvents.Count != 0)
-            .ToList();
-
-        // 3. Extraemos todos los Domain Events
-        var domainEvents = domainEntities
-            .SelectMany(e => e.Entity.DomainEvents)
-            .ToList();
-
-        // 4. Limpiamos los Domain Events de las entidades
-        domainEntities.ForEach(e => e.Entity.ClearDomainEvents());
-
-        // 5. Publicamos los eventos usando Application
-        foreach (var domainEvent in domainEvents)
-        {
-            await _domainEventDispatcher.Dispatch(domainEvent);
-        }
-
-        return result;
+        return await base.SaveChangesAsync(cancellationToken);
     }
 }

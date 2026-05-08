@@ -2,4 +2,4 @@
 
 namespace BookingSystem.Application.Bookings.Commands.CancelBooking;
 
-public record CancelBookingCommand(Guid BookingId) : IRequest;
+public record CancelBookingCommand(Guid Id) : IRequest;

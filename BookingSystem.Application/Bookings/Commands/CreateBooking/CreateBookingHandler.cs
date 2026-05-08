@@ -1,12 +1,14 @@
-﻿using BookingSystem.Application.Bookings.Commands.CreateBooking;
-using BookingSystem.Application.Bookings.Dtos;
+﻿using BookingSystem.Application.Bookings.Dtos;
+using BookingSystem.Application.Bookings.Events;
 using BookingSystem.Application.Common.Exceptions;
 using BookingSystem.Application.Common.Interfaces;
 using BookingSystem.Domain.Entities;
+using BookingSystem.Domain.Exceptions;
 using BookingSystem.Domain.ValueObjects;
 using MediatR;
 
 namespace BookingSystem.Application.Bookings.Commands.CreateBooking;
+
 public class CreateBookingHandler : IRequestHandler<CreateBookingCommand, BookingDto>
 {
     private readonly IBookingRepository _bookingRepository;
@@ -14,58 +16,54 @@ public class CreateBookingHandler : IRequestHandler<CreateBookingCommand, Bookin
     private readonly IClientRepository _clientRepository;
     private readonly IUserRepository _userRepository;
     private readonly ICurrentUserService _currentUser;
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly IMediator _mediator;
 
     public CreateBookingHandler(
         IBookingRepository bookingRepository,
         IRoomRepository roomRepository,
         IClientRepository clientRepository,
         IUserRepository userRepository,
-        ICurrentUserService currentUser)
+        ICurrentUserService currentUser,
+        IUnitOfWork unitOfWork,
+        IMediator mediator)
     {
         _bookingRepository = bookingRepository;
         _roomRepository = roomRepository;
         _clientRepository = clientRepository;
         _userRepository = userRepository;
         _currentUser = currentUser;
+        _unitOfWork = unitOfWork;
+        _mediator = mediator;
     }
 
     public async Task<BookingDto> Handle(CreateBookingCommand request, CancellationToken cancellationToken)
     {
-        // 1. Validar Room
         var room = await _roomRepository.GetByIdAsync(request.RoomId, cancellationToken)
             ?? throw new NotFoundException("Room", request.RoomId);
 
-        // 2. Validar Client
         var client = await _clientRepository.GetByIdAsync(request.ClientId, cancellationToken)
             ?? throw new NotFoundException("Client", request.ClientId);
 
-        // 3. Obtener el usuario creador (si viene del token)
-        var createdByUserId = _currentUser.UserId ?? Guid.Empty;
+        var createdByUserId = _currentUser.UserId
+            ?? throw new ValidationException("Debe estar autenticado para crear una reserva.");
 
-        if (createdByUserId != Guid.Empty)
-        {
-            // Esto valida que el usuario existe sin crear una variable innecesaria.
-            _ = await _userRepository.GetByIdAsync(createdByUserId, cancellationToken)
-                ?? throw new NotFoundException("User", createdByUserId);
+        _ = await _userRepository.GetByIdAsync(createdByUserId, cancellationToken)
+            ?? throw new NotFoundException("User", createdByUserId);
 
-        }
-
-        // 4. Crear DateRange (el VO valida fechas inválidas)
         var dateRange = new DateRange(request.Start, request.End);
 
-        // 5. Validar solapamientos
         var overlaps = await _bookingRepository.ExistsOverlappingBookingAsync(
             request.RoomId,
-            request.Start,
-            request.End,
-            null, // No excluir ninguna reserva (es creación)
+            dateRange.Start,
+            dateRange.End,
+            null,
             cancellationToken
         );
 
         if (overlaps)
-            throw new ValidationException("La sala ya está reservada para las fechas seleccionadas");
+            throw new BookingOverlapException("La sala ya está reservada para las fechas seleccionadas.");
 
-        // 6. Crear la reserva usando el dominio
         var booking = new Booking(
             room.Id,
             client.Id,
@@ -74,10 +72,14 @@ public class CreateBookingHandler : IRequestHandler<CreateBookingCommand, Bookin
             request.Comments
         );
 
-        // 7. Guardar
         await _bookingRepository.AddAsync(booking, cancellationToken);
 
-        // 8. Devolver DTO
+        // ⭐ GUARDAR CAMBIOS
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        // ⭐ PUBLICAR APPLICATION EVENT
+        await _mediator.Publish(new BookingCreatedNotification(booking.Id), cancellationToken);
+
         return new BookingDto
         {
             Id = booking.Id,
@@ -91,6 +93,5 @@ public class CreateBookingHandler : IRequestHandler<CreateBookingCommand, Bookin
             CreatedAt = booking.CreatedAt
         };
     }
-
 }
 

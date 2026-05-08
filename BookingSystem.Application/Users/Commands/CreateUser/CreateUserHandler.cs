@@ -1,6 +1,7 @@
 ﻿using BookingSystem.Application.Common.Interfaces;
-using BookingSystem.Domain.Entities;
 using BookingSystem.Application.Users.Dtos;
+using BookingSystem.Domain.Entities;
+using BookingSystem.Domain.ValueObjects;
 using MediatR;
 
 namespace BookingSystem.Application.Users.Commands.CreateUser;
@@ -19,9 +20,11 @@ public class CreateUserHandler : IRequestHandler<CreateUserCommand, UserDto>
         // Hash temporal (lo cambiaremos más adelante)
         var fakeHash = $"HASHED_{request.Password}";
 
+        var email = new Email(request.Email);
+
         var user = new User(
             request.Username,
-            request.Email,
+            email,
             fakeHash,
             request.Role
         );
@@ -32,7 +35,7 @@ public class CreateUserHandler : IRequestHandler<CreateUserCommand, UserDto>
         {
             Id = user.Id,
             Username = user.Username,
-            Email = user.Email,
+            Email = user.Email.Value,
             Role = user.Role
         };
         

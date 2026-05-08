@@ -23,8 +23,6 @@ public static class DependencyInjection
         services.AddScoped<IClientRepository, ClientRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IEmailService, FakeEmailService>();
-        services.AddScoped<IDomainEventDispatcher, DomainEventDispatcher>();
-
 
         return services;
     }

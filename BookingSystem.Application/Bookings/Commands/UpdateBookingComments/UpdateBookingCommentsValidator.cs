@@ -6,7 +6,7 @@ public class UpdateBookingCommentsValidator : AbstractValidator<UpdateBookingCom
 {
     public UpdateBookingCommentsValidator()
     {
-        RuleFor(x => x.BookingId)
+        RuleFor(x => x.Id)
             .NotEmpty().WithMessage("El BookingId es obligatorio.");
 
         RuleFor(x => x.Comments)

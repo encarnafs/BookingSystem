@@ -32,7 +32,7 @@ public class User
         Role = NormalizeRole(newRole);
     }
 
-    public void UpdateEmail(string newEmail)
+    public void UpdateEmail(Email newEmail)
     {
         Email = newEmail ?? throw new InvalidUserStateException("El email no puede ser nulo.");
     }

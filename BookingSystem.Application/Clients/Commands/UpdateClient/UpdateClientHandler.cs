@@ -1,5 +1,6 @@
 ﻿using BookingSystem.Application.Common.Exceptions;
 using BookingSystem.Application.Common.Interfaces;
+using BookingSystem.Domain.ValueObjects;
 using MediatR;
 
 namespace BookingSystem.Application.Clients.Commands.UpdateClient;
@@ -20,7 +21,10 @@ public class UpdateClientHandler : IRequestHandler<UpdateClientCommand, Guid>
         if (client is null)
             throw new NotFoundException("Client", request.Id);
 
-        client.Update(request.FullName, request.Email, request.Phone);
+        var email = new Email(request.Email);
+        var phone = new PhoneNumber(request.Phone);
+
+        client.Update(request.FullName, email, phone);
 
         await _clientRepository.UpdateAsync(client, cancellationToken);
 

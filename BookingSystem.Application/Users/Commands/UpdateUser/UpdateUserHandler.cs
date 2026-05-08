@@ -1,5 +1,6 @@
 ﻿using BookingSystem.Application.Common.Exceptions;
 using BookingSystem.Application.Common.Interfaces;
+using BookingSystem.Domain.ValueObjects;
 using MediatR;
 
 namespace BookingSystem.Application.Users.Commands.UpdateUser;
@@ -20,7 +21,9 @@ public class UpdateUserHandler : IRequestHandler<UpdateUserCommand, Guid>
         if (user is null)
             throw new NotFoundException("User", request.Id);
 
-        user.UpdateEmail(request.Email);
+        var email = new Email(request.Email);
+
+        user.UpdateEmail(email);
 
         await _userRepository.UpdateAsync(user, cancellationToken);
 

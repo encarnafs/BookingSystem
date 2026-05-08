@@ -26,7 +26,7 @@ public class RegisterHandler : IRequestHandler<RegisterCommand, AuthResponse>
 
         var token = _jwt.GenerateToken(
             user.Id,
-            user.Email,
+            user.Email.Value,
             user.Username,
             user.Role);
 
@@ -35,7 +35,7 @@ public class RegisterHandler : IRequestHandler<RegisterCommand, AuthResponse>
             Token = token,
             Id = user.Id,
             Username = user.Username,
-            Email = user.Email,
+            Email = user.Email.Value,
             Role = user.Role
         };
     }
