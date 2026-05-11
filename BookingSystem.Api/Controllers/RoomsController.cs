@@ -1,5 +1,8 @@
 ﻿using BookingSystem.Api.Mappers;
 using BookingSystem.Api.Requests.Rooms;
+using BookingSystem.Api.Responses.Rooms;
+using BookingSystem.Application.Rooms.Commands.CreateRoom;
+using BookingSystem.Application.Rooms.Commands.UpdateRoom;
 using BookingSystem.Application.Rooms.Queries.CheckAvailability;
 using BookingSystem.Application.Rooms.Queries.GetAllRooms;
 using BookingSystem.Application.Rooms.Queries.GetRoomById;
@@ -25,18 +28,19 @@ public class RoomsController : ControllerBase
     /// Crea una nueva habitación.
     /// </summary>
     /// <param name="request">Datos necesarios para crear la habitación.</param>
-    /// <returns>El identificador de la habitación creada.</returns>
+    /// <returns>La habitación creada.</returns>
     /// <remarks>
     /// Solo los administradores pueden crear habitaciones.
     /// </remarks>
     [Authorize(Roles = "Admin")]
     [HttpPost]
-    public async Task<IActionResult> Create(CreateRoomRequest request)
+    public async Task<ActionResult<RoomResponse>> Create(CreateRoomRequest request)
     {
         var command = request.ToCommand();
         var id = await _mediator.Send(command);
 
-        return Ok(id);
+        var room = await _mediator.Send(new GetRoomByIdQuery(id));
+        return CreatedAtAction(nameof(GetById), new { id }, room.ToResponse());
     }
 
     /// <summary>
@@ -68,7 +72,7 @@ public class RoomsController : ControllerBase
     /// </remarks>
     [Authorize(Roles = "Admin,User")]
     [HttpGet("{id:guid}")]
-    public async Task<IActionResult> GetById(Guid id)
+    public async Task<ActionResult<RoomResponse>> GetById(Guid id)
     {
         var room = await _mediator.Send(new GetRoomByIdQuery(id));
         return Ok(room.ToResponse());
@@ -83,13 +87,10 @@ public class RoomsController : ControllerBase
     /// </remarks>
     [Authorize(Roles = "Admin,User")]
     [HttpGet]
-    public async Task<IActionResult> GetAll()
+    public async Task<ActionResult<IEnumerable<RoomResponse>>> GetAll()
     {
         var rooms = await _mediator.Send(new GetAllRoomsQuery());
-
-        var response = rooms
-            .Select(r => r.ToResponse())
-            .ToList();
+        var response = rooms.Select(r => r.ToResponse()).ToList();
 
         return Ok(response);
     }
@@ -105,7 +106,7 @@ public class RoomsController : ControllerBase
     /// Este endpoint no requiere rol específico; cualquier usuario autenticado puede consultar disponibilidad.
     /// </remarks>
     [HttpGet("{roomId:guid}/availability")]
-    public async Task<IActionResult> CheckAvailability(
+    public async Task<ActionResult<RoomAvailabilityResponse>> CheckAvailability(
         Guid roomId,
         [FromQuery] DateTime start,
         [FromQuery] DateTime end)
@@ -114,5 +115,3 @@ public class RoomsController : ControllerBase
         return Ok(dto.ToResponse());
     }
 }
-
-

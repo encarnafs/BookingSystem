@@ -1,15 +1,16 @@
 ﻿using BookingSystem.Api.Mappers;
 using BookingSystem.Api.Requests.Bookings;
+using BookingSystem.Api.Responses.Bookings;
 using BookingSystem.Application.Bookings.Commands.CancelBooking;
 using BookingSystem.Application.Bookings.Commands.ConfirmBooking;
 using BookingSystem.Application.Bookings.Commands.CreateBooking;
 using BookingSystem.Application.Bookings.Commands.UpdateBooking;
 using BookingSystem.Application.Bookings.Commands.UpdateBookingComments;
 using BookingSystem.Application.Bookings.Commands.UpdateBookingDates;
+using BookingSystem.Application.Bookings.Queries.GetAllBookings;
 using BookingSystem.Application.Bookings.Queries.GetBookingById;
 using BookingSystem.Application.Bookings.Queries.GetBookingsByClientId;
 using BookingSystem.Application.Bookings.Queries.GetBookingsByRoomId;
-using BookingSystem.Application.Bookings.Queries.GetAllBookings;
 using BookingSystem.Application.Bookings.Queries.GetBookingsInDateRange;
 using BookingSystem.Application.Common.Interfaces;
 using BookingSystem.Domain.ValueObjects;
@@ -44,7 +45,7 @@ public class BookingsController : ControllerBase
     /// Solo el administrador o el cliente dueño de la reserva pueden acceder a ella.
     /// </remarks>
     [HttpGet("{id:guid}")]
-    public async Task<IActionResult> GetById(Guid id)
+    public async Task<ActionResult<BookingResponse>> GetById(Guid id)
     {
         if (_currentUser.UserId is null)
             return Unauthorized();
@@ -66,7 +67,7 @@ public class BookingsController : ControllerBase
     /// <returns>Una colección de reservas asociadas a la habitación.</returns>
     [Authorize(Roles = "Admin")]
     [HttpGet("room/{roomId:guid}")]
-    public async Task<IActionResult> GetByRoom(Guid roomId)
+    public async Task<ActionResult<IEnumerable<BookingResponse>>> GetByRoom(Guid roomId)
     {
         var result = await _sender.Send(new GetBookingsByRoomIdQuery(roomId));
         return Ok(result.Select(b => b.ToResponse()));
@@ -81,7 +82,7 @@ public class BookingsController : ControllerBase
     /// Un cliente solo puede ver sus propias reservas. El administrador puede ver las de cualquier cliente.
     /// </remarks>
     [HttpGet("client/{clientId:guid}")]
-    public async Task<IActionResult> GetByClient(Guid clientId)
+    public async Task<ActionResult<IEnumerable<BookingResponse>>> GetByClient(Guid clientId)
     {
         if (_currentUser.UserId is null)
             return Unauthorized();
@@ -101,7 +102,7 @@ public class BookingsController : ControllerBase
     /// <returns>Una colección con todas las reservas.</returns>
     [Authorize(Roles = "Admin")]
     [HttpGet]
-    public async Task<IActionResult> GetAll()
+    public async Task<ActionResult<IEnumerable<BookingResponse>>> GetAll()
     {
         var result = await _sender.Send(new GetAllBookingsQuery());
         return Ok(result.Select(b => b.ToResponse()));
@@ -115,7 +116,7 @@ public class BookingsController : ControllerBase
     /// <returns>Una colección de reservas dentro del rango especificado.</returns>
     [Authorize(Roles = "Admin")]
     [HttpGet("daterange")]
-    public async Task<IActionResult> GetInDateRange([FromQuery] DateTime start, [FromQuery] DateTime end)
+    public async Task<ActionResult<IEnumerable<BookingResponse>>> GetInDateRange([FromQuery] DateTime start, [FromQuery] DateTime end)
     {
         var result = await _sender.Send(new GetBookingsInDateRangeQuery(start, end));
         return Ok(result.Select(b => b.ToResponse()));
@@ -130,7 +131,7 @@ public class BookingsController : ControllerBase
     /// Un cliente solo puede crear reservas para sí mismo. El administrador puede crear reservas para cualquier cliente.
     /// </remarks>
     [HttpPost]
-    public async Task<IActionResult> Create(CreateBookingRequest request)
+    public async Task<ActionResult<BookingResponse>> Create(CreateBookingRequest request)
     {
         if (_currentUser.UserId is null)
             return Unauthorized();
@@ -284,3 +285,4 @@ public class BookingsController : ControllerBase
         return NoContent();
     }
 }
+

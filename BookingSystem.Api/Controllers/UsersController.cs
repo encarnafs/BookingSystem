@@ -1,5 +1,6 @@
 ﻿using BookingSystem.Api.Mappers;
 using BookingSystem.Api.Requests.Users;
+using BookingSystem.Api.Responses.Users;
 using BookingSystem.Application.Users.Commands.CreateUser;
 using BookingSystem.Application.Users.Commands.UpdateUser;
 using BookingSystem.Application.Users.Queries.GetAllUsers;
@@ -26,16 +27,18 @@ public class UsersController : ControllerBase
     /// Crea un nuevo usuario en el sistema.
     /// </summary>
     /// <param name="request">Datos necesarios para crear el usuario.</param>
-    /// <returns>El identificador del usuario creado.</returns>
+    /// <returns>El usuario creado.</returns>
     /// <remarks>
     /// Solo los administradores pueden crear usuarios.
     /// </remarks>
     [HttpPost]
-    public async Task<IActionResult> Create([FromBody] CreateUserRequest request)
+    public async Task<ActionResult<UserResponse>> Create([FromBody] CreateUserRequest request)
     {
-        var command = request.ToCommand();
-        var id = await _mediator.Send(command);
-        return CreatedAtAction(nameof(GetById), new { id }, null);
+        var id = await _mediator.Send(request.ToCommand());
+
+        var dto = await _mediator.Send(new GetUserByIdQuery(id));
+
+        return CreatedAtAction(nameof(GetById), new { id }, dto.ToResponse());
     }
 
     /// <summary>
@@ -63,7 +66,7 @@ public class UsersController : ControllerBase
     /// Solo los administradores pueden ver la lista completa de usuarios.
     /// </remarks>
     [HttpGet]
-    public async Task<IActionResult> GetAll()
+    public async Task<ActionResult<IEnumerable<UserResponse>>> GetAll()
     {
         var result = await _mediator.Send(new GetAllUsersQuery());
         return Ok(result.Select(u => u.ToResponse()));
@@ -80,9 +83,13 @@ public class UsersController : ControllerBase
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [HttpGet("{id:guid}")]
-    public async Task<IActionResult> GetById(Guid id)
+    public async Task<ActionResult<UserResponse>> GetById(Guid id)
     {
         var result = await _mediator.Send(new GetUserByIdQuery(id));
+
+        if (result is null)
+            return NotFound();
+
         return Ok(result.ToResponse());
     }
 }

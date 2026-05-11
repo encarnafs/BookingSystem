@@ -30,7 +30,7 @@ public class AuthController : ControllerBase
     /// Este endpoint crea un usuario con rol por defecto "Client".
     /// </remarks>
     [HttpPost("register")]
-    public async Task<IActionResult> Register(RegisterRequest request)
+    public async Task<ActionResult<AuthResponse>> Register(RegisterRequest request)
     {
         AuthResponse response = await _mediator.Send(
             new RegisterCommand(request.Username, request.Email, request.Password));
@@ -47,7 +47,7 @@ public class AuthController : ControllerBase
     /// El token devuelto debe enviarse en el header Authorization para acceder a endpoints protegidos.
     /// </remarks>
     [HttpPost("login")]
-    public async Task<IActionResult> Login(LoginRequest request)
+    public async Task<ActionResult<AuthResponse>> Login(LoginRequest request)
     {
         AuthResponse response = await _mediator.Send(
             new LoginCommand(request.Email, request.Password));
@@ -66,7 +66,7 @@ public class AuthController : ControllerBase
     /// </remarks>
     [Authorize]
     [HttpGet("me")]
-    public IActionResult Me([FromServices] ICurrentUserService currentUser)
+    public ActionResult<UserProfileResponse> Me([FromServices] ICurrentUserService currentUser)
     {
         if (currentUser.UserId is null)
             return Unauthorized();

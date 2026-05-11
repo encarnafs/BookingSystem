@@ -1,5 +1,6 @@
 ﻿using BookingSystem.Api.Mappers;
 using BookingSystem.Api.Requests.Clients;
+using BookingSystem.Api.Responses.Clients;
 using BookingSystem.Application.Clients.Commands.CreateClient;
 using BookingSystem.Application.Clients.Commands.UpdateClient;
 using BookingSystem.Application.Clients.Queries.GetAllClients;
@@ -29,16 +30,19 @@ public class ClientsController : ControllerBase
     /// Crea un nuevo cliente.
     /// </summary>
     /// <param name="request">Datos necesarios para crear el cliente.</param>
-    /// <returns>El identificador del cliente creado.</returns>
+    /// <returns>El cliente creado.</returns>
     /// <remarks>
     /// Solo los administradores pueden crear clientes.
     /// </remarks>
     [Authorize(Roles = "Admin")]
     [HttpPost]
-    public async Task<IActionResult> Create(CreateClientRequest request)
+    public async Task<ActionResult<ClientResponse>> Create(CreateClientRequest request)
     {
         var id = await _mediator.Send(request.ToCommand());
-        return CreatedAtAction(nameof(GetById), new { id }, null);
+
+        var dto = await _mediator.Send(new GetClientByIdQuery(id));
+
+        return CreatedAtAction(nameof(GetById), new { id }, dto.ToResponse());
     }
 
     /// <summary>
@@ -75,7 +79,7 @@ public class ClientsController : ControllerBase
     /// </remarks>
     [Authorize(Roles = "Admin")]
     [HttpGet]
-    public async Task<IActionResult> GetAll()
+    public async Task<ActionResult<IEnumerable<ClientResponse>>> GetAll()
     {
         var dtos = await _mediator.Send(new GetAllClientsQuery());
         return Ok(dtos.Select(d => d.ToResponse()));
@@ -91,7 +95,7 @@ public class ClientsController : ControllerBase
     /// El administrador puede ver cualquier cliente.
     /// </remarks>
     [HttpGet("{id:guid}")]
-    public async Task<IActionResult> GetById(Guid id)
+    public async Task<ActionResult<ClientResponse>> GetById(Guid id)
     {
         if (_currentUser.UserId is null)
             return Unauthorized();
@@ -105,3 +109,4 @@ public class ClientsController : ControllerBase
         return Ok(dto.ToResponse());
     }
 }
+
