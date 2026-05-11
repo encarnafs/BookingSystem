@@ -21,6 +21,14 @@ public class AuthController : ControllerBase
         _mediator = mediator;
     }
 
+    /// <summary>
+    /// Registra un nuevo usuario en el sistema.
+    /// </summary>
+    /// <param name="request">Datos necesarios para registrar al usuario.</param>
+    /// <returns>Los datos del usuario registrado, incluyendo el token de autenticación.</returns>
+    /// <remarks>
+    /// Este endpoint crea un usuario con rol por defecto "Client".
+    /// </remarks>
     [HttpPost("register")]
     public async Task<IActionResult> Register(RegisterRequest request)
     {
@@ -30,6 +38,14 @@ public class AuthController : ControllerBase
         return Ok(response);
     }
 
+    /// <summary>
+    /// Inicia sesión y obtiene un token JWT.
+    /// </summary>
+    /// <param name="request">Credenciales del usuario (email y contraseña).</param>
+    /// <returns>Los datos del usuario autenticado, incluyendo el token JWT.</returns>
+    /// <remarks>
+    /// El token devuelto debe enviarse en el header Authorization para acceder a endpoints protegidos.
+    /// </remarks>
     [HttpPost("login")]
     public async Task<IActionResult> Login(LoginRequest request)
     {
@@ -39,6 +55,15 @@ public class AuthController : ControllerBase
         return Ok(response);
     }
 
+    /// <summary>
+    /// Obtiene la información del usuario actualmente autenticado.
+    /// </summary>
+    /// <param name="currentUser">Servicio que contiene los datos del usuario autenticado.</param>
+    /// <returns>El perfil del usuario autenticado.</returns>
+    /// <remarks>
+    /// Requiere un token JWT válido.  
+    /// Devuelve el ID, email y rol del usuario actual.
+    /// </remarks>
     [Authorize]
     [HttpGet("me")]
     public IActionResult Me([FromServices] ICurrentUserService currentUser)
@@ -56,4 +81,3 @@ public class AuthController : ControllerBase
         return Ok(response);
     }
 }
-

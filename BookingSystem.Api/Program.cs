@@ -25,7 +25,12 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Swagger
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+// Incluir comentarios XML en Swagger para mejorar la documentación de la API. Esto permite que las descripciones de los controladores, acciones y modelos aparezcan en la interfaz de Swagger UI, lo que facilita a los desarrolladores entender cómo usar la API.
+builder.Services.AddSwaggerGen(options =>
+{
+    var xmlFilename = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    options.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, xmlFilename));
+});
 
 builder.Services.AddTransient<ExceptionHandlingMiddleware>();
 
@@ -59,6 +64,10 @@ builder.Configuration.GetSection("JwtSettings").Bind(jwtSettings);
 builder.Services.Configure<JwtSettings>(
     builder.Configuration.GetSection("JwtSettings"));
 
+if (jwtSettings.Secret.Length < 32)
+    throw new Exception("JWT Secret debe tener al menos 32 caracteres.");
+
+
 // 3. Configurar autenticación JWT y Authorization
 builder.Services
     .AddAuthentication(options =>
@@ -73,12 +82,16 @@ builder.Services
             ValidateIssuer = true,
             ValidateAudience = true,
             ValidateLifetime = true,
+            ClockSkew = TimeSpan.Zero,
             ValidateIssuerSigningKey = true,
 
             ValidIssuer = jwtSettings.Issuer,
             ValidAudience = jwtSettings.Audience,
             IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(jwtSettings.Secret))
+                Encoding.UTF8.GetBytes(jwtSettings.Secret)),
+            // Solo permitir HMAC-SHA256, no otros algoritmos. Buena práctica para evitar ataques  tipo: cambio de algoritmo a none "alg=none", cambio a RS256, usar un algoritmo débil o manipular el header del token. Es una capa extra de seguridad que asegura que el token sólo se valide si fue firmado con el algoritmo esperado.
+            ValidAlgorithms = [SecurityAlgorithms.HmacSha256],
+            RequireExpirationTime = true
         };
     });
 
@@ -105,13 +118,13 @@ var app = builder.Build();
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
-app.UseSwagger();
-app.UseSwaggerUI();
-
 // OpenAPI 
 //app.MapOpenApi();
 
 app.UseHttpsRedirection();
+
+app.UseSwagger();
+app.UseSwaggerUI();
 
 // Activar autenticación y autorización
 app.UseAuthentication();

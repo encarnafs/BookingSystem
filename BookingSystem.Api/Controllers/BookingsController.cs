@@ -1,5 +1,4 @@
-﻿
-using BookingSystem.Api.Mappers;
+﻿using BookingSystem.Api.Mappers;
 using BookingSystem.Api.Requests.Bookings;
 using BookingSystem.Application.Bookings.Commands.CancelBooking;
 using BookingSystem.Application.Bookings.Commands.ConfirmBooking;
@@ -36,6 +35,14 @@ public class BookingsController : ControllerBase
         _currentUser = currentUser;
     }
 
+    /// <summary>
+    /// Obtiene una reserva por su identificador único.
+    /// </summary>
+    /// <param name="id">Identificador de la reserva (GUID).</param>
+    /// <returns>Los datos de la reserva solicitada.</returns>
+    /// <remarks>
+    /// Solo el administrador o el cliente dueño de la reserva pueden acceder a ella.
+    /// </remarks>
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> GetById(Guid id)
     {
@@ -52,7 +59,12 @@ public class BookingsController : ControllerBase
         return Ok(booking.ToResponse());
     }
 
-
+    /// <summary>
+    /// Obtiene todas las reservas asociadas a una habitación.
+    /// </summary>
+    /// <param name="roomId">Identificador de la habitación.</param>
+    /// <returns>Una colección de reservas asociadas a la habitación.</returns>
+    [Authorize(Roles = "Admin")]
     [HttpGet("room/{roomId:guid}")]
     public async Task<IActionResult> GetByRoom(Guid roomId)
     {
@@ -60,6 +72,14 @@ public class BookingsController : ControllerBase
         return Ok(result.Select(b => b.ToResponse()));
     }
 
+    /// <summary>
+    /// Obtiene todas las reservas asociadas a un cliente.
+    /// </summary>
+    /// <param name="clientId">Identificador del cliente.</param>
+    /// <returns>Una colección de reservas del cliente.</returns>
+    /// <remarks>
+    /// Un cliente solo puede ver sus propias reservas. El administrador puede ver las de cualquier cliente.
+    /// </remarks>
     [HttpGet("client/{clientId:guid}")]
     public async Task<IActionResult> GetByClient(Guid clientId)
     {
@@ -75,6 +95,10 @@ public class BookingsController : ControllerBase
         return Ok(result.Select(b => b.ToResponse()));
     }
 
+    /// <summary>
+    /// Obtiene todas las reservas del sistema.
+    /// </summary>
+    /// <returns>Una colección con todas las reservas.</returns>
     [Authorize(Roles = "Admin")]
     [HttpGet]
     public async Task<IActionResult> GetAll()
@@ -83,7 +107,13 @@ public class BookingsController : ControllerBase
         return Ok(result.Select(b => b.ToResponse()));
     }
 
-
+    /// <summary>
+    /// Obtiene todas las reservas dentro de un rango de fechas.
+    /// </summary>
+    /// <param name="start">Fecha de inicio.</param>
+    /// <param name="end">Fecha de fin.</param>
+    /// <returns>Una colección de reservas dentro del rango especificado.</returns>
+    [Authorize(Roles = "Admin")]
     [HttpGet("daterange")]
     public async Task<IActionResult> GetInDateRange([FromQuery] DateTime start, [FromQuery] DateTime end)
     {
@@ -91,6 +121,14 @@ public class BookingsController : ControllerBase
         return Ok(result.Select(b => b.ToResponse()));
     }
 
+    /// <summary>
+    /// Crea una nueva reserva.
+    /// </summary>
+    /// <param name="request">Datos necesarios para crear la reserva.</param>
+    /// <returns>La reserva creada.</returns>
+    /// <remarks>
+    /// Un cliente solo puede crear reservas para sí mismo. El administrador puede crear reservas para cualquier cliente.
+    /// </remarks>
     [HttpPost]
     public async Task<IActionResult> Create(CreateBookingRequest request)
     {
@@ -99,7 +137,9 @@ public class BookingsController : ControllerBase
 
         var createdByUserId = _currentUser.UserId.Value;
 
-        // Si el request no trae ClientId, es un cliente normal
+        if (!User.IsInRole("Admin") && request.ClientId is not null && request.ClientId != createdByUserId)
+            return Forbid();
+
         var clientId = request.ClientId ?? createdByUserId;
 
         var command = request.ToCommand(createdByUserId);
@@ -109,7 +149,13 @@ public class BookingsController : ControllerBase
         return CreatedAtAction(nameof(GetById), new { id = result.Id }, result.ToResponse());
     }
 
-
+    /// <summary>
+    /// Actualiza las fechas de una reserva existente.
+    /// </summary>
+    /// <param name="id">Identificador de la reserva.</param>
+    /// <param name="request">Nuevas fechas de inicio y fin.</param>
+    /// <param name="cancellationToken">Token de cancelación.</param>
+    /// <returns>Sin contenido si la operación es exitosa.</returns>
     [HttpPatch("{id:guid}/dates")]
     public async Task<IActionResult> UpdateDates(Guid id, UpdateBookingDatesRequest request, CancellationToken cancellationToken)
     {
@@ -118,25 +164,25 @@ public class BookingsController : ControllerBase
 
         var currentUserId = _currentUser.UserId.Value;
 
-        // Obtener la reserva actual
         var booking = await _sender.Send(new GetBookingByIdQuery(id), cancellationToken);
 
-        // Permisos
         if (!User.IsInRole("Admin") && booking.ClientId != currentUserId)
             return Forbid();
 
-        var command = new UpdateBookingDatesCommand(
-            id,
-            request.Start,
-            request.End
-        );
+        var command = new UpdateBookingDatesCommand(id, request.Start, request.End);
 
         await _sender.Send(command, cancellationToken);
 
         return NoContent();
     }
 
-
+    /// <summary>
+    /// Actualiza los comentarios de una reserva.
+    /// </summary>
+    /// <param name="id">Identificador de la reserva.</param>
+    /// <param name="request">Nuevos comentarios.</param>
+    /// <param name="cancellationToken">Token de cancelación.</param>
+    /// <returns>Sin contenido si la operación es exitosa.</returns>
     [HttpPatch("{id:guid}/comments")]
     public async Task<IActionResult> UpdateComments(Guid id, UpdateBookingCommentsRequest request, CancellationToken cancellationToken)
     {
@@ -145,24 +191,27 @@ public class BookingsController : ControllerBase
 
         var currentUserId = _currentUser.UserId.Value;
 
-        // Obtener la reserva actual
         var booking = await _sender.Send(new GetBookingByIdQuery(id), cancellationToken);
 
-        // Permisos
         if (!User.IsInRole("Admin") && booking.ClientId != currentUserId)
             return Forbid();
 
-        var command = new UpdateBookingCommentsCommand(
-            id,
-            request.Comments
-        );
+        var command = new UpdateBookingCommentsCommand(id, request.Comments);
 
         await _sender.Send(command, cancellationToken);
 
         return NoContent();
     }
 
-
+    /// <summary>
+    /// Confirma una reserva.
+    /// </summary>
+    /// <param name="id">Identificador de la reserva.</param>
+    /// <param name="cancellationToken">Token de cancelación.</param>
+    /// <returns>Sin contenido si la operación es exitosa.</returns>
+    /// <remarks>
+    /// Solo el administrador o el cliente dueño de la reserva pueden confirmarla.
+    /// </remarks>
     [HttpPost("{id:guid}/confirm")]
     public async Task<IActionResult> Confirm(Guid id, CancellationToken cancellationToken)
     {
@@ -171,10 +220,8 @@ public class BookingsController : ControllerBase
 
         var currentUserId = _currentUser.UserId.Value;
 
-        // Obtener la reserva actual
         var booking = await _sender.Send(new GetBookingByIdQuery(id), cancellationToken);
 
-        // Permisos: Admin o dueño
         if (!User.IsInRole("Admin") && booking.ClientId != currentUserId)
             return Forbid();
 
@@ -183,17 +230,20 @@ public class BookingsController : ControllerBase
         return NoContent();
     }
 
-
-    // ¿Por qué no usamos [Authorize(Policy = "...")] aquí?
-    // Porque esa sintaxis no permite pasar el bookingId al handler.
-    // Y mi policy necesita el ID de la reserva para consultar el repositorio.
+    /// <summary>
+    /// Cancela una reserva.
+    /// </summary>
+    /// <param name="id">Identificador de la reserva.</param>
+    /// <returns>Sin contenido si la operación es exitosa.</returns>
+    /// <remarks>
+    /// La autorización se realiza mediante la policy "CanCancelBooking".
+    /// </remarks>
     [HttpPost("{id:guid}/cancel")]
     public async Task<IActionResult> Cancel(Guid id)
     {
-        // Ejecutar la policy con el bookingId como resource
         var authorizationResult = await _authorizationService.AuthorizeAsync(
             User,
-            id, // resource
+            id,
             "CanCancelBooking"
         );
 
@@ -204,7 +254,16 @@ public class BookingsController : ControllerBase
         return NoContent();
     }
 
-
+    /// <summary>
+    /// Actualiza una reserva completa.
+    /// </summary>
+    /// <param name="id">Identificador de la reserva.</param>
+    /// <param name="request">Datos actualizados de la reserva.</param>
+    /// <param name="cancellationToken">Token de cancelación.</param>
+    /// <returns>Sin contenido si la operación es exitosa.</returns>
+    /// <remarks>
+    /// Solo el administrador o el cliente dueño de la reserva pueden modificarla.
+    /// </remarks>
     [HttpPut("{id:guid}")]
     public async Task<IActionResult> Update(Guid id, UpdateBookingRequest request, CancellationToken cancellationToken)
     {
@@ -213,14 +272,11 @@ public class BookingsController : ControllerBase
 
         var currentUserId = _currentUser.UserId.Value;
 
-        // Obtener la reserva actual para saber quién es el cliente real
         var booking = await _sender.Send(new GetBookingByIdQuery(id), cancellationToken);
 
-        // Si no es admin y no es el dueño → prohibido
         if (!User.IsInRole("Admin") && booking.ClientId != currentUserId)
             return Forbid();
 
-        // El cliente no puede cambiar el ClientId, siempre se mantiene el mismo. El Admin sí podría cambiarlo si quisiera, pero esa lógica la dejo para otro momento por simplicidad.
         var command = request.ToCommand(booking.ClientId);
 
         await _sender.Send(command, cancellationToken);

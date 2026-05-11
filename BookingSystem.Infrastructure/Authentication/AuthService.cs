@@ -12,6 +12,10 @@ public class AuthService : IAuthService
 {
     private readonly ApplicationDbContext _context;
 
+    private const int SaltSize = 16; // 128 bits
+    private const int KeySize = 32;  // 256 bits
+    private const int Iterations = 100000;
+
     public AuthService(ApplicationDbContext context)
     {
         _context = context;
@@ -42,9 +46,7 @@ public class AuthService : IAuthService
         if (user is null)
             return null;
 
-        var passwordHash = HashPassword(password);
-
-        if (user.PasswordHash != passwordHash)
+        if (!VerifyPassword(user.PasswordHash, password))
             return null;
 
         return user;
@@ -52,9 +54,30 @@ public class AuthService : IAuthService
 
     private static string HashPassword(string password)
     {
-        using var sha = SHA256.Create();
-        var bytes = Encoding.UTF8.GetBytes(password);
-        var hash = sha.ComputeHash(bytes);
-        return Convert.ToBase64String(hash);
+        using var rng = RandomNumberGenerator.Create();
+        var salt = new byte[SaltSize];
+        rng.GetBytes(salt);
+
+        using var pbkdf2 = new Rfc2898DeriveBytes(password, salt, Iterations, HashAlgorithmName.SHA256);
+        var key = pbkdf2.GetBytes(KeySize);
+
+        return $"{Iterations}.{Convert.ToBase64String(salt)}.{Convert.ToBase64String(key)}";
+    }
+
+    private static bool VerifyPassword(string storedHash, string password)
+    {
+        var parts = storedHash.Split('.');
+        if (parts.Length != 3)
+            return false;
+
+        var iterations = int.Parse(parts[0]);
+        var salt = Convert.FromBase64String(parts[1]);
+        var key = Convert.FromBase64String(parts[2]);
+
+        using var pbkdf2 = new Rfc2898DeriveBytes(password, salt, iterations, HashAlgorithmName.SHA256);
+        var keyToCheck = pbkdf2.GetBytes(KeySize);
+
+        return keyToCheck.SequenceEqual(key);
     }
 }
+

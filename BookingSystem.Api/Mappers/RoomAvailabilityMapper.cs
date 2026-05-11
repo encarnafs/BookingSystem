@@ -1,5 +1,4 @@
-﻿using BookingSystem.Api.Mappers;
-using BookingSystem.Api.Responses.Rooms;
+﻿using BookingSystem.Api.Responses.Rooms;
 using BookingSystem.Application.Rooms.Dtos;
 
 namespace BookingSystem.Api.Mappers;

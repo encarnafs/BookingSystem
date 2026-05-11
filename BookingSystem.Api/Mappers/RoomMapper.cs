@@ -6,7 +6,7 @@ using BookingSystem.Api.Responses.Rooms;
 
 namespace BookingSystem.Api.Mappers;
 
-public static class RoomRequestMapper
+public static class RoomMapper
 {
     public static CreateRoomCommand ToCommand(this CreateRoomRequest request)
     {
