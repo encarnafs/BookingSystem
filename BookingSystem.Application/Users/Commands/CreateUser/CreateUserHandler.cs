@@ -4,6 +4,7 @@ using BookingSystem.Application.Users.Events;
 using BookingSystem.Domain.Entities;
 using BookingSystem.Domain.ValueObjects;
 using MediatR;
+using System.Security.Cryptography;
 
 namespace BookingSystem.Application.Users.Commands.CreateUser;
 
@@ -33,14 +34,14 @@ public class CreateUserHandler : IRequestHandler<CreateUserCommand, UserDto>
             throw new Exception("El nombre de usuario ya existe.");
 
         // Hash temporal
-        var fakeHash = $"HASHED_{request.Password}";
+        var passwordHash = HashPassword(request.Password);
 
         var email = Email.Create(request.Email);
 
         var user = new User(
             request.Username,
             email,
-            fakeHash,
+            passwordHash,
             request.Role
         );
 
@@ -59,6 +60,22 @@ public class CreateUserHandler : IRequestHandler<CreateUserCommand, UserDto>
             Email = user.Email.Value,
             Role = user.Role
         };
+    }
+
+    private static string HashPassword(string password)
+    {
+        const int iterations = 10000;
+        const int saltSize = 16;
+        const int keySize = 32;
+
+        using var rng = RandomNumberGenerator.Create();
+        var salt = new byte[saltSize];
+        rng.GetBytes(salt);
+
+        using var pbkdf2 = new Rfc2898DeriveBytes(password, salt, iterations, HashAlgorithmName.SHA256);
+        var key = pbkdf2.GetBytes(keySize);
+
+        return $"{iterations}.{Convert.ToBase64String(salt)}.{Convert.ToBase64String(key)}";
     }
 }
 

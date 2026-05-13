@@ -1,6 +1,7 @@
 ﻿using BookingSystem.Api.Authorization;
 using BookingSystem.Api.Middleware;
 using BookingSystem.Api.Services;
+using BookingSystem.Api.Configuration;
 using BookingSystem.Application.Bookings.Commands.CreateBooking;
 using BookingSystem.Application.Common.Interfaces;
 using BookingSystem.Application.DependencyInjection;
@@ -9,6 +10,8 @@ using BookingSystem.Infrastructure.DependencyInjection;
 using BookingSystem.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Reflection;
@@ -19,18 +22,63 @@ var builder = WebApplication.CreateBuilder(args);
 // =========================
 // 1. CONFIGURACIÓN DE SERVICIOS
 // =========================
+//Versionado
+builder.Services.AddApiVersioning(options =>
+{
+    options.DefaultApiVersion = new ApiVersion(1, 0);
+    options.AssumeDefaultVersionWhenUnspecified = true;
+    options.ReportApiVersions = true;
+});
+
+builder.Services.AddVersionedApiExplorer(options =>
+{
+    options.GroupNameFormat = "'v'VVV";
+    options.SubstituteApiVersionInUrl = true;
+});
 
 // OpenAPI
 //builder.Services.AddOpenApi();
 
 // Swagger
-builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(options =>
+{
+    var xmlFilename = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    options.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, xmlFilename));
+
+    options.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+    {
+        Description = "Autenticación JWT usando el esquema Bearer. Ejemplo: Bearer {token}",
+        Name = "Authorization",
+        In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+        Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT"
+    });
+
+    options.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
+    {
+        {
+            new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+            {
+                Reference = new Microsoft.OpenApi.Models.OpenApiReference
+                {
+                    Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+});
+
+
 // Incluir comentarios XML en Swagger para mejorar la documentación de la API. Esto permite que las descripciones de los controladores, acciones y modelos aparezcan en la interfaz de Swagger UI, lo que facilita a los desarrolladores entender cómo usar la API.
 builder.Services.AddSwaggerGen(options =>
 {
     var xmlFilename = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
     options.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, xmlFilename));
 });
+builder.Services.ConfigureOptions<ConfigureSwaggerOptions>();
 
 builder.Services.AddTransient<ExceptionHandlingMiddleware>();
 
@@ -124,7 +172,19 @@ app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseHttpsRedirection();
 
 app.UseSwagger();
-app.UseSwaggerUI();
+//Esto hace que SwaggerUI muestre v1, v2, v3....
+app.UseSwaggerUI(options =>
+{
+    var provider = app.Services.GetRequiredService<IApiVersionDescriptionProvider>();
+
+    foreach (var description in provider.ApiVersionDescriptions)
+    {
+        options.SwaggerEndpoint(
+            $"/swagger/{description.GroupName}/swagger.json",
+            description.GroupName.ToUpperInvariant());
+    }
+});
+
 
 // Activar autenticación y autorización
 app.UseAuthentication();

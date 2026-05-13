@@ -11,7 +11,5 @@ namespace BookingSystem.Application.Clients.Queries.GetClientById;
 
 public record GetClientByIdQuery(Guid Id) : IRequest<ClientDto>
 {
-    public GetClientByIdQuery(ClientDto id)
-    {
-    }
+
 }

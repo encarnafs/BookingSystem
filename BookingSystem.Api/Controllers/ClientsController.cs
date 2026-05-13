@@ -38,12 +38,10 @@ public class ClientsController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<ClientResponse>> Create(CreateClientRequest request)
     {
-        var id = await _mediator.Send(request.ToCommand());
-
-        var dto = await _mediator.Send(new GetClientByIdQuery(id));
-
-        return CreatedAtAction(nameof(GetById), new { id }, dto.ToResponse());
+        var clientDto = await _mediator.Send(request.ToCommand());
+        return CreatedAtAction(nameof(GetById), new { id = clientDto.Id }, clientDto.ToResponse());
     }
+
 
     /// <summary>
     /// Actualiza los datos de un cliente existente.

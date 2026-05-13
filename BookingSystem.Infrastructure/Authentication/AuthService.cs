@@ -52,17 +52,22 @@ public class AuthService : IAuthService
         return user;
     }
 
-    private static string HashPassword(string password)
+    public static string HashPassword(string password)
     {
+        const int iterations = 10000;
+        const int saltSize = 16; // 128 bits
+        const int keySize = 32;  // 256 bits
+
         using var rng = RandomNumberGenerator.Create();
-        var salt = new byte[SaltSize];
+        var salt = new byte[saltSize];
         rng.GetBytes(salt);
 
-        using var pbkdf2 = new Rfc2898DeriveBytes(password, salt, Iterations, HashAlgorithmName.SHA256);
-        var key = pbkdf2.GetBytes(KeySize);
+        using var pbkdf2 = new Rfc2898DeriveBytes(password, salt, iterations, HashAlgorithmName.SHA256);
+        var key = pbkdf2.GetBytes(keySize);
 
-        return $"{Iterations}.{Convert.ToBase64String(salt)}.{Convert.ToBase64String(key)}";
+        return $"{iterations}.{Convert.ToBase64String(salt)}.{Convert.ToBase64String(key)}";
     }
+
 
     private static bool VerifyPassword(string storedHash, string password)
     {

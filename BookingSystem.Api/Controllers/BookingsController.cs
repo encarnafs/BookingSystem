@@ -22,7 +22,8 @@ namespace BookingSystem.Api.Controllers;
 
 [Authorize]
 [ApiController]
-[Route("api/[controller]")]
+[ApiVersion("1.0")]
+[Route("api/v{version:apiVersion}/[controller]")]
 public class BookingsController : ControllerBase
 {
     private readonly ISender _sender;

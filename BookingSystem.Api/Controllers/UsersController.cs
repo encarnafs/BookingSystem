@@ -11,7 +11,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace BookingSystem.Api.Controllers;
 
-[Authorize(Roles = "Admin")]
+//[Authorize(Roles = "Admin")]
 [ApiController]
 [Route("api/[controller]")]
 public class UsersController : ControllerBase
@@ -32,14 +32,13 @@ public class UsersController : ControllerBase
     /// Solo los administradores pueden crear usuarios.
     /// </remarks>
     [HttpPost]
+    [HttpPost]
     public async Task<ActionResult<UserResponse>> Create([FromBody] CreateUserRequest request)
     {
-        var id = await _mediator.Send(request.ToCommand());
-
-        var dto = await _mediator.Send(new GetUserByIdQuery(id));
-
-        return CreatedAtAction(nameof(GetById), new { id }, dto.ToResponse());
+        var userDto = await _mediator.Send(request.ToCommand());
+        return CreatedAtAction(nameof(GetById), new { id = userDto.Id }, userDto.ToResponse());
     }
+
 
     /// <summary>
     /// Actualiza los datos de un usuario existente.
