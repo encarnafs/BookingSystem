@@ -9,6 +9,7 @@ public class User
     public string Username { get; private set; } = default!;
     public Email Email { get; private set; } = default!;
     public string PasswordHash { get; private set; } = default!;
+    public string PasswordSalt { get; private set; } = default!;
     public string Role { get; private set; } = default!;
     public bool IsActive { get; private set; } = true;
     public bool IsDeleted { get; private set; } = false;
@@ -20,20 +21,24 @@ public class User
 
     private User() { }
 
-    public User(string username, Email email, string passwordHash, string role)
+    public User(string username, Email email, string passwordHash, string passwordSalt, string role)
     {
         Username = NormalizeUsername(username);
         Email = email ?? throw new InvalidUserStateException("El email no puede ser nulo.");
         PasswordHash = ValidatePasswordHash(passwordHash);
+        PasswordSalt = passwordSalt ?? throw new InvalidUserStateException("El salt no puede ser nulo.");
         Role = NormalizeRole(role);
 
         Id = Guid.NewGuid();
     }
 
-    public void ChangePassword(string newHash)
+
+    public void ChangePassword(string newHash, string newSalt)
     {
         PasswordHash = ValidatePasswordHash(newHash);
+        PasswordSalt = newSalt ?? throw new InvalidUserPasswordException("El salt no puede ser nulo.");
     }
+
 
     public void AssignRole(string newRole)
     {

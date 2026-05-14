@@ -29,30 +29,24 @@ public class ChangeUserPasswordHandler : IRequestHandler<ChangeUserPasswordComma
         var user = await _userRepository.GetByIdAsync(request.UserId, cancellationToken)
             ?? throw new Exception($"Usuario con ID {request.UserId} no encontrado.");
 
-        // Validar contraseña actual (si aplica)
-        if (!_passwordHasher.Verify(request.CurrentPassword, user.PasswordHash))
+        // Validar contraseña actual
+        if (!_passwordHasher.Verify(request.CurrentPassword, user.PasswordHash, user.PasswordSalt))
             throw new Exception("La contraseña actual no es correcta.");
 
-        // Generar nuevo hash
-        var newHash = _passwordHasher.Hash(request.NewPassword);
+        // Generar nuevo hash + salt
+        var (newHash, newSalt) = _passwordHasher.Hash(request.NewPassword);
 
         var oldValues = new { PasswordHash = user.PasswordHash };
         var newValues = new { PasswordHash = newHash };
 
-        // Actualizar contraseña
-        user.ChangePassword(newHash);
+        // Actualizar contraseña en la entidad
+        user.ChangePassword(newHash, newSalt);
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        // Publicar evento
-        await _mediator.Publish(
-            new UserPasswordChangedNotification(user.Id),
-            cancellationToken);
-
-        // Auditoría
-        await _mediator.Publish(
-            new UserUpdatedNotification(user.Id, oldValues, newValues),
-            cancellationToken);
+        // Publicar eventos
+        await _mediator.Publish(new UserPasswordChangedNotification(user.Id), cancellationToken);
+        await _mediator.Publish(new UserUpdatedNotification(user.Id, oldValues, newValues), cancellationToken);
 
         return new UserDto
         {
@@ -63,3 +57,4 @@ public class ChangeUserPasswordHandler : IRequestHandler<ChangeUserPasswordComma
         };
     }
 }
+

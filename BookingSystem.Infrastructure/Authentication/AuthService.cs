@@ -1,10 +1,8 @@
 ﻿using BookingSystem.Application.Common.Interfaces;
 using BookingSystem.Domain.Entities;
-using BookingSystem.Domain.ValueObjects;
 using BookingSystem.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
-using System.Text;
 
 namespace BookingSystem.Infrastructure.Authentication;
 
@@ -21,23 +19,69 @@ public class AuthService : IAuthService
         _context = context;
     }
 
-    public async Task<User> RegisterAsync(string username, string email, string password, CancellationToken cancellationToken)
+    // -----------------------------
+    // 1. Buscar usuario por email
+    // -----------------------------
+    public async Task<User?> GetUserByEmailAsync(string email)
     {
-        var emailVO = Email.Create(email);
+        return await _context.Users
+            .FirstOrDefaultAsync(u => u.Email.Value == email);
+    }
 
-        if (await _context.Users.AnyAsync(u => u.Email.Value == emailVO.Value, cancellationToken))
-            throw new Exception("El email ya está registrado.");
+    // -----------------------------
+    // 2. Buscar cliente por email
+    // -----------------------------
+    public async Task<Client?> GetClientByEmailAsync(string email)
+    {
+        return await _context.Clients
+            .FirstOrDefaultAsync(c => c.Email.Value == email);
+    }
 
-        var passwordHash = HashPassword(password);
-
-        var user = new User(username, emailVO, passwordHash, role: "User");
-
+    // -----------------------------
+    // 3. Crear usuario
+    // -----------------------------
+    public async Task<User?> CreateUserAsync(User user)
+    {
         _context.Users.Add(user);
-        await _context.SaveChangesAsync(cancellationToken);
-
+        await _context.SaveChangesAsync();
         return user;
     }
 
+    // -----------------------------
+    // 4. Crear cliente
+    // -----------------------------
+    public async Task<Client?> CreateClientAsync(Client client)
+    {
+        _context.Clients.Add(client);
+        await _context.SaveChangesAsync();
+        return client;
+    }
+
+    // -----------------------------
+    // 5. Hash de contraseña
+    // -----------------------------
+    public (string Hash, string Salt) HashPassword(string password)
+    {
+        const int iterations = 100000;
+        const int saltSize = 16;
+        const int keySize = 32;
+
+        using var rng = RandomNumberGenerator.Create();
+        var saltBytes = new byte[saltSize];
+        rng.GetBytes(saltBytes);
+
+        using var pbkdf2 = new Rfc2898DeriveBytes(password, saltBytes, iterations, HashAlgorithmName.SHA256);
+        var keyBytes = pbkdf2.GetBytes(keySize);
+
+        var salt = Convert.ToBase64String(saltBytes);
+        var hash = Convert.ToBase64String(keyBytes);
+
+        return (hash, salt);
+    }
+
+    // -----------------------------
+    // 6. Validar usuario (login)
+    // -----------------------------
     public async Task<User?> ValidateUserAsync(string email, string password, CancellationToken cancellationToken)
     {
         var user = await _context.Users
@@ -46,43 +90,26 @@ public class AuthService : IAuthService
         if (user is null)
             return null;
 
-        if (!VerifyPassword(user.PasswordHash, password))
+        if (!VerifyPassword(user.PasswordHash, user.PasswordSalt, password))
             return null;
 
         return user;
     }
 
-    public static string HashPassword(string password)
+    // -----------------------------
+    // 7. Verificar contraseña
+    // -----------------------------
+    private static bool VerifyPassword(string storedHash, string storedSalt, string password)
     {
-        const int iterations = 10000;
-        const int saltSize = 16; // 128 bits
-        const int keySize = 32;  // 256 bits
+        const int iterations = 100000;
+        const int keySize = 32;
 
-        using var rng = RandomNumberGenerator.Create();
-        var salt = new byte[saltSize];
-        rng.GetBytes(salt);
+        var saltBytes = Convert.FromBase64String(storedSalt);
+        var storedKeyBytes = Convert.FromBase64String(storedHash);
 
-        using var pbkdf2 = new Rfc2898DeriveBytes(password, salt, iterations, HashAlgorithmName.SHA256);
-        var key = pbkdf2.GetBytes(keySize);
+        using var pbkdf2 = new Rfc2898DeriveBytes(password, saltBytes, iterations, HashAlgorithmName.SHA256);
+        var computedKey = pbkdf2.GetBytes(keySize);
 
-        return $"{iterations}.{Convert.ToBase64String(salt)}.{Convert.ToBase64String(key)}";
-    }
-
-
-    private static bool VerifyPassword(string storedHash, string password)
-    {
-        var parts = storedHash.Split('.');
-        if (parts.Length != 3)
-            return false;
-
-        var iterations = int.Parse(parts[0]);
-        var salt = Convert.FromBase64String(parts[1]);
-        var key = Convert.FromBase64String(parts[2]);
-
-        using var pbkdf2 = new Rfc2898DeriveBytes(password, salt, iterations, HashAlgorithmName.SHA256);
-        var keyToCheck = pbkdf2.GetBytes(KeySize);
-
-        return keyToCheck.SequenceEqual(key);
+        return computedKey.SequenceEqual(storedKeyBytes);
     }
 }
-

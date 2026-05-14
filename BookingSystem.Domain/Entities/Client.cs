@@ -12,19 +12,41 @@ public class Client
     public bool IsActive { get; private set; }
     public bool IsDeleted { get; private set; } = false;
 
+    // Autenticación
+    public string PasswordHash { get; private set; } = default!;
+    public string PasswordSalt { get; private set; } = default!;
+
+    // Auditoría
+    public DateTime CreatedAt { get; private set; }
+    public Guid? CreatedByUserId { get; private set; }
+
+
+
     // Constructor privado para EF Core
     private Client() { }
 
     // Constructor principal
-    public Client(string fullName, Email email, PhoneNumber phoneNumber)
+    public Client(string fullName, Email email, PhoneNumber phoneNumber, string passwordHash, string passwordSalt, Guid createdByUserId)
     {
         FullName = NormalizeName(fullName);
         Email = email ?? throw new InvalidClientStateException("El email no puede ser nulo.");
         PhoneNumber = phoneNumber ?? throw new InvalidClientStateException("El teléfono no puede ser nulo.");
-               
+
+        PasswordHash = passwordHash ?? throw new InvalidClientStateException("El hash no puede ser nulo.");
+        PasswordSalt = passwordSalt ?? throw new InvalidClientStateException("El salt no puede ser nulo.");
+
         Id = Guid.NewGuid();
         IsActive = true;
         IsDeleted = false;
+
+        CreatedAt = DateTime.UtcNow;
+        CreatedByUserId = createdByUserId;
+    }
+
+    public void Update(string fullName, Email email, PhoneNumber phoneNumber)
+    {
+        UpdateName(fullName);
+        UpdateContactInfo(email, phoneNumber);
     }
 
     public void UpdateName(string newName)
@@ -36,12 +58,6 @@ public class Client
     {
         Email = email ?? throw new InvalidClientStateException("El email no puede ser nulo.");
         PhoneNumber = phoneNumber ?? throw new InvalidClientStateException("El teléfono no puede ser nulo.");
-    }
-
-    public void Update(string fullName, Email email, PhoneNumber phoneNumber)
-    {
-        UpdateName(fullName);
-        UpdateContactInfo(email, phoneNumber);
     }
 
     private static string NormalizeName(string name)

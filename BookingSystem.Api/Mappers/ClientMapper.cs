@@ -9,7 +9,7 @@ namespace BookingSystem.Api.Mappers;
 public static class ClientMapper
 {
     public static CreateClientCommand ToCommand(this CreateClientRequest request)
-        => new(request.FullName, request.Email, request.Phone);
+    => new(request.FullName, request.Email, request.Phone, request.Password);
 
     public static UpdateClientCommand ToCommand(this UpdateClientRequest request, Guid id)
         => new(id, request.FullName, request.Email, request.Phone);

@@ -7,5 +7,6 @@ namespace BookingSystem.Application.Clients.Commands.CreateClient;
 public record CreateClientCommand(
     string FullName,
     string Email,
-    string PhoneNumber
+    string PhoneNumber,
+    string Password
 ) : IRequest<ClientDto>;

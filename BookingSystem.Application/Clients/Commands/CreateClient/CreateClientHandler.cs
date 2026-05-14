@@ -12,15 +12,18 @@ public class CreateClientHandler : IRequestHandler<CreateClientCommand, ClientDt
     private readonly IClientRepository _clientRepository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMediator _mediator;
+    private readonly IPasswordHasher _passwordHasher;
 
     public CreateClientHandler(
         IClientRepository clientRepository,
         IUnitOfWork unitOfWork,
-        IMediator mediator)
+        IMediator mediator,
+        IPasswordHasher passwordHasher)
     {
         _clientRepository = clientRepository;
         _unitOfWork = unitOfWork;
         _mediator = mediator;
+        _passwordHasher = passwordHasher;
     }
 
     public async Task<ClientDto> Handle(CreateClientCommand request, CancellationToken cancellationToken)
@@ -36,17 +39,27 @@ public class CreateClientHandler : IRequestHandler<CreateClientCommand, ClientDt
         if (await _clientRepository.ExistsByPhoneAsync(phone, cancellationToken))
             throw new Exception("Ya existe un cliente con este teléfono.");
 
-        // 3. Crear entidad
-        var client = new Client(request.FullName, email, phone);
+        // 3. Hashear contraseña
+        var hashed = _passwordHasher.Hash(request.Password);
 
-        // 4. Persistir
+        // 4. Crear entidad Client con hash y salt
+        var client = new Client(
+            request.FullName,
+            email,
+            phone,
+            hashed.Hash,
+            hashed.Salt,
+            Guid.NewGuid() // o el UserId que corresponda
+        );
+
+        // 5. Persistir
         await _clientRepository.AddAsync(client, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        // 5. Publicar evento
+        // 6. Publicar evento
         await _mediator.Publish(new ClientCreatedNotification(client.Id), cancellationToken);
 
-        // 6. Devolver DTO
+        // 7. Devolver DTO
         return new ClientDto
         {
             Id = client.Id,

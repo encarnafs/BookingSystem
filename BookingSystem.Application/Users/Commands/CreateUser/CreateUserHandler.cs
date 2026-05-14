@@ -13,15 +13,18 @@ public class CreateUserHandler : IRequestHandler<CreateUserCommand, UserDto>
     private readonly IUserRepository _userRepository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMediator _mediator;
+    private readonly IPasswordHasher _passwordHasher;
 
     public CreateUserHandler(
         IUserRepository userRepository,
         IUnitOfWork unitOfWork,
-        IMediator mediator)
+        IMediator mediator,
+        IPasswordHasher passwordHasher)
     {
         _userRepository = userRepository;
         _unitOfWork = unitOfWork;
         _mediator = mediator;
+        _passwordHasher = passwordHasher;
     }
 
     public async Task<UserDto> Handle(CreateUserCommand request, CancellationToken cancellationToken)
@@ -33,15 +36,15 @@ public class CreateUserHandler : IRequestHandler<CreateUserCommand, UserDto>
         if (await _userRepository.ExistsByUsernameAsync(request.Username, cancellationToken))
             throw new Exception("El nombre de usuario ya existe.");
 
-        // Hash temporal
-        var passwordHash = HashPassword(request.Password);
-
         var email = Email.Create(request.Email);
+
+        var (hash, salt) = _passwordHasher.Hash(request.Password);
 
         var user = new User(
             request.Username,
             email,
-            passwordHash,
+            hash,
+            salt,
             request.Role
         );
 
@@ -60,22 +63,6 @@ public class CreateUserHandler : IRequestHandler<CreateUserCommand, UserDto>
             Email = user.Email.Value,
             Role = user.Role
         };
-    }
-
-    private static string HashPassword(string password)
-    {
-        const int iterations = 10000;
-        const int saltSize = 16;
-        const int keySize = 32;
-
-        using var rng = RandomNumberGenerator.Create();
-        var salt = new byte[saltSize];
-        rng.GetBytes(salt);
-
-        using var pbkdf2 = new Rfc2898DeriveBytes(password, salt, iterations, HashAlgorithmName.SHA256);
-        var key = pbkdf2.GetBytes(keySize);
-
-        return $"{iterations}.{Convert.ToBase64String(salt)}.{Convert.ToBase64String(key)}";
     }
 }
 

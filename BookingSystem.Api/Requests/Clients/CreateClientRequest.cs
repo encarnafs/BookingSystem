@@ -19,4 +19,9 @@ public class CreateClientRequest
     /// Número de teléfono de contacto del cliente.
     /// </summary>
     public string Phone { get; set; } = default!;
+
+    /// <summary>
+    /// Contraseña del cliente para autenticación.
+    /// </summary>
+    public string Password { get; set; } = default!;
 }

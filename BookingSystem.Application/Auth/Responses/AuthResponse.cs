@@ -7,4 +7,7 @@ public class AuthResponse
     public string Username { get; set; } = default!;
     public string Email { get; set; } = default!;
     public string Role { get; set; } = default!;
+
+    public bool Success { get; set; }
+    public string? Message { get; set; }
 }

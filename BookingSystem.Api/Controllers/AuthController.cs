@@ -1,7 +1,8 @@
 ﻿using BookingSystem.Api.Requests.Auth;
 using BookingSystem.Api.Responses.Auth;
 using BookingSystem.Application.Auth.Commands.Login;
-using BookingSystem.Application.Auth.Commands.Register;
+using BookingSystem.Application.Auth.Commands.RegisterUser;
+using BookingSystem.Application.Auth.Commands.RegisterClient;
 using BookingSystem.Application.Auth.Responses;
 using BookingSystem.Application.Common.Interfaces;
 using MediatR;
@@ -22,18 +23,25 @@ public class AuthController : ControllerBase
     }
 
     /// <summary>
-    /// Registra un nuevo usuario en el sistema.
+    /// Registra un nuevo usuario del sistema (User).
     /// </summary>
-    /// <param name="request">Datos necesarios para registrar al usuario.</param>
-    /// <returns>Los datos del usuario registrado, incluyendo el token de autenticación.</returns>
-    /// <remarks>
-    /// Este endpoint crea un usuario con rol por defecto "Client".
-    /// </remarks>
-    [HttpPost("register")]
-    public async Task<ActionResult<AuthResponse>> Register(RegisterRequest request)
+    [HttpPost("register-user")]
+    public async Task<ActionResult<AuthResponse>> RegisterUser(RegisterRequest request)
     {
-        AuthResponse response = await _mediator.Send(
-            new RegisterCommand(request.Username, request.Email, request.Password));
+        var response = await _mediator.Send(
+            new RegisterUserCommand(request.Username, request.Email, request.Password));
+
+        return Ok(response);
+    }
+
+    /// <summary>
+    /// Registra un nuevo cliente (Client).
+    /// </summary>
+    [HttpPost("register-client")]
+    public async Task<ActionResult<AuthResponse>> RegisterClient(RegisterRequest request)
+    {
+        var response = await _mediator.Send(
+            new RegisterClientCommand(request.FullName, request.Email, request.PhoneNumber, request.Password));
 
         return Ok(response);
     }
@@ -41,29 +49,18 @@ public class AuthController : ControllerBase
     /// <summary>
     /// Inicia sesión y obtiene un token JWT.
     /// </summary>
-    /// <param name="request">Credenciales del usuario (email y contraseña).</param>
-    /// <returns>Los datos del usuario autenticado, incluyendo el token JWT.</returns>
-    /// <remarks>
-    /// El token devuelto debe enviarse en el header Authorization para acceder a endpoints protegidos.
-    /// </remarks>
     [HttpPost("login")]
     public async Task<ActionResult<AuthResponse>> Login(LoginRequest request)
     {
-        AuthResponse response = await _mediator.Send(
+        var response = await _mediator.Send(
             new LoginCommand(request.Email, request.Password));
 
         return Ok(response);
     }
 
     /// <summary>
-    /// Obtiene la información del usuario actualmente autenticado.
+    /// Obtiene la información del usuario autenticado.
     /// </summary>
-    /// <param name="currentUser">Servicio que contiene los datos del usuario autenticado.</param>
-    /// <returns>El perfil del usuario autenticado.</returns>
-    /// <remarks>
-    /// Requiere un token JWT válido.  
-    /// Devuelve el ID, email y rol del usuario actual.
-    /// </remarks>
     [Authorize]
     [HttpGet("me")]
     public ActionResult<UserProfileResponse> Me([FromServices] ICurrentUserService currentUser)
@@ -81,3 +78,4 @@ public class AuthController : ControllerBase
         return Ok(response);
     }
 }
+
