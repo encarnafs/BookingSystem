@@ -1,10 +1,10 @@
 ﻿using FluentValidation;
 
-namespace BookingSystem.Application.Auth.Commands.Login;
+namespace BookingSystem.Application.Auth.Commands.LoginUser;
 
-public class LoginValidator : AbstractValidator<LoginCommand>
+public class LoginUserValidator : AbstractValidator<LoginUserCommand>
 {
-    public LoginValidator()
+    public LoginUserValidator()
     {
         RuleFor(x => x.Email)
             .NotEmpty()

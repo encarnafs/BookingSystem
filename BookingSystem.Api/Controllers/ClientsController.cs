@@ -34,7 +34,7 @@ public class ClientsController : ControllerBase
     /// <remarks>
     /// Solo los administradores pueden crear clientes.
     /// </remarks>
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin, User")]
     [HttpPost]
     public async Task<ActionResult<ClientResponse>> Create(CreateClientRequest request)
     {
@@ -75,7 +75,7 @@ public class ClientsController : ControllerBase
     /// <remarks>
     /// Solo los administradores pueden ver la lista completa de clientes.
     /// </remarks>
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin, User")]
     [HttpGet]
     public async Task<ActionResult<IEnumerable<ClientResponse>>> GetAll()
     {

@@ -1,4 +1,5 @@
-﻿using FluentValidation;
+﻿using BookingSystem.Application.Auth.Responses;
+using FluentValidation;
 using MediatR;
 
 namespace BookingSystem.Application.Common.Behaviors;
@@ -15,26 +16,37 @@ public class ValidationBehavior<TRequest, TResponse>
     }
 
     public async Task<TResponse> Handle(
-        TRequest request,
-        RequestHandlerDelegate<TResponse> next,
-        CancellationToken cancellationToken)
+    TRequest request,
+    RequestHandlerDelegate<TResponse> next,
+    CancellationToken cancellationToken)
     {
-        if (_validators.Any())
+        var context = new ValidationContext<TRequest>(request);
+        var failures = _validators
+            .Select(v => v.Validate(context))
+            .SelectMany(result => result.Errors)
+            .Where(f => f != null)
+            .ToList();
+
+        if (failures.Count != 0)
         {
-            var context = new ValidationContext<TRequest>(request);
+            // En lugar de lanzar excepción, devolvemos una respuesta controlada
+            var responseType = typeof(TResponse);
+            if (responseType == typeof(AuthResponse))
+            {
+                var response = new AuthResponse
+                {
+                    Success = false,
+                    Message = string.Join("; ", failures.Select(f => f.ErrorMessage))
+                };
 
-            var validationResults = await Task.WhenAll(
-                _validators.Select(v => v.ValidateAsync(context, cancellationToken)));
+                return (TResponse)(object)response;
+            }
 
-            var failures = validationResults
-                .SelectMany(r => r.Errors)
-                .Where(f => f is not null)
-                .ToList();
-
-            if (failures.Count != 0)
-                throw new ValidationException(failures);
+            // Si no es AuthResponse, puedes devolver null o manejarlo según tu caso
+            return default!;
         }
 
         return await next(cancellationToken);
     }
+
 }

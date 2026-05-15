@@ -11,6 +11,7 @@ public class Client
     public PhoneNumber PhoneNumber { get; private set; } = default!;
     public bool IsActive { get; private set; }
     public bool IsDeleted { get; private set; } = false;
+    public string Role { get; private set; } = "Client";
 
     // Autenticación
     public string PasswordHash { get; private set; } = default!;
@@ -26,7 +27,7 @@ public class Client
     private Client() { }
 
     // Constructor principal
-    public Client(string fullName, Email email, PhoneNumber phoneNumber, string passwordHash, string passwordSalt, Guid createdByUserId)
+    public Client(string fullName, Email email, PhoneNumber phoneNumber, string passwordHash, string passwordSalt)
     {
         FullName = NormalizeName(fullName);
         Email = email ?? throw new InvalidClientStateException("El email no puede ser nulo.");
@@ -38,8 +39,14 @@ public class Client
         Id = Guid.NewGuid();
         IsActive = true;
         IsDeleted = false;
+        Role = "Client";
 
         CreatedAt = DateTime.UtcNow;
+    }
+
+    // Asignar CreatedByUserId después de la creación
+    public void SetCreatedBy(Guid createdByUserId)
+    {
         CreatedByUserId = createdByUserId;
     }
 

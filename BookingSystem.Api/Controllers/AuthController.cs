@@ -1,8 +1,9 @@
 ﻿using BookingSystem.Api.Requests.Auth;
 using BookingSystem.Api.Responses.Auth;
-using BookingSystem.Application.Auth.Commands.Login;
-using BookingSystem.Application.Auth.Commands.RegisterUser;
+using BookingSystem.Application.Auth.Commands.LoginClient;
+using BookingSystem.Application.Auth.Commands.LoginUser;
 using BookingSystem.Application.Auth.Commands.RegisterClient;
+using BookingSystem.Application.Auth.Commands.RegisterUser;
 using BookingSystem.Application.Auth.Responses;
 using BookingSystem.Application.Common.Interfaces;
 using MediatR;
@@ -25,6 +26,7 @@ public class AuthController : ControllerBase
     /// <summary>
     /// Registra un nuevo usuario del sistema (User).
     /// </summary>
+    [Authorize(Roles = "Admin")]
     [HttpPost("register-user")]
     public async Task<ActionResult<AuthResponse>> RegisterUser(RegisterRequest request)
     {
@@ -37,9 +39,21 @@ public class AuthController : ControllerBase
     /// <summary>
     /// Registra un nuevo cliente (Client).
     /// </summary>
+    [AllowAnonymous]
     [HttpPost("register-client")]
     public async Task<ActionResult<AuthResponse>> RegisterClient(RegisterRequest request)
     {
+        // Si el usuario está autenticado como CLIENTE → bloquear
+        if (User.Identity?.IsAuthenticated == true &&
+            User.IsInRole("Client"))
+        {
+            return Unauthorized(new AuthResponse
+            {
+                Success = false,
+                Message = "Los clientes no pueden registrar otros clientes."
+            });
+        }
+
         var response = await _mediator.Send(
             new RegisterClientCommand(request.FullName, request.Email, request.PhoneNumber, request.Password));
 
@@ -47,16 +61,36 @@ public class AuthController : ControllerBase
     }
 
     /// <summary>
-    /// Inicia sesión y obtiene un token JWT.
+    /// Inicia sesión como usuario interno (Admin o User).
     /// </summary>
-    [HttpPost("login")]
-    public async Task<ActionResult<AuthResponse>> Login(LoginRequest request)
+    [HttpPost("login-user")]
+    public async Task<ActionResult<AuthResponse>> LoginUser(LoginRequest request)
     {
         var response = await _mediator.Send(
-            new LoginCommand(request.Email, request.Password));
+            new LoginUserCommand(request.Email, request.Password));
+
+        if (!response.Success)
+            return Unauthorized(response);
 
         return Ok(response);
     }
+
+    /// <summary>
+    /// Inicia sesión como cliente.
+    /// </summary>
+    [AllowAnonymous]
+    [HttpPost("login-client")]
+    public async Task<ActionResult<AuthResponse>> LoginClient(LoginRequest request)
+    {
+        var response = await _mediator.Send(
+            new LoginClientCommand(request.Email, request.Password));
+
+        if (!response.Success)
+            return Unauthorized(response);
+
+        return Ok(response);
+    }
+
 
     /// <summary>
     /// Obtiene la información del usuario autenticado.

@@ -10,11 +10,13 @@ public class RegisterClientHandler : IRequestHandler<RegisterClientCommand, Auth
 {
     private readonly IAuthService _authService;
     private readonly IJwtTokenGenerator _jwtTokenGenerator;
+    private ICurrentUserService _currentUserService;
 
-    public RegisterClientHandler(IAuthService authService, IJwtTokenGenerator jwtTokenGenerator)
+    public RegisterClientHandler(IAuthService authService, IJwtTokenGenerator jwtTokenGenerator, ICurrentUserService currentUserService)
     {
         _authService = authService;
         _jwtTokenGenerator = jwtTokenGenerator;
+        _currentUserService = currentUserService;
     }
 
     public async Task<AuthResponse> Handle(RegisterClientCommand request, CancellationToken cancellationToken)
@@ -34,15 +36,18 @@ public class RegisterClientHandler : IRequestHandler<RegisterClientCommand, Auth
         // 2. Crear el cliente con contraseña hasheada
         var hashedPassword = _authService.HashPassword(request.Password);
 
+       
         var client = new Client(
             request.FullName,
             Email.Create(request.Email),
             PhoneNumber.Create(request.PhoneNumber),
             hashedPassword.Hash,
-            hashedPassword.Salt,
-            Guid.NewGuid() 
+            hashedPassword.Salt 
         );
 
+        // Asignar CreatedByUserId correctamente
+        var createdBy = _currentUserService.UserId ?? client.Id;
+        client.SetCreatedBy(createdBy);
 
         // 3. Guardar el cliente en la base de datos
         var createdClient = await _authService.CreateClientAsync(client);
@@ -67,9 +72,13 @@ public class RegisterClientHandler : IRequestHandler<RegisterClientCommand, Auth
         // 5. Devolver la respuesta de autenticación
         return new AuthResponse
         {
+            Id = createdClient.Id,
+            Username = createdClient.FullName,
+            Email = createdClient.Email.Value,
+            Role = "Client",
+            Token = token,
             Success = true,
-            Message = "Cliente registrado correctamente.",
-            Token = token
+            Message = "Cliente registrado correctamente."
         };
     }
 }

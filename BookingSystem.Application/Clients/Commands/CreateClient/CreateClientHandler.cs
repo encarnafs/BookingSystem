@@ -13,17 +13,20 @@ public class CreateClientHandler : IRequestHandler<CreateClientCommand, ClientDt
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMediator _mediator;
     private readonly IPasswordHasher _passwordHasher;
+    private readonly ICurrentUserService _currentUserService;
 
     public CreateClientHandler(
         IClientRepository clientRepository,
         IUnitOfWork unitOfWork,
         IMediator mediator,
-        IPasswordHasher passwordHasher)
+        IPasswordHasher passwordHasher,
+        ICurrentUserService currentUserService)
     {
         _clientRepository = clientRepository;
         _unitOfWork = unitOfWork;
         _mediator = mediator;
         _passwordHasher = passwordHasher;
+        _currentUserService = currentUserService;
     }
 
     public async Task<ClientDto> Handle(CreateClientCommand request, CancellationToken cancellationToken)
@@ -48,9 +51,11 @@ public class CreateClientHandler : IRequestHandler<CreateClientCommand, ClientDt
             email,
             phone,
             hashed.Hash,
-            hashed.Salt,
-            Guid.NewGuid() // o el UserId que corresponda
+            hashed.Salt
         );
+
+        // Asignar el Admin como creador
+        client.SetCreatedBy(_currentUserService.UserId ?? client.Id);
 
         // 5. Persistir
         await _clientRepository.AddAsync(client, cancellationToken);

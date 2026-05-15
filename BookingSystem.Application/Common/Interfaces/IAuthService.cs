@@ -13,4 +13,5 @@ public interface IAuthService
     Task<Client?> CreateClientAsync(Client client);
 
     Task<User?> ValidateUserAsync(string email, string password, CancellationToken cancellationToken);
+    Task<Client?> ValidateClientAsync(string email, string password, CancellationToken cancellationToken);
 }

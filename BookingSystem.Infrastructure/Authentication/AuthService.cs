@@ -1,6 +1,7 @@
 ﻿using BookingSystem.Application.Common.Interfaces;
 using BookingSystem.Domain.Entities;
 using BookingSystem.Infrastructure.Persistence;
+using BookingSystem.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
 
@@ -97,7 +98,28 @@ public class AuthService : IAuthService
     }
 
     // -----------------------------
-    // 7. Verificar contraseña
+    // 7. Validar cliente (login)
+    // -----------------------------
+    public async Task<Client?> ValidateClientAsync(
+    string email,
+    string password,
+    CancellationToken cancellationToken)
+    {
+        var client = await _context.Clients
+            .FirstOrDefaultAsync(c => c.Email.Value == email, cancellationToken);
+
+        if (client is null)
+            return null;
+
+        if (!VerifyPassword(client.PasswordHash, client.PasswordSalt, password))
+            return null;
+
+        return client;
+    }
+
+
+    // -----------------------------
+    // 8. Verificar contraseña
     // -----------------------------
     private static bool VerifyPassword(string storedHash, string storedSalt, string password)
     {

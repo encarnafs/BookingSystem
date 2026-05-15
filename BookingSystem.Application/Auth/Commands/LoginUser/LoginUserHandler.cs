@@ -1,22 +1,21 @@
-﻿using BookingSystem.Application.Auth.Commands.Login;
-using BookingSystem.Application.Auth.Responses;
+﻿using BookingSystem.Application.Auth.Responses;
 using BookingSystem.Application.Common.Interfaces;
 using MediatR;
 
-namespace BookingSystem.Application.Auth.Commands.Login;
+namespace BookingSystem.Application.Auth.Commands.LoginUser;
 
-public class LoginHandler : IRequestHandler<LoginCommand, AuthResponse>
+public class LoginUserHandler : IRequestHandler<LoginUserCommand, AuthResponse>
 {
     private readonly IAuthService _authService;
     private readonly IJwtTokenGenerator _jwt;
 
-    public LoginHandler(IAuthService authService, IJwtTokenGenerator jwt)
+    public LoginUserHandler(IAuthService authService, IJwtTokenGenerator jwt)
     {
         _authService = authService;
         _jwt = jwt;
     }
 
-    public async Task<AuthResponse> Handle(LoginCommand request, CancellationToken cancellationToken)
+    public async Task<AuthResponse> Handle(LoginUserCommand request, CancellationToken cancellationToken)
     {
         var user = await _authService.ValidateUserAsync(
             request.Email,
