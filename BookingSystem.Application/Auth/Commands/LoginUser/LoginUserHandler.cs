@@ -23,7 +23,13 @@ public class LoginUserHandler : IRequestHandler<LoginUserCommand, AuthResponse>
             cancellationToken);
 
         if (user is null)
-            throw new UnauthorizedAccessException("Credenciales inválidas.");
+        {
+            return new AuthResponse
+            {
+                Success = false,
+                Message = "Credenciales inválidas."
+            };
+        }
 
         var token = _jwt.GenerateToken(
             user.Id,

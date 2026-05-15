@@ -85,7 +85,7 @@ public class RoomsController : ControllerBase
     /// <remarks>
     /// Disponible para administradores y usuarios autenticados.
     /// </remarks>
-    [Authorize(Roles = "Admin,User")]
+    [Authorize(Roles = "Admin,User,Client")]
     [HttpGet]
     public async Task<ActionResult<IEnumerable<RoomResponse>>> GetAll()
     {
