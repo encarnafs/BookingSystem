@@ -1,4 +1,5 @@
-﻿using BookingSystem.Application.Common.Interfaces;
+﻿using BookingSystem.Application.Common.Exceptions;
+using BookingSystem.Application.Common.Interfaces;
 using BookingSystem.Application.Users.Dtos;
 using BookingSystem.Application.Users.Events;
 using MediatR;
@@ -24,7 +25,7 @@ public class ChangeUserRoleHandler : IRequestHandler<ChangeUserRoleCommand, User
     public async Task<UserDto> Handle(ChangeUserRoleCommand request, CancellationToken cancellationToken)
     {
         var user = await _userRepository.GetByIdAsync(request.UserId, cancellationToken)
-            ?? throw new Exception($"Usuario con ID {request.UserId} no encontrado.");
+            ?? throw new NotFoundException("User", request.UserId);
 
         var oldRole = user.Role;
 

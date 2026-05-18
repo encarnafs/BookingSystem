@@ -113,7 +113,7 @@ builder.Services.Configure<JwtSettings>(
     builder.Configuration.GetSection("JwtSettings"));
 
 if (jwtSettings.Secret.Length < 32)
-    throw new Exception("JWT Secret debe tener al menos 32 caracteres.");
+    throw new InvalidOperationException("JWT Secret debe tener al menos 32 caracteres.");
 
 
 // 3. Configurar autenticación JWT y Authorization

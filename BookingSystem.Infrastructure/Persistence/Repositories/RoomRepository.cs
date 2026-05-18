@@ -26,7 +26,6 @@ namespace BookingSystem.Infrastructure.Persistence.Repositories
         public async Task<Room?> GetByIdAsync(Guid id, CancellationToken cancellationToken)
         {
             return await _dbContext.Rooms
-                .AsNoTracking()
                 .FirstOrDefaultAsync(r => r.Id == id, cancellationToken);
         }
         public async Task<IList<Room>> GetAllAsync(CancellationToken cancellationToken)

@@ -1,4 +1,5 @@
 ﻿using BookingSystem.Application.Clients.Events;
+using BookingSystem.Application.Common.Exceptions;
 using BookingSystem.Application.Common.Interfaces;
 using MediatR;
 
@@ -23,7 +24,7 @@ public class DisableClientHandler : IRequestHandler<DisableClientCommand, Unit>
     public async Task<Unit> Handle(DisableClientCommand request, CancellationToken cancellationToken)
     {
         var client = await _clientRepository.GetByIdAsync(request.ClientId, cancellationToken)
-            ?? throw new Exception($"Cliente con ID {request.ClientId} no encontrado.");
+            ?? throw new NotFoundException("Client", request.ClientId);
 
         if (!client.IsActive)
             return Unit.Value; // ya está deshabilitado, no hacemos nada

@@ -1,4 +1,5 @@
-﻿using BookingSystem.Application.Common.Interfaces;
+﻿using BookingSystem.Application.Common.Exceptions;
+using BookingSystem.Application.Common.Interfaces;
 using BookingSystem.Application.Users.Dtos;
 using BookingSystem.Application.Users.Events;
 using BookingSystem.Domain.Entities;
@@ -26,13 +27,13 @@ public class UpdateUserHandler : IRequestHandler<UpdateUserCommand, UserDto>
     public async Task<UserDto> Handle(UpdateUserCommand request, CancellationToken cancellationToken)
     {
         var user = await _userRepository.GetByIdAsync(request.Id, cancellationToken)
-            ?? throw new Exception($"Usuario con ID {request.Id} no encontrado.");
+            ?? throw new NotFoundException("User", request.Id);
 
         // Validar duplicado de email si se cambia
         if (user.Email.Value != request.Email &&
             await _userRepository.ExistsByEmailAsync(request.Email, cancellationToken))
         {
-            throw new Exception("El email ya está registrado.");
+            throw new ConflictException("El email ya está registrado.");
         }
 
         var oldValues = new

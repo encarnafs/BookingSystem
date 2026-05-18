@@ -1,4 +1,5 @@
-﻿using BookingSystem.Application.Common.Interfaces;
+﻿using BookingSystem.Application.Common.Exceptions;
+using BookingSystem.Application.Common.Interfaces;
 using BookingSystem.Application.Users.Dtos;
 using BookingSystem.Application.Users.Events;
 using BookingSystem.Domain.Entities;
@@ -31,10 +32,10 @@ public class CreateUserHandler : IRequestHandler<CreateUserCommand, UserDto>
     {
         // Validar duplicados
         if (await _userRepository.ExistsByEmailAsync(request.Email, cancellationToken))
-            throw new Exception("El email ya está registrado.");
+            throw new ConflictException("El email ya está registrado.");
 
         if (await _userRepository.ExistsByUsernameAsync(request.Username, cancellationToken))
-            throw new Exception("El nombre de usuario ya existe.");
+            throw new ConflictException("El nombre de usuario ya existe.");
 
         var email = Email.Create(request.Email);
 

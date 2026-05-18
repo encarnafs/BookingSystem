@@ -1,5 +1,6 @@
 ﻿using BookingSystem.Application.Clients.Dtos;
 using BookingSystem.Application.Clients.Events;
+using BookingSystem.Application.Common.Exceptions;
 using BookingSystem.Application.Common.Interfaces;
 using BookingSystem.Domain.ValueObjects;
 using MediatR;
@@ -26,7 +27,8 @@ public class UpdateClientHandler : IRequestHandler<UpdateClientCommand, ClientDt
     {
         // 1. Obtener cliente
         var client = await _clientRepository.GetByIdAsync(request.Id, cancellationToken)
-            ?? throw new Exception($"Cliente con ID {request.Id} no encontrado.");
+            ?? throw new NotFoundException("Client", request.Id);
+
 
         // 2. Guardar valores antiguos para auditoría
         var oldValues = new
@@ -44,11 +46,11 @@ public class UpdateClientHandler : IRequestHandler<UpdateClientCommand, ClientDt
         // 4. Validar duplicados solo si cambian
         if (client.Email.Value != request.Email &&
             await _clientRepository.ExistsByEmailAsync(email, cancellationToken))
-            throw new Exception("Ya existe un cliente con este email.");
+            throw new ConflictException("Ya existe un cliente con este email.");
 
         if (client.PhoneNumber.Value != request.PhoneNumber &&
             await _clientRepository.ExistsByPhoneAsync(phone, cancellationToken))
-            throw new Exception("Ya existe un cliente con este teléfono.");
+            throw new ConflictException("Ya existe un cliente con este teléfono.");
 
         // 5. Actualizar usando el método de dominio
         client.Update(request.FullName, email, phone);

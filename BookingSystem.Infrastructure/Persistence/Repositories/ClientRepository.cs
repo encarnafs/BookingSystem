@@ -17,7 +17,6 @@ public class ClientRepository : IClientRepository
     public async Task<Client?> GetByIdAsync(Guid id, CancellationToken cancellationToken)
     {
         return await _context.Clients
-            .AsNoTracking()
             .Where(c => !c.IsDeleted)
             .FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
     }

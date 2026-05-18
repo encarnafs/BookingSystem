@@ -1,4 +1,5 @@
-﻿using BookingSystem.Application.Common.Interfaces;
+﻿using BookingSystem.Application.Common.Exceptions;
+using BookingSystem.Application.Common.Interfaces;
 using BookingSystem.Application.Users.Dtos;
 using BookingSystem.Application.Users.Events;
 using MediatR;
@@ -27,11 +28,11 @@ public class ChangeUserPasswordHandler : IRequestHandler<ChangeUserPasswordComma
     public async Task<UserDto> Handle(ChangeUserPasswordCommand request, CancellationToken cancellationToken)
     {
         var user = await _userRepository.GetByIdAsync(request.UserId, cancellationToken)
-            ?? throw new Exception($"Usuario con ID {request.UserId} no encontrado.");
+            ?? throw new NotFoundException("UserId", request.UserId);
 
         // Validar contraseña actual
         if (!_passwordHasher.Verify(request.CurrentPassword, user.PasswordHash, user.PasswordSalt))
-            throw new Exception("La contraseña actual no es correcta.");
+            throw new UnauthorizedAccessException("La contraseña actual no es correcta.");
 
         // Generar nuevo hash + salt
         var (newHash, newSalt) = _passwordHasher.Hash(request.NewPassword);

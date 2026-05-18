@@ -1,6 +1,7 @@
 ﻿using BookingSystem.Application.Clients.Commands.CreateClient;
 using BookingSystem.Application.Clients.Dtos;
 using BookingSystem.Application.Clients.Events;
+using BookingSystem.Application.Common.Exceptions;
 using BookingSystem.Application.Common.Interfaces;
 using BookingSystem.Domain.Entities;
 using BookingSystem.Domain.ValueObjects;
@@ -37,10 +38,10 @@ public class CreateClientHandler : IRequestHandler<CreateClientCommand, ClientDt
 
         // 2. Validar duplicados usando VO
         if (await _clientRepository.ExistsByEmailAsync(email, cancellationToken))
-            throw new Exception("Ya existe un cliente con este email.");
+            throw new ConflictException("Ya existe un cliente con este email.");
 
         if (await _clientRepository.ExistsByPhoneAsync(phone, cancellationToken))
-            throw new Exception("Ya existe un cliente con este teléfono.");
+            throw new ConflictException("Ya existe un cliente con este teléfono.");
 
         // 3. Hashear contraseña
         var hashed = _passwordHasher.Hash(request.Password);

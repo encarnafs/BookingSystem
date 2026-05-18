@@ -63,6 +63,7 @@ public class AuthController : ControllerBase
     /// <summary>
     /// Inicia sesión como usuario interno (Admin o User).
     /// </summary>
+    [AllowAnonymous]
     [HttpPost("login-user")]
     public async Task<ActionResult<AuthResponse>> LoginUser(LoginRequest request)
     {

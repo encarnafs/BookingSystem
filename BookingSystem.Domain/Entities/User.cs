@@ -5,6 +5,9 @@ namespace BookingSystem.Domain.Entities;
 
 public class User
 {
+    // -----------------------------
+    // Propiedades
+    // -----------------------------
     public Guid Id { get; private set; }
     public string Username { get; private set; } = default!;
     public Email Email { get; private set; } = default!;
@@ -14,31 +17,39 @@ public class User
     public bool IsActive { get; private set; } = true;
     public bool IsDeleted { get; private set; } = false;
 
-    public void Disable()
-    {
-        IsActive = false;
-    }
-
     private User() { }
 
+    // -----------------------------
+    // Constructor
+    // -----------------------------
     public User(string username, Email email, string passwordHash, string passwordSalt, string role)
     {
         Username = NormalizeUsername(username);
-        Email = email ?? throw new InvalidUserStateException("El email no puede ser nulo.");
+        Email = ValidateEmail(email);
         PasswordHash = ValidatePasswordHash(passwordHash);
-        PasswordSalt = passwordSalt ?? throw new InvalidUserStateException("El salt no puede ser nulo.");
+        PasswordSalt = ValidateSalt(passwordSalt);
         Role = NormalizeRole(role);
 
         Id = Guid.NewGuid();
     }
 
-
+    // -----------------------------
+    // Métodos públicos
+    // -----------------------------
     public void ChangePassword(string newHash, string newSalt)
     {
         PasswordHash = ValidatePasswordHash(newHash);
-        PasswordSalt = newSalt ?? throw new InvalidUserPasswordException("El salt no puede ser nulo.");
+        PasswordSalt = ValidateSalt(newSalt);
+    }
+    public void Disable()
+    {
+        IsActive = false;
     }
 
+    public void Enable()
+    {
+        IsActive = true;
+    }
 
     public void AssignRole(string newRole)
     {
@@ -51,7 +62,29 @@ public class User
     }
     public void UpdateEmail(Email newEmail)
     {
-        Email = newEmail ?? throw new InvalidUserStateException("El email no puede ser nulo.");
+        Email = ValidateEmail(newEmail);
+    }
+
+    public void MarkAsDeleted()
+    {
+        IsDeleted = true;
+    }
+
+    // -----------------------------
+    // Métodos privados 
+    // -----------------------------
+    private static Email ValidateEmail(Email email)
+    {
+        if (email is null)
+            throw new InvalidUserStateException("El email no puede ser nulo.");
+        return email;
+    }
+
+    private static string ValidateSalt(string salt)
+    {
+        if (string.IsNullOrWhiteSpace(salt))
+            throw new InvalidUserPasswordException("El salt no puede estar vacío.");
+        return salt;
     }
 
     private static string NormalizeUsername(string username)
@@ -86,9 +119,5 @@ public class User
         return hash;
     }
 
-    public void MarkAsDeleted()
-    {
-        IsDeleted = true;
-    }
 }
 

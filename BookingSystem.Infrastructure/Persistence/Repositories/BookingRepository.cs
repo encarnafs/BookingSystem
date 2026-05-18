@@ -27,7 +27,6 @@ namespace BookingSystem.Infrastructure.Persistence.Repositories
         public async Task<Booking?> GetByIdAsync(Guid id, CancellationToken cancellationToken)
         {
             return await _dbContext.Bookings
-                .AsNoTracking()
                 .Include(b => b.Room)
                 .Include(b => b.Client)
                 .FirstOrDefaultAsync(b => b.Id == id, cancellationToken);

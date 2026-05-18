@@ -72,12 +72,12 @@ public class RegisterClientHandler : IRequestHandler<RegisterClientCommand, Auth
         // 5. Devolver la respuesta de autenticación
         return new AuthResponse
         {
+            Success = true,
             Id = createdClient.Id,
             Username = createdClient.FullName,
             Email = createdClient.Email.Value,
             Role = "Client",
             Token = token,
-            Success = true,
             Message = "Cliente registrado correctamente."
         };
     }

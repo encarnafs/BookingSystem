@@ -3,7 +3,4 @@ using MediatR;
 
 namespace BookingSystem.Application.Users.Commands.DisableUser;
 
-public class DisableUserCommand : IRequest<UserDto>
-{
-    public Guid UserId { get; set; }
-}
+public record DisableUserCommand(Guid UserId) : IRequest<UserDto>;

@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using BookingSystem.Application.Common.Exceptions; // si tienes NotFoundException, etc.
+using FluentValidation;  // para ValidationException
 
 namespace BookingSystem.Api.Middleware;
 
@@ -31,15 +32,41 @@ public class ExceptionHandlingMiddleware : IMiddleware
             context.Response.StatusCode = StatusCodes.Status404NotFound;
             await context.Response.WriteAsJsonAsync(problem);
         }
-        catch (ValidationException)
+        catch (FluentValidation.ValidationException ex)
         {
+            var errors = ex.Errors.Select(e => e.ErrorMessage).ToArray();
+
             var problem = _problemDetailsFactory.CreateProblemDetails(
                 context,
                 statusCode: StatusCodes.Status400BadRequest,
                 title: "Validation error",
-                detail: "One or more validation errors occurred.");
+                detail: string.Join("; ", errors),
+                type: "https://httpstatuses.com/400"
+            );
 
             context.Response.StatusCode = StatusCodes.Status400BadRequest;
+            await context.Response.WriteAsJsonAsync(problem);
+        }
+        catch (ConflictException ex)
+        {
+            var problem = _problemDetailsFactory.CreateProblemDetails(
+                context,
+                statusCode: StatusCodes.Status409Conflict,
+                title: "Conflict error",
+                detail: ex.Message);
+
+            context.Response.StatusCode = StatusCodes.Status409Conflict;
+            await context.Response.WriteAsJsonAsync(problem);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+                var problem = _problemDetailsFactory.CreateProblemDetails(
+                context,
+                statusCode: StatusCodes.Status401Unauthorized,
+                title: "Unauthorized",
+                detail: ex.Message);
+
+            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
             await context.Response.WriteAsJsonAsync(problem);
         }
         catch (Exception ex)

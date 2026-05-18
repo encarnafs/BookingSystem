@@ -1,4 +1,5 @@
 ﻿using BookingSystem.Application.Clients.Events;
+using BookingSystem.Application.Common.Exceptions;
 using BookingSystem.Application.Common.Interfaces;
 using MediatR;
 
@@ -23,7 +24,7 @@ public class DeleteClientHandler : IRequestHandler<DeleteClientCommand, Unit>
     public async Task<Unit> Handle(DeleteClientCommand request, CancellationToken cancellationToken)
     {
         var client = await _clientRepository.GetByIdAsync(request.ClientId, cancellationToken)
-            ?? throw new Exception($"Cliente con ID {request.ClientId} no encontrado.");
+            ?? throw new NotFoundException("Client", request.ClientId);
 
         if (client.IsDeleted)
             return Unit.Value; // ya está eliminado

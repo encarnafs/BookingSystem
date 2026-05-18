@@ -5,6 +5,9 @@ namespace BookingSystem.Domain.Entities;
 
 public class Client
 {
+    // -----------------------------
+    // Propiedades
+    // -----------------------------
     public Guid Id { get; private set; }
     public string FullName { get; private set; } = default!;
     public Email Email { get; private set; } = default!;
@@ -21,30 +24,31 @@ public class Client
     public DateTime CreatedAt { get; private set; }
     public Guid? CreatedByUserId { get; private set; }
 
-
-
     // Constructor privado para EF Core
     private Client() { }
 
+    // -----------------------------
     // Constructor principal
+    // -----------------------------
     public Client(string fullName, Email email, PhoneNumber phoneNumber, string passwordHash, string passwordSalt)
     {
         FullName = NormalizeName(fullName);
-        Email = email ?? throw new InvalidClientStateException("El email no puede ser nulo.");
-        PhoneNumber = phoneNumber ?? throw new InvalidClientStateException("El teléfono no puede ser nulo.");
+        Email = ValidateEmail(email);
+        PhoneNumber = ValidatePhoneNumber(phoneNumber);
 
-        PasswordHash = passwordHash ?? throw new InvalidClientStateException("El hash no puede ser nulo.");
-        PasswordSalt = passwordSalt ?? throw new InvalidClientStateException("El salt no puede ser nulo.");
+        PasswordHash = ValidatePasswordHash(passwordHash);
+        PasswordSalt = ValidateSalt(passwordSalt);
 
         Id = Guid.NewGuid();
         IsActive = true;
         IsDeleted = false;
         Role = "Client";
-
         CreatedAt = DateTime.UtcNow;
     }
 
-    // Asignar CreatedByUserId después de la creación
+    // -----------------------------
+    // Métodos públicos
+    // -----------------------------
     public void SetCreatedBy(Guid createdByUserId)
     {
         CreatedByUserId = createdByUserId;
@@ -63,10 +67,24 @@ public class Client
 
     public void UpdateContactInfo(Email email, PhoneNumber phoneNumber)
     {
-        Email = email ?? throw new InvalidClientStateException("El email no puede ser nulo.");
-        PhoneNumber = phoneNumber ?? throw new InvalidClientStateException("El teléfono no puede ser nulo.");
+        Email = ValidateEmail(email);
+        PhoneNumber = ValidatePhoneNumber(phoneNumber);
     }
 
+    public void Disable()
+    {
+        IsActive = false;
+    }
+
+    public void MarkAsDeleted()
+    {
+        IsActive = false;
+        IsDeleted = true;
+    }
+
+    // -----------------------------
+    // Métodos privados (helpers)
+    // -----------------------------
     private static string NormalizeName(string name)
     {
         if (string.IsNullOrWhiteSpace(name))
@@ -80,15 +98,32 @@ public class Client
         return normalized;
     }
 
-    public void Disable()
+    private static Email ValidateEmail(Email email)
     {
-        IsActive = false;
+        if (email is null)
+            throw new InvalidClientStateException("El email no puede ser nulo.");
+        return email;
     }
 
-    public void MarkAsDeleted()
+    private static PhoneNumber ValidatePhoneNumber(PhoneNumber phoneNumber)
     {
-        IsActive = false;
-        IsDeleted = true;
+        if (phoneNumber is null)
+            throw new InvalidClientStateException("El teléfono no puede ser nulo.");
+        return phoneNumber;
+    }
+
+    private static string ValidatePasswordHash(string hash)
+    {
+        if (string.IsNullOrWhiteSpace(hash))
+            throw new InvalidClientStateException("El hash no puede ser nulo.");
+        return hash;
+    }
+
+    private static string ValidateSalt(string salt)
+    {
+        if (string.IsNullOrWhiteSpace(salt))
+            throw new InvalidClientStateException("El salt no puede ser nulo.");
+        return salt;
     }
 }
 

@@ -12,7 +12,6 @@ public class UserRepository : IUserRepository
 
     public async Task<User?> GetByIdAsync(Guid id, CancellationToken cancellationToken)
         => await _context.Users
-            .AsNoTracking()
             .FirstOrDefaultAsync(u => u.Id == id, cancellationToken);
 
     public async Task<List<User>> GetAllAsync(CancellationToken cancellationToken)

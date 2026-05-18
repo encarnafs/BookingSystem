@@ -1,7 +1,9 @@
-﻿using BookingSystem.Application.Common.Interfaces;
+﻿using BookingSystem.Application.Common.Exceptions;
+using BookingSystem.Application.Common.Interfaces;
 using BookingSystem.Application.Users.Dtos;
 using BookingSystem.Application.Users.Events;
 using MediatR;
+using System.Text.RegularExpressions;
 
 namespace BookingSystem.Application.Users.Commands.DisableUser;
 
@@ -24,16 +26,15 @@ public class DisableUserHandler : IRequestHandler<DisableUserCommand, UserDto>
     public async Task<UserDto> Handle(DisableUserCommand request, CancellationToken cancellationToken)
     {
         var user = await _userRepository.GetByIdAsync(request.UserId, cancellationToken)
-            ?? throw new Exception($"Usuario con ID {request.UserId} no encontrado.");
+            ?? throw new NotFoundException("User", request.UserId);
 
+        // No permitir desactivar un Admin
+        if (user.Role == "Admin")
+            throw new ConflictException("El usuario Admin no puede ser desactivado");
+
+        // Si ya está desactivado → lanzar ConflictException
         if (!user.IsActive)
-            return new UserDto
-            {
-                Id = user.Id,
-                Username = user.Username,
-                Email = user.Email.Value,
-                Role = user.Role
-            };
+            throw new ConflictException("Usuario ya está desactivado");
 
         var oldValues = new { IsActive = user.IsActive };
 

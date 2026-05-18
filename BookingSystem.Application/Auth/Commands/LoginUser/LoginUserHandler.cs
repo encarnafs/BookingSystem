@@ -39,6 +39,7 @@ public class LoginUserHandler : IRequestHandler<LoginUserCommand, AuthResponse>
 
         return new AuthResponse
         {
+            Success = true,
             Token = token,
             Id = user.Id,
             Username = user.Username,

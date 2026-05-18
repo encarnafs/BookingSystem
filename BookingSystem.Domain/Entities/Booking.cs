@@ -6,6 +6,9 @@ namespace BookingSystem.Domain.Entities;
 
 public class Booking
 {
+    // -----------------------------
+    // Propiedades
+    // -----------------------------
     public Guid Id { get; private set; }
     public Guid RoomId { get; private set; }
     public Guid ClientId { get; private set; }
@@ -15,48 +18,41 @@ public class Booking
     public string? Comments { get; private set; }
     public DateTime CreatedAt { get; private set; }
 
-    // ⭐⭐ PROPIEDADES DE NAVEGACIÓN
+    // Navegación
     public Room Room { get; private set; } = default!;
     public Client Client { get; private set; } = default!;
 
     // Constructor privado para EF Core
     private Booking() { }
 
+    // -----------------------------
     // Constructor principal
+    // -----------------------------
     public Booking(Guid roomId, Guid clientId, Guid createdByUserId, DateRange dateRange, string? comments = null)
     {
-        if (roomId == Guid.Empty)
-            throw new InvalidBookingStateException("El RoomId no puede estar vacío.");
-
-        if (clientId == Guid.Empty)
-            throw new InvalidBookingStateException("El ClientId no puede estar vacío.");
-
-        if (createdByUserId == Guid.Empty)
-            throw new InvalidBookingStateException("El CreatedByUserId no puede estar vacío.");
-
-        if (dateRange is null)
-            throw new InvalidBookingStateException("El DateRange no puede ser nulo.");
-
         Id = Guid.NewGuid();
-        RoomId = roomId;
-        ClientId = clientId;
-        CreatedByUserId = createdByUserId;
-        DateRange = dateRange;
+        RoomId = ValidateRoomId(roomId);
+        ClientId = ValidateClientId(clientId);
+        CreatedByUserId = ValidateCreatedByUserId(createdByUserId);
+        DateRange = ValidateDateRange(dateRange);
+
         Comments = comments;
         Status = BookingStatus.Pending;
         CreatedAt = DateTime.UtcNow;
     }
 
+    // -----------------------------
+    // Métodos públicos
+    // -----------------------------
     public void UpdateDates(DateRange newDateRange)
     {
         if (Status == BookingStatus.Cancelled)
             throw new InvalidBookingStateException("No se pueden modificar fechas de una reserva cancelada.");
 
-        // ⭐ Validar contra el nuevo rango, no el antiguo
         if (newDateRange.End < DateTime.UtcNow)
             throw new InvalidBookingStateException("No se puede modificar una reserva que ya ha finalizado.");
 
-        DateRange = newDateRange;
+        DateRange = ValidateDateRange(newDateRange);
     }
 
     public void UpdateComments(string? comments)
@@ -91,19 +87,44 @@ public class Booking
         if (Status == BookingStatus.Cancelled)
             throw new InvalidBookingStateException("No se puede actualizar una reserva cancelada.");
 
-        // ⭐ Validar contra el nuevo rango, no el antiguo
         if (newDateRange.End < DateTime.UtcNow)
-            throw new InvalidBookingStateException("No se puede modificar una reserva que ya ha finalizado");
+            throw new InvalidBookingStateException("No se puede modificar una reserva que ya ha finalizado.");
 
-        if (roomId == Guid.Empty)
-            throw new InvalidBookingStateException("El RoomId no puede estar vacío.");
-
-        if (clientId == Guid.Empty)
-            throw new InvalidBookingStateException("El ClientId no puede estar vacío.");
-
-        RoomId = roomId;
-        ClientId = clientId;
-        DateRange = newDateRange;
+        RoomId = ValidateRoomId(roomId);
+        ClientId = ValidateClientId(clientId);
+        DateRange = ValidateDateRange(newDateRange);
         Comments = comments;
     }
+
+    // -----------------------------
+    // Métodos privados (helpers)
+    // -----------------------------
+    private static Guid ValidateRoomId(Guid roomId)
+    {
+        if (roomId == Guid.Empty)
+            throw new InvalidBookingStateException("El RoomId no puede estar vacío.");
+        return roomId;
+    }
+
+    private static Guid ValidateClientId(Guid clientId)
+    {
+        if (clientId == Guid.Empty)
+            throw new InvalidBookingStateException("El ClientId no puede estar vacío.");
+        return clientId;
+    }
+
+    private static Guid ValidateCreatedByUserId(Guid createdByUserId)
+    {
+        if (createdByUserId == Guid.Empty)
+            throw new InvalidBookingStateException("El CreatedByUserId no puede estar vacío.");
+        return createdByUserId;
+    }
+
+    private static DateRange ValidateDateRange(DateRange dateRange)
+    {
+        if (dateRange is null)
+            throw new InvalidBookingStateException("El DateRange no puede ser nulo.");
+        return dateRange;
+    }
 }
+
