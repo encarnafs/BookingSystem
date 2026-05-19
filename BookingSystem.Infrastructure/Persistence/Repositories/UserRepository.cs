@@ -14,6 +14,13 @@ public class UserRepository : IUserRepository
         => await _context.Users
             .FirstOrDefaultAsync(u => u.Id == id, cancellationToken);
 
+    public async Task<User?> GetByIdIncludingDeletedAsync(Guid id, CancellationToken cancellationToken)
+    {
+        return await _context.Users
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(u => u.Id == id, cancellationToken);
+    }
+
     public async Task<List<User>> GetAllAsync(CancellationToken cancellationToken)
         => await _context.Users
             .AsNoTracking()

@@ -5,6 +5,7 @@ namespace BookingSystem.Application.Common.Interfaces;
 public interface IUserRepository
 {
     Task<User?> GetByIdAsync(Guid id, CancellationToken cancellationToken);
+    Task<User?> GetByIdIncludingDeletedAsync(Guid id, CancellationToken cancellationToken);
     Task<List<User>> GetAllAsync(CancellationToken cancellationToken);
     Task<User?> GetByUsernameAsync(string username, CancellationToken cancellationToken);
     Task UpdateAsync(User user, CancellationToken cancellationToken);
