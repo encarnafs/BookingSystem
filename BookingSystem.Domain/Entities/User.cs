@@ -12,7 +12,6 @@ public class User
     public string Username { get; private set; } = default!;
     public Email Email { get; private set; } = default!;
     public string PasswordHash { get; private set; } = default!;
-    public string PasswordSalt { get; private set; } = default!;
     public string Role { get; private set; } = default!;
     public bool IsActive { get; private set; } = true;
     public bool IsDeleted { get; private set; } = false;
@@ -22,12 +21,10 @@ public class User
     // -----------------------------
     // Constructor
     // -----------------------------
-    public User(string username, Email email, string passwordHash, string passwordSalt, string role)
+    public User(string username, Email email, string role)
     {
         Username = NormalizeUsername(username);
         Email = ValidateEmail(email);
-        PasswordHash = ValidatePasswordHash(passwordHash);
-        PasswordSalt = ValidateSalt(passwordSalt);
         Role = NormalizeRole(role);
 
         Id = Guid.NewGuid();
@@ -36,10 +33,14 @@ public class User
     // -----------------------------
     // Métodos públicos
     // -----------------------------
-    public void ChangePassword(string newHash, string newSalt)
+    public void SetPassword(string passwordHash)
+    {
+        PasswordHash = ValidatePasswordHash(passwordHash);
+    }
+
+    public void ChangePassword(string newHash)
     {
         PasswordHash = ValidatePasswordHash(newHash);
-        PasswordSalt = ValidateSalt(newSalt);
     }
     public void Disable()
     {
@@ -78,13 +79,6 @@ public class User
         if (email is null)
             throw new InvalidUserStateException("El email no puede ser nulo.");
         return email;
-    }
-
-    private static string ValidateSalt(string salt)
-    {
-        if (string.IsNullOrWhiteSpace(salt))
-            throw new InvalidUserPasswordException("El salt no puede estar vacío.");
-        return salt;
     }
 
     private static string NormalizeUsername(string username)

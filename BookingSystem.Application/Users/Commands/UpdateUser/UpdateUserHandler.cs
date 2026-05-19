@@ -31,7 +31,7 @@ public class UpdateUserHandler : IRequestHandler<UpdateUserCommand, UserDto>
 
         // Validar duplicado de email si se cambia
         if (user.Email.Value != request.Email &&
-            await _userRepository.ExistsByEmailAsync(request.Email, cancellationToken))
+            await _userRepository.ExistsByEmailAsync(Email.Create(request.Email), cancellationToken))
         {
             throw new ConflictException("El email ya está registrado.");
         }

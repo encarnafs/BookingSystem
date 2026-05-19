@@ -2,7 +2,9 @@
 using BookingSystem.Application.Common.Interfaces;
 using BookingSystem.Application.Users.Dtos;
 using BookingSystem.Application.Users.Events;
+using BookingSystem.Domain.Entities;
 using MediatR;
+using Microsoft.AspNetCore.Identity;
 
 namespace BookingSystem.Application.Users.Commands.ChangeUserPassword;
 
@@ -11,13 +13,13 @@ public class ChangeUserPasswordHandler : IRequestHandler<ChangeUserPasswordComma
     private readonly IUserRepository _userRepository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMediator _mediator;
-    private readonly IPasswordHasher _passwordHasher;
+    private readonly IPasswordHasher<User> _passwordHasher;
 
     public ChangeUserPasswordHandler(
         IUserRepository userRepository,
         IUnitOfWork unitOfWork,
         IMediator mediator,
-        IPasswordHasher passwordHasher)
+        IPasswordHasher<User> passwordHasher)
     {
         _userRepository = userRepository;
         _unitOfWork = unitOfWork;
@@ -30,25 +32,32 @@ public class ChangeUserPasswordHandler : IRequestHandler<ChangeUserPasswordComma
         var user = await _userRepository.GetByIdAsync(request.UserId, cancellationToken)
             ?? throw new NotFoundException("UserId", request.UserId);
 
-        // Validar contraseña actual
-        if (!_passwordHasher.Verify(request.CurrentPassword, user.PasswordHash, user.PasswordSalt))
+        // 1️⃣ Validar contraseña actual
+        var verifyResult = _passwordHasher.VerifyHashedPassword(
+            user,
+            user.PasswordHash,
+            request.CurrentPassword
+        );
+
+        if (verifyResult == PasswordVerificationResult.Failed)
             throw new UnauthorizedAccessException("La contraseña actual no es correcta.");
 
-        // Generar nuevo hash + salt
-        var (newHash, newSalt) = _passwordHasher.Hash(request.NewPassword);
+        // 2️⃣ Generar nuevo hash
+        var newHash = _passwordHasher.HashPassword(user, request.NewPassword);
 
         var oldValues = new { PasswordHash = user.PasswordHash };
         var newValues = new { PasswordHash = newHash };
 
-        // Actualizar contraseña en la entidad
-        user.ChangePassword(newHash, newSalt);
+        // 3️⃣ Actualizar contraseña en la entidad
+        user.SetPassword(newHash);
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        // Publicar eventos
+        // 4️⃣ Publicar eventos
         await _mediator.Publish(new UserPasswordChangedNotification(user.Id), cancellationToken);
         await _mediator.Publish(new UserUpdatedNotification(user.Id, oldValues, newValues), cancellationToken);
 
+        // 5️⃣ Devolver DTO
         return new UserDto
         {
             Id = user.Id,

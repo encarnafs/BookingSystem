@@ -26,7 +26,7 @@ public class AuthController : ControllerBase
     /// <summary>
     /// Registra un nuevo usuario del sistema (User).
     /// </summary>
-    [Authorize(Roles = "Admin")]
+    [AllowAnonymous]
     [HttpPost("register-user")]
     public async Task<ActionResult<AuthResponse>> RegisterUser(RegisterRequest request)
     {

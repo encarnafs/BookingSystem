@@ -1,5 +1,6 @@
 ﻿using BookingSystem.Application.Common.Interfaces;
 using BookingSystem.Domain.Entities;
+using BookingSystem.Domain.ValueObjects;
 using Microsoft.EntityFrameworkCore;
 
 namespace BookingSystem.Infrastructure.Persistence.Repositories;
@@ -40,10 +41,10 @@ public class UserRepository : IUserRepository
             .AsNoTracking()
             .FirstOrDefaultAsync(u => u.Username == username, cancellationToken);
 
-    public async Task<bool> ExistsByEmailAsync(string email, CancellationToken cancellationToken)
+    public async Task<bool> ExistsByEmailAsync(Email email, CancellationToken cancellationToken)
         => await _context.Users
             .AsNoTracking()
-            .AnyAsync(u => u.Email.Value == email, cancellationToken);
+            .AnyAsync(u => u.Email.Value == email.Value, cancellationToken);
 
     public async Task<bool> ExistsByUsernameAsync(string username, CancellationToken cancellationToken)
         => await _context.Users

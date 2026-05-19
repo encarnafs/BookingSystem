@@ -3,6 +3,7 @@ using BookingSystem.Application.Common.Interfaces;
 using BookingSystem.Domain.Entities;
 using BookingSystem.Domain.ValueObjects;
 using MediatR;
+using Microsoft.AspNetCore.Identity;
 
 namespace BookingSystem.Application.Auth.Commands.RegisterClient;
 
@@ -11,12 +12,14 @@ public class RegisterClientHandler : IRequestHandler<RegisterClientCommand, Auth
     private readonly IAuthService _authService;
     private readonly IJwtTokenGenerator _jwtTokenGenerator;
     private ICurrentUserService _currentUserService;
+    private readonly IPasswordHasher<Client> _passwordHasher;
 
-    public RegisterClientHandler(IAuthService authService, IJwtTokenGenerator jwtTokenGenerator, ICurrentUserService currentUserService)
+    public RegisterClientHandler(IAuthService authService, IJwtTokenGenerator jwtTokenGenerator, ICurrentUserService currentUserService, IPasswordHasher<Client> passwordHasher)
     {
         _authService = authService;
         _jwtTokenGenerator = jwtTokenGenerator;
         _currentUserService = currentUserService;
+        _passwordHasher = passwordHasher;
     }
 
     public async Task<AuthResponse> Handle(RegisterClientCommand request, CancellationToken cancellationToken)
@@ -34,24 +37,22 @@ public class RegisterClientHandler : IRequestHandler<RegisterClientCommand, Auth
         }
 
         // 2. Crear el cliente con contraseña hasheada
-        var hashedPassword = _authService.HashPassword(request.Password);
-
-       
         var client = new Client(
             request.FullName,
             Email.Create(request.Email),
-            PhoneNumber.Create(request.PhoneNumber),
-            hashedPassword.Hash,
-            hashedPassword.Salt 
+            PhoneNumber.Create(request.PhoneNumber)
         );
 
-        // Asignar CreatedByUserId correctamente
+        // 3. Hashear la contraseña con el estándar
+        var hashedPassword = _passwordHasher.HashPassword(client, request.Password);
+
+
+        // 4️. Asignar CreatedByUserId correctamente
         var createdBy = _currentUserService.UserId ?? client.Id;
         client.SetCreatedBy(createdBy);
 
-        // 3. Guardar el cliente en la base de datos
+        // 5️. Guardar el cliente en la base de datos
         var createdClient = await _authService.CreateClientAsync(client);
-
         if (createdClient is null)
         {
             return new AuthResponse
@@ -61,7 +62,7 @@ public class RegisterClientHandler : IRequestHandler<RegisterClientCommand, Auth
             };
         }
 
-        // 4. Generar el token JWT
+        // 6️. Generar el token JWT
         var token = _jwtTokenGenerator.GenerateToken(
             createdClient.Id,
             createdClient.Email.Value,
@@ -69,7 +70,7 @@ public class RegisterClientHandler : IRequestHandler<RegisterClientCommand, Auth
             "Client"
         );
 
-        // 5. Devolver la respuesta de autenticación
+        // 7️. Devolver la respuesta
         return new AuthResponse
         {
             Success = true,
@@ -80,5 +81,6 @@ public class RegisterClientHandler : IRequestHandler<RegisterClientCommand, Auth
             Token = token,
             Message = "Cliente registrado correctamente."
         };
+
     }
 }

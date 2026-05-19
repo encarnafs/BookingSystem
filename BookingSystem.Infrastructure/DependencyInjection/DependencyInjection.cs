@@ -1,5 +1,4 @@
-﻿
-using BookingSystem.Application.Common.Interfaces;
+﻿using BookingSystem.Application.Common.Interfaces;
 using BookingSystem.Infrastructure.Persistence;
 using BookingSystem.Infrastructure.Persistence.Repositories;
 using BookingSystem.Infrastructure.Services;
@@ -24,7 +23,6 @@ public static class DependencyInjection
         services.AddScoped<IClientRepository, ClientRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IEmailService, FakeEmailService>();
-        services.AddScoped<IPasswordHasher, PasswordHasher>();
         services.AddScoped<IAuditService, AuditService>();
 
         return services;

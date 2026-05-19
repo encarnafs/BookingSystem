@@ -1,15 +1,17 @@
 ﻿using BookingSystem.Api.Authorization;
+using BookingSystem.Api.Configuration;
 using BookingSystem.Api.Middleware;
 using BookingSystem.Api.Services;
-using BookingSystem.Api.Configuration;
 using BookingSystem.Application.Bookings.Commands.CreateBooking;
 using BookingSystem.Application.Common.Interfaces;
 using BookingSystem.Application.DependencyInjection;
+using BookingSystem.Domain.Entities;
 using BookingSystem.Infrastructure.Authentication;
 using BookingSystem.Infrastructure.DependencyInjection;
 using BookingSystem.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.EntityFrameworkCore;
@@ -154,6 +156,8 @@ builder.Services.AddScoped<IAuthorizationHandler, CanCancelBookingHandler>();
 // 4. Registrar servicios de autenticación
 builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
+builder.Services.AddScoped<IPasswordHasher<Client>, PasswordHasher<Client>>();
 
 // Controllers / Minimal APIs
 builder.Services.AddControllers();

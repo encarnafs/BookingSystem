@@ -1,23 +1,22 @@
 ﻿using BookingSystem.Application.Common.Interfaces;
 using BookingSystem.Domain.Entities;
 using BookingSystem.Infrastructure.Persistence;
-using BookingSystem.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
-using System.Security.Cryptography;
+using Microsoft.AspNetCore.Identity;
 
 namespace BookingSystem.Infrastructure.Authentication;
 
 public class AuthService : IAuthService
 {
     private readonly ApplicationDbContext _context;
+    private readonly IPasswordHasher<User> _passwordHasher;
+    private readonly IPasswordHasher<Client> _clientPasswordHasher;
 
-    private const int SaltSize = 16; // 128 bits
-    private const int KeySize = 32;  // 256 bits
-    private const int Iterations = 100000;
-
-    public AuthService(ApplicationDbContext context)
+    public AuthService(ApplicationDbContext context, IPasswordHasher<User> passwordHasher, IPasswordHasher<Client> clientPasswordHasher)
     {
         _context = context;
+        _passwordHasher = passwordHasher;
+        _clientPasswordHasher = clientPasswordHasher;
     }
 
     // -----------------------------
@@ -59,29 +58,7 @@ public class AuthService : IAuthService
     }
 
     // -----------------------------
-    // 5. Hash de contraseña
-    // -----------------------------
-    public (string Hash, string Salt) HashPassword(string password)
-    {
-        const int iterations = 100000;
-        const int saltSize = 16;
-        const int keySize = 32;
-
-        using var rng = RandomNumberGenerator.Create();
-        var saltBytes = new byte[saltSize];
-        rng.GetBytes(saltBytes);
-
-        using var pbkdf2 = new Rfc2898DeriveBytes(password, saltBytes, iterations, HashAlgorithmName.SHA256);
-        var keyBytes = pbkdf2.GetBytes(keySize);
-
-        var salt = Convert.ToBase64String(saltBytes);
-        var hash = Convert.ToBase64String(keyBytes);
-
-        return (hash, salt);
-    }
-
-    // -----------------------------
-    // 6. Validar usuario (login)
+    // 5. Validar usuario (login)
     // -----------------------------
     public async Task<User?> ValidateUserAsync(string email, string password, CancellationToken cancellationToken)
     {
@@ -91,19 +68,18 @@ public class AuthService : IAuthService
         if (user is null)
             return null;
 
-        if (!VerifyPassword(user.PasswordHash, user.PasswordSalt, password))
+        var result = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, password);
+
+        if (result == PasswordVerificationResult.Failed)
             return null;
 
         return user;
     }
 
     // -----------------------------
-    // 7. Validar cliente (login)
+    // 6. Validar cliente (login)
     // -----------------------------
-    public async Task<Client?> ValidateClientAsync(
-    string email,
-    string password,
-    CancellationToken cancellationToken)
+    public async Task<Client?> ValidateClientAsync(string email, string password, CancellationToken cancellationToken)
     {
         var client = await _context.Clients
             .FirstOrDefaultAsync(c => c.Email.Value == email, cancellationToken);
@@ -111,27 +87,20 @@ public class AuthService : IAuthService
         if (client is null)
             return null;
 
-        if (!VerifyPassword(client.PasswordHash, client.PasswordSalt, password))
+        var result = _clientPasswordHasher.VerifyHashedPassword(client, client.PasswordHash, password);
+
+        if (result == PasswordVerificationResult.Failed)
             return null;
 
         return client;
     }
 
-
     // -----------------------------
-    // 8. Verificar contraseña
+    // 7. Contar usuarios
     // -----------------------------
-    private static bool VerifyPassword(string storedHash, string storedSalt, string password)
+    public async Task<int> CountUsersAsync()
     {
-        const int iterations = 100000;
-        const int keySize = 32;
-
-        var saltBytes = Convert.FromBase64String(storedSalt);
-        var storedKeyBytes = Convert.FromBase64String(storedHash);
-
-        using var pbkdf2 = new Rfc2898DeriveBytes(password, saltBytes, iterations, HashAlgorithmName.SHA256);
-        var computedKey = pbkdf2.GetBytes(keySize);
-
-        return computedKey.SequenceEqual(storedKeyBytes);
+        return await _context.Users.CountAsync();
     }
+
 }

@@ -18,7 +18,6 @@ public class Client
 
     // Autenticación
     public string PasswordHash { get; private set; } = default!;
-    public string PasswordSalt { get; private set; } = default!;
 
     // Auditoría
     public DateTime CreatedAt { get; private set; }
@@ -28,16 +27,13 @@ public class Client
     private Client() { }
 
     // -----------------------------
-    // Constructor principal
+    // Constructor principal (sin password)
     // -----------------------------
-    public Client(string fullName, Email email, PhoneNumber phoneNumber, string passwordHash, string passwordSalt)
+    public Client(string fullName, Email email, PhoneNumber phoneNumber)
     {
         FullName = NormalizeName(fullName);
         Email = ValidateEmail(email);
         PhoneNumber = ValidatePhoneNumber(phoneNumber);
-
-        PasswordHash = ValidatePasswordHash(passwordHash);
-        PasswordSalt = ValidateSalt(passwordSalt);
 
         Id = Guid.NewGuid();
         IsActive = true;
@@ -49,6 +45,11 @@ public class Client
     // -----------------------------
     // Métodos públicos
     // -----------------------------
+    public void SetPassword(string passwordHash)
+    {
+        PasswordHash = ValidatePasswordHash(passwordHash);
+    }
+
     public void SetCreatedBy(Guid createdByUserId)
     {
         CreatedByUserId = createdByUserId;
@@ -116,15 +117,10 @@ public class Client
     {
         if (string.IsNullOrWhiteSpace(hash))
             throw new InvalidClientStateException("El hash no puede ser nulo.");
+
+        if (hash.Length < 20)
+            throw new InvalidClientStateException("El hash no es válido.");
+
         return hash;
     }
-
-    private static string ValidateSalt(string salt)
-    {
-        if (string.IsNullOrWhiteSpace(salt))
-            throw new InvalidClientStateException("El salt no puede ser nulo.");
-        return salt;
-    }
 }
-
-

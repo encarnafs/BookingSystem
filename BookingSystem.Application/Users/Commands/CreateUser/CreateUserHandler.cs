@@ -5,7 +5,7 @@ using BookingSystem.Application.Users.Events;
 using BookingSystem.Domain.Entities;
 using BookingSystem.Domain.ValueObjects;
 using MediatR;
-using System.Security.Cryptography;
+using Microsoft.AspNetCore.Identity;
 
 namespace BookingSystem.Application.Users.Commands.CreateUser;
 
@@ -14,13 +14,13 @@ public class CreateUserHandler : IRequestHandler<CreateUserCommand, UserDto>
     private readonly IUserRepository _userRepository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMediator _mediator;
-    private readonly IPasswordHasher _passwordHasher;
+    private readonly IPasswordHasher<User> _passwordHasher;
 
     public CreateUserHandler(
         IUserRepository userRepository,
         IUnitOfWork unitOfWork,
         IMediator mediator,
-        IPasswordHasher passwordHasher)
+        IPasswordHasher<User> passwordHasher)
     {
         _userRepository = userRepository;
         _unitOfWork = unitOfWork;
@@ -30,33 +30,35 @@ public class CreateUserHandler : IRequestHandler<CreateUserCommand, UserDto>
 
     public async Task<UserDto> Handle(CreateUserCommand request, CancellationToken cancellationToken)
     {
-        // Validar duplicados
-        if (await _userRepository.ExistsByEmailAsync(request.Email, cancellationToken))
+        // 1️. Crear VO Email
+        var email = Email.Create(request.Email);
+
+        // 2️. Validar duplicados
+        if (await _userRepository.ExistsByEmailAsync(email, cancellationToken))
             throw new ConflictException("El email ya está registrado.");
 
         if (await _userRepository.ExistsByUsernameAsync(request.Username, cancellationToken))
             throw new ConflictException("El nombre de usuario ya existe.");
 
-        var email = Email.Create(request.Email);
-
-        var (hash, salt) = _passwordHasher.Hash(request.Password);
-
+        // 3️. Crear entidad User sin contraseña
         var user = new User(
             request.Username,
             email,
-            hash,
-            salt,
-            request.Role
+            request.Role // "Admin" o "User"
         );
 
-        await _userRepository.AddAsync(user, cancellationToken);
+        // 4️. Hashear contraseña
+        var hashedPassword = _passwordHasher.HashPassword(user, request.Password);
+        user.SetPassword(hashedPassword);
 
-        // Guardar cambios
+        // 5️. Persistir
+        await _userRepository.AddAsync(user, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        // Publicar evento
+        // 6️. Publicar evento
         await _mediator.Publish(new UserCreatedNotification(user.Id), cancellationToken);
 
+        // 7️. Devolver DTO
         return new UserDto
         {
             Id = user.Id,

@@ -6,21 +6,23 @@ using BookingSystem.Application.Common.Interfaces;
 using BookingSystem.Domain.Entities;
 using BookingSystem.Domain.ValueObjects;
 using MediatR;
+using Microsoft.AspNetCore.Identity;
 
 namespace BookingSystem.Application.Clients.Commands.CreateClient;
+
 public class CreateClientHandler : IRequestHandler<CreateClientCommand, ClientDto>
 {
     private readonly IClientRepository _clientRepository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMediator _mediator;
-    private readonly IPasswordHasher _passwordHasher;
+    private readonly IPasswordHasher<Client> _passwordHasher;
     private readonly ICurrentUserService _currentUserService;
 
     public CreateClientHandler(
         IClientRepository clientRepository,
         IUnitOfWork unitOfWork,
         IMediator mediator,
-        IPasswordHasher passwordHasher,
+        IPasswordHasher<Client> passwordHasher,
         ICurrentUserService currentUserService)
     {
         _clientRepository = clientRepository;
@@ -32,40 +34,35 @@ public class CreateClientHandler : IRequestHandler<CreateClientCommand, ClientDt
 
     public async Task<ClientDto> Handle(CreateClientCommand request, CancellationToken cancellationToken)
     {
-        // 1. Crear Value Objects primero
+        // 1️⃣ Crear Value Objects primero
         var email = Email.Create(request.Email);
         var phone = PhoneNumber.Create(request.PhoneNumber);
 
-        // 2. Validar duplicados usando VO
+        // 2️⃣ Validar duplicados
         if (await _clientRepository.ExistsByEmailAsync(email, cancellationToken))
             throw new ConflictException("Ya existe un cliente con este email.");
 
         if (await _clientRepository.ExistsByPhoneAsync(phone, cancellationToken))
             throw new ConflictException("Ya existe un cliente con este teléfono.");
 
-        // 3. Hashear contraseña
-        var hashed = _passwordHasher.Hash(request.Password);
+        // 3️⃣ Crear entidad Client (sin contraseña)
+        var client = new Client(request.FullName, email, phone);
 
-        // 4. Crear entidad Client con hash y salt
-        var client = new Client(
-            request.FullName,
-            email,
-            phone,
-            hashed.Hash,
-            hashed.Salt
-        );
+        // 4️⃣ Hashear contraseña con el estándar
+        var hashedPassword = _passwordHasher.HashPassword(client, request.Password);
+        client.SetPassword(hashedPassword);
 
-        // Asignar el Admin como creador
+        // 5️⃣ Asignar el Admin como creador
         client.SetCreatedBy(_currentUserService.UserId ?? client.Id);
 
-        // 5. Persistir
+        // 6️⃣ Persistir
         await _clientRepository.AddAsync(client, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        // 6. Publicar evento
+        // 7️⃣ Publicar evento
         await _mediator.Publish(new ClientCreatedNotification(client.Id), cancellationToken);
 
-        // 7. Devolver DTO
+        // 8️⃣ Devolver DTO
         return new ClientDto
         {
             Id = client.Id,
@@ -74,6 +71,5 @@ public class CreateClientHandler : IRequestHandler<CreateClientCommand, ClientDt
             PhoneNumber = client.PhoneNumber.Value
         };
     }
-
 }
 
