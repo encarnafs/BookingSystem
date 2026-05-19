@@ -81,17 +81,27 @@ public class AuthService : IAuthService
     // -----------------------------
     public async Task<Client?> ValidateClientAsync(string email, string password, CancellationToken cancellationToken)
     {
+        // 1. Buscar el cliente por email
+        //    Si no existe, devolvemos null directamente.
         var client = await _context.Clients
             .FirstOrDefaultAsync(c => c.Email.Value == email, cancellationToken);
 
         if (client is null)
             return null;
 
+        // 2. Bloquear login si el cliente está eliminado (borrado lógico)
+        //    Esto evita que un cliente con IsDeleted = true pueda autenticarse.
+        if (client.IsDeleted)
+            return null;
+
+        // 3. Verificar la contraseña hasheada
+        //    Si la contraseña no coincide, devolvemos null.
         var result = _clientPasswordHasher.VerifyHashedPassword(client, client.PasswordHash, password);
 
         if (result == PasswordVerificationResult.Failed)
             return null;
 
+        // 4. Si todo es correcto, devolvemos el cliente autenticado
         return client;
     }
 

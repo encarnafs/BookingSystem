@@ -45,7 +45,7 @@ public class RegisterClientHandler : IRequestHandler<RegisterClientCommand, Auth
 
         // 3. Hashear la contraseña con el estándar
         var hashedPassword = _passwordHasher.HashPassword(client, request.Password);
-
+        client.SetPassword(hashedPassword);
 
         // 4️. Asignar CreatedByUserId correctamente
         var createdBy = _currentUserService.UserId ?? client.Id;
