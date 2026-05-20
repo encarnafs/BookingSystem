@@ -19,6 +19,9 @@ public class RoomConfiguration : IEntityTypeConfiguration<Room>
                .IsRequired()
                .HasMaxLength(100); // Nombre corto y manejable
 
+        // Índice único para evitar duplicados a nivel de base de datos
+        builder.HasIndex(r => r.Name).IsUnique();
+
         builder.Property(r => r.Capacity)
                .IsRequired();
 

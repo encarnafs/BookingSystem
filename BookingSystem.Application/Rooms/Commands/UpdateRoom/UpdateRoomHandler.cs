@@ -1,5 +1,6 @@
 ﻿using BookingSystem.Application.Common.Exceptions;
 using BookingSystem.Application.Common.Interfaces;
+using BookingSystem.Domain.Exceptions;
 using MediatR;
 
 namespace BookingSystem.Application.Rooms.Commands.UpdateRoom;
@@ -23,6 +24,12 @@ public class UpdateRoomHandler : IRequestHandler<UpdateRoomCommand>
 
         if (room is null)
             throw new NotFoundException("Room", request.Id);
+
+        // Checkea si ya existe una sala con el mismo nombre
+        var existingRoom = await _roomRepository.GetByNameAsync(request.Name, cancellationToken);
+
+        if (existingRoom is not null && existingRoom.Id != request.Id)
+            throw new InvalidRoomNameException(request.Name);
 
         room.UpdateName(request.Name);
         room.UpdateCapacity(request.Capacity);

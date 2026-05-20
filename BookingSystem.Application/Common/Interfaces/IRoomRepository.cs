@@ -8,4 +8,5 @@ public interface IRoomRepository
     Task<IList<Room>> GetAllAsync(CancellationToken cancellationToken);
     Task AddAsync(Room room, CancellationToken cancellationToken);
     Task UpdateAsync(Room room, CancellationToken cancellationToken);
+    Task<Room?> GetByNameAsync(string name, CancellationToken cancellationToken);
 }

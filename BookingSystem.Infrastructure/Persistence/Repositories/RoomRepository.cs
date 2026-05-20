@@ -40,5 +40,11 @@ namespace BookingSystem.Infrastructure.Persistence.Repositories
             _dbContext.Rooms.Update(room);
             return Task.CompletedTask;
         }
+
+        public async Task<Room?> GetByNameAsync(string name, CancellationToken cancellationToken)
+        {
+            return await _dbContext.Rooms
+                .FirstOrDefaultAsync(r => r.Name == name);
+        }
     }
 }

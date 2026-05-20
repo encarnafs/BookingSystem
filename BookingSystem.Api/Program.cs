@@ -14,6 +14,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Reflection;
@@ -127,6 +128,7 @@ builder.Services
     })
     .AddJwtBearer(options =>
     {
+        // Configuración de validación del token JWT
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
@@ -137,13 +139,68 @@ builder.Services
 
             ValidIssuer = jwtSettings.Issuer,
             ValidAudience = jwtSettings.Audience,
+
             IssuerSigningKey = new SymmetricSecurityKey(
                 Encoding.UTF8.GetBytes(jwtSettings.Secret)),
-            // Solo permitir HMAC-SHA256, no otros algoritmos. Buena práctica para evitar ataques  tipo: cambio de algoritmo a none "alg=none", cambio a RS256, usar un algoritmo débil o manipular el header del token. Es una capa extra de seguridad que asegura que el token sólo se valide si fue firmado con el algoritmo esperado.
+
+            // Solo permitir HMAC-SHA256
             ValidAlgorithms = [SecurityAlgorithms.HmacSha256],
+
             RequireExpirationTime = true
         };
-    });
+
+        // =========================
+        // RESPUESTAS PERSONALIZADAS
+        // PARA 401 Y 403
+        // =========================
+        //
+        // Por defecto, JWT devuelve:
+        // - 401 Unauthorized
+        // - 403 Forbidden
+        //
+        // con body vacío.
+        //
+        // Aquí personalizamos esas respuestas para
+        // devolver ProblemDetails en formato JSON,
+        // manteniendo una API consistente y profesional.
+        //
+        options.Events = new JwtBearerEvents
+        {
+            // Se ejecuta cuando el usuario NO está autenticado
+            // o el token es inválido/expirado.
+            OnChallenge = async context =>
+            {
+                // Evita que ASP.NET Core escriba
+                // la respuesta por defecto.
+                context.HandleResponse();
+
+            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            context.Response.ContentType = "application/problem+json";
+
+            await context.Response.WriteAsJsonAsync(new ProblemDetails
+            {
+                Title = "Unauthorized",
+                Status = StatusCodes.Status401Unauthorized,
+                Detail = "Se requiere autenticación para acceder a este recurso."
+            });
+        },
+
+        // Se ejecuta cuando el usuario está autenticado
+        // pero NO tiene permisos suficientes.
+        OnForbidden = async context =>
+        {
+            context.Response.StatusCode = StatusCodes.Status403Forbidden;
+            context.Response.ContentType = "application/problem+json";
+
+            await context.Response.WriteAsJsonAsync(new ProblemDetails
+            {
+                Title = "Forbidden",
+                Status = StatusCodes.Status403Forbidden,
+                Detail = "No tienes permiso para acceder a este recurso."
+            });
+        }
+     };
+     });
 
 // Authorization Policies
 builder.Services.AddAuthorizationBuilder()
@@ -193,6 +250,23 @@ app.UseSwaggerUI(options =>
 // Activar autenticación y autorización
 app.UseAuthentication();
 app.UseAuthorization();
+
+// Middleware para manejar errores y devolver respuestas con formato ProblemDetails en caso de códigos de estado 4xx o 5xx. Esto mejora la consistencia de las respuestas de error y facilita el manejo de errores en el cliente.
+app.UseStatusCodePages(async context =>
+{
+    var response = context.HttpContext.Response;
+
+    if (response.HasStarted)
+        return;
+
+    response.ContentType = "application/problem+json";
+
+    await response.WriteAsJsonAsync(new ProblemDetails
+    {
+        Status = response.StatusCode,
+        Title = ReasonPhrases.GetReasonPhrase(response.StatusCode)
+    });
+});
 
 app.MapControllers();
 

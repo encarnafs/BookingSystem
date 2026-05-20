@@ -2,7 +2,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using BookingSystem.Application.Common.Exceptions; // si tienes NotFoundException, etc.
-using FluentValidation;  // para ValidationException
+using FluentValidation;
+using BookingSystem.Domain.Exceptions;  // para ValidationException
 
 namespace BookingSystem.Api.Middleware;
 
@@ -40,14 +41,24 @@ public class ExceptionHandlingMiddleware : IMiddleware
                 context,
                 statusCode: StatusCodes.Status400BadRequest,
                 title: "Validation error",
-                detail: string.Join("; ", errors),
-                type: "https://httpstatuses.com/400"
+                detail: string.Join("; ", errors)
             );
 
             context.Response.StatusCode = StatusCodes.Status400BadRequest;
             await context.Response.WriteAsJsonAsync(problem);
         }
         catch (ConflictException ex)
+        {
+            var problem = _problemDetailsFactory.CreateProblemDetails(
+                context,
+                statusCode: StatusCodes.Status409Conflict,
+                title: "Conflict error",
+                detail: ex.Message);
+
+            context.Response.StatusCode = StatusCodes.Status409Conflict;
+            await context.Response.WriteAsJsonAsync(problem);
+        }
+        catch (InvalidRoomNameException ex)
         {
             var problem = _problemDetailsFactory.CreateProblemDetails(
                 context,

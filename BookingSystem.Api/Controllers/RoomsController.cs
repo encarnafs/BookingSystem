@@ -34,6 +34,10 @@ public class RoomsController : ControllerBase
     /// </remarks>
     [Authorize(Roles = "Admin")]
     [HttpPost]
+    [ProducesResponseType(typeof(RoomResponse), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<RoomResponse>> Create(CreateRoomRequest request)
     {
         var command = request.ToCommand();
@@ -54,6 +58,12 @@ public class RoomsController : ControllerBase
     /// </remarks>
     [Authorize(Roles = "Admin")]
     [HttpPut("{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> Update(Guid id, UpdateRoomRequest request)
     {
         var command = request.ToCommand(id);
