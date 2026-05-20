@@ -45,6 +45,7 @@ public class BookingsController : ControllerBase
     /// <remarks>
     /// Solo el administrador o el cliente dueño de la reserva pueden acceder a ella.
     /// </remarks>
+    [Authorize(Roles = "Admin, User, Client")]
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<BookingResponse>> GetById(Guid id)
     {
@@ -55,7 +56,7 @@ public class BookingsController : ControllerBase
 
         var booking = await _sender.Send(new GetBookingByIdQuery(id));
 
-        if (!User.IsInRole("Admin") && booking.ClientId != currentUserId)
+        if (!User.IsInRole("Admin") && !User.IsInRole("User") && booking.ClientId != currentUserId)
             return Forbid();
 
         return Ok(booking.ToResponse());
@@ -66,7 +67,7 @@ public class BookingsController : ControllerBase
     /// </summary>
     /// <param name="roomId">Identificador de la habitación.</param>
     /// <returns>Una colección de reservas asociadas a la habitación.</returns>
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin, User")]
     [HttpGet("room/{roomId:guid}")]
     public async Task<ActionResult<IEnumerable<BookingResponse>>> GetByRoom(Guid roomId)
     {
@@ -82,6 +83,7 @@ public class BookingsController : ControllerBase
     /// <remarks>
     /// Un cliente solo puede ver sus propias reservas. El administrador puede ver las de cualquier cliente.
     /// </remarks>
+    [Authorize(Roles = "Admin, User, Client")]
     [HttpGet("client/{clientId:guid}")]
     public async Task<ActionResult<IEnumerable<BookingResponse>>> GetByClient(Guid clientId)
     {
@@ -90,7 +92,7 @@ public class BookingsController : ControllerBase
 
         var currentUserId = _currentUser.UserId.Value;
 
-        if (!User.IsInRole("Admin") && clientId != currentUserId)
+        if (!User.IsInRole("Admin") && !User.IsInRole("User") && clientId != currentUserId)
             return Forbid();
 
         var result = await _sender.Send(new GetBookingsByClientIdQuery(clientId));
@@ -101,7 +103,7 @@ public class BookingsController : ControllerBase
     /// Obtiene todas las reservas del sistema.
     /// </summary>
     /// <returns>Una colección con todas las reservas.</returns>
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin, User")]
     [HttpGet]
     public async Task<ActionResult<IEnumerable<BookingResponse>>> GetAll()
     {
@@ -115,7 +117,7 @@ public class BookingsController : ControllerBase
     /// <param name="start">Fecha de inicio.</param>
     /// <param name="end">Fecha de fin.</param>
     /// <returns>Una colección de reservas dentro del rango especificado.</returns>
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin, User")]
     [HttpGet("daterange")]
     public async Task<ActionResult<IEnumerable<BookingResponse>>> GetInDateRange([FromQuery] DateTime start, [FromQuery] DateTime end)
     {
@@ -131,6 +133,7 @@ public class BookingsController : ControllerBase
     /// <remarks>
     /// Un cliente solo puede crear reservas para sí mismo. El administrador puede crear reservas para cualquier cliente.
     /// </remarks>
+    [Authorize(Roles = "Admin, User, Client")]
     [HttpPost]
     public async Task<ActionResult<BookingResponse>> Create(CreateBookingRequest request)
     {
@@ -139,7 +142,7 @@ public class BookingsController : ControllerBase
 
         var createdByUserId = _currentUser.UserId.Value;
 
-        if (!User.IsInRole("Admin") && request.ClientId is not null && request.ClientId != createdByUserId)
+        if (!User.IsInRole("Admin") && !User.IsInRole("User") && request.ClientId is not null && request.ClientId != createdByUserId)
             return Forbid();
 
         var clientId = request.ClientId ?? createdByUserId;
@@ -158,6 +161,7 @@ public class BookingsController : ControllerBase
     /// <param name="request">Nuevas fechas de inicio y fin.</param>
     /// <param name="cancellationToken">Token de cancelación.</param>
     /// <returns>Sin contenido si la operación es exitosa.</returns>
+    [Authorize(Roles = "Admin, User, Client")]
     [HttpPatch("{id:guid}/dates")]
     public async Task<IActionResult> UpdateDates(Guid id, UpdateBookingDatesRequest request, CancellationToken cancellationToken)
     {
@@ -168,7 +172,7 @@ public class BookingsController : ControllerBase
 
         var booking = await _sender.Send(new GetBookingByIdQuery(id), cancellationToken);
 
-        if (!User.IsInRole("Admin") && booking.ClientId != currentUserId)
+        if (!User.IsInRole("Admin") && !User.IsInRole("User") && booking.ClientId != currentUserId)
             return Forbid();
 
         var command = new UpdateBookingDatesCommand(id, request.Start, request.End);
@@ -185,6 +189,7 @@ public class BookingsController : ControllerBase
     /// <param name="request">Nuevos comentarios.</param>
     /// <param name="cancellationToken">Token de cancelación.</param>
     /// <returns>Sin contenido si la operación es exitosa.</returns>
+    [Authorize(Roles = "Admin, User, Client")]
     [HttpPatch("{id:guid}/comments")]
     public async Task<IActionResult> UpdateComments(Guid id, UpdateBookingCommentsRequest request, CancellationToken cancellationToken)
     {
@@ -195,7 +200,7 @@ public class BookingsController : ControllerBase
 
         var booking = await _sender.Send(new GetBookingByIdQuery(id), cancellationToken);
 
-        if (!User.IsInRole("Admin") && booking.ClientId != currentUserId)
+        if (!User.IsInRole("Admin") && !User.IsInRole("User") && booking.ClientId != currentUserId)
             return Forbid();
 
         var command = new UpdateBookingCommentsCommand(id, request.Comments);
@@ -214,6 +219,7 @@ public class BookingsController : ControllerBase
     /// <remarks>
     /// Solo el administrador o el cliente dueño de la reserva pueden confirmarla.
     /// </remarks>
+    [Authorize(Roles = "Admin, User, Client")]
     [HttpPost("{id:guid}/confirm")]
     public async Task<IActionResult> Confirm(Guid id, CancellationToken cancellationToken)
     {
@@ -224,7 +230,7 @@ public class BookingsController : ControllerBase
 
         var booking = await _sender.Send(new GetBookingByIdQuery(id), cancellationToken);
 
-        if (!User.IsInRole("Admin") && booking.ClientId != currentUserId)
+        if (!User.IsInRole("Admin") && !User.IsInRole("User") && booking.ClientId != currentUserId)
             return Forbid();
 
         await _sender.Send(new ConfirmBookingCommand(id), cancellationToken);
@@ -266,6 +272,7 @@ public class BookingsController : ControllerBase
     /// <remarks>
     /// Solo el administrador o el cliente dueño de la reserva pueden modificarla.
     /// </remarks>
+    [Authorize(Roles = "Admin, User, Client")]
     [HttpPut("{id:guid}")]
     public async Task<IActionResult> Update(Guid id, UpdateBookingRequest request, CancellationToken cancellationToken)
     {
@@ -276,7 +283,9 @@ public class BookingsController : ControllerBase
 
         var booking = await _sender.Send(new GetBookingByIdQuery(id), cancellationToken);
 
-        if (!User.IsInRole("Admin") && booking.ClientId != currentUserId)
+        // Solo Admin y User pueden modificar cualquier reserva.
+        // Client solo puede modificar la suya.
+        if (!User.IsInRole("Admin") && !User.IsInRole("User") && booking.ClientId != currentUserId)
             return Forbid();
 
         var command = request.ToCommand(booking.ClientId);
