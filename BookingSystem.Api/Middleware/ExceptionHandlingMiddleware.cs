@@ -47,18 +47,10 @@ public class ExceptionHandlingMiddleware : IMiddleware
             context.Response.StatusCode = StatusCodes.Status400BadRequest;
             await context.Response.WriteAsJsonAsync(problem);
         }
-        catch (ConflictException ex)
-        {
-            var problem = _problemDetailsFactory.CreateProblemDetails(
-                context,
-                statusCode: StatusCodes.Status409Conflict,
-                title: "Conflict error",
-                detail: ex.Message);
-
-            context.Response.StatusCode = StatusCodes.Status409Conflict;
-            await context.Response.WriteAsJsonAsync(problem);
-        }
-        catch (InvalidRoomNameException ex)
+        catch (Exception ex) when (
+            ex is ConflictException || 
+            ex is InvalidRoomNameException || 
+            ex is BookingOverlapException)
         {
             var problem = _problemDetailsFactory.CreateProblemDetails(
                 context,

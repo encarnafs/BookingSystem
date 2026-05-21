@@ -16,18 +16,29 @@ public static class BookingMapper
     // REQUEST → COMMAND (Entrada)
     // -----------------------------
 
+    // Este método convierte un CreateBookingRequest en un CreateBookingCommand.
+    // Se usa inicialización por propiedades porque CreateBookingCommand ahora es una clase mutable.
+    // El constructor con parámetros ya no existe (antes era un record posicional).
+    // Esto permite asignar ClientId dinámicamente según el usuario autenticado.
     public static CreateBookingCommand ToCommand(this CreateBookingRequest request, Guid currentUserId)
     {
-        var clientId = request.ClientId ?? currentUserId;
+        // Si el request no incluye ClientId (por ejemplo, cuando el rol es Client),
+        // se usa el ID del usuario autenticado para evitar que un cliente reserve en nombre de otro.
+        // ClientId puede ser nullable (Guid?), mientras que currentUserId es Guid.
+        // Se usa HasValue/Value para evitar el error CS0266 y garantizar que el tipo final sea Guid.
+        var clientId = request.ClientId.GetValueOrDefault(currentUserId);
 
-        return new CreateBookingCommand(
-            request.RoomId,
-            clientId,
-            request.Start,
-            request.End,
-            request.Comments
-            );
+        // Inicialización por propiedades (object initializer)
+        return new CreateBookingCommand
+        {
+            RoomId = request.RoomId,
+            ClientId = clientId,
+            Start = request.Start,
+            End = request.End,
+            Comments = request.Comments
+        };
     }
+
 
     public static UpdateBookingCommand ToCommand(this UpdateBookingRequest request, Guid clientId)
     {
@@ -74,7 +85,7 @@ public static class BookingMapper
             End = dto.End,
             Comments = dto.Comments,
             CreatedAt = dto.CreatedAt,
-            Status = dto.Status,
+            Status = dto.Status.ToString(),
             RoomName = dto.RoomName,
             ClientFullName = dto.ClientFullName
         };

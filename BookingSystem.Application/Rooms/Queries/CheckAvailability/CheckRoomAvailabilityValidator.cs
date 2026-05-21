@@ -11,6 +11,6 @@ public class CheckRoomAvailabilityValidator : AbstractValidator<CheckRoomAvailab
 
         RuleFor(x => x.Start)
             .LessThan(x => x.End)
-            .WithMessage("Start date must be earlier than End date.");
+            .WithMessage("La fecha de inicio debe ser anterior a la fecha de fin.");
     }
 }

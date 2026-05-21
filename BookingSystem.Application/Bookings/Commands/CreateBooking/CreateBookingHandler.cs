@@ -39,20 +39,46 @@ public class CreateBookingHandler : IRequestHandler<CreateBookingCommand, Bookin
 
     public async Task<BookingDto> Handle(CreateBookingCommand request, CancellationToken cancellationToken)
     {
+        // ⭐ 1. Validar que la sala existe
         var room = await _roomRepository.GetByIdAsync(request.RoomId, cancellationToken)
             ?? throw new NotFoundException("Room", request.RoomId);
 
-        var client = await _clientRepository.GetByIdAsync(request.ClientId, cancellationToken)
-            ?? throw new NotFoundException("Client", request.ClientId);
-
+        // ⭐ 2. Obtener el ID del usuario autenticado
         var createdByUserId = _currentUser.UserId
             ?? throw new ValidationException("Debe estar autenticado para crear una reserva.");
 
-        _ = await _userRepository.GetByIdAsync(createdByUserId, cancellationToken)
-            ?? throw new NotFoundException("User", createdByUserId);
+        // ⭐ 3. Obtener el rol del usuario autenticado
+        var role = _currentUser.Role;
 
+        // ⭐ 4. Si el rol es Client, el ClientId SIEMPRE es el del usuario autenticado
+        //    (un cliente no puede reservar para otro cliente)
+        if (role == "Client")
+        {
+            request.ClientId = createdByUserId;
+        }
+
+        // ⭐ 5. Validar que el cliente existe (ya con el ClientId corregido si era Client)
+        var client = await _clientRepository.GetByIdAsync(request.ClientId, cancellationToken)
+            ?? throw new NotFoundException("Client", request.ClientId);
+
+        // ⭐ 6. Validar que el creador existe en la tabla correcta
+        //    - Client → tabla Clients
+        //    - User/Admin → tabla Users
+        if (role == "Client")
+        {
+            _ = await _clientRepository.GetByIdAsync(createdByUserId, cancellationToken)
+                ?? throw new NotFoundException("Client", createdByUserId);
+        }
+        else
+        {
+            _ = await _userRepository.GetByIdAsync(createdByUserId, cancellationToken)
+                ?? throw new NotFoundException("User", createdByUserId);
+        }
+
+        // ⭐ 7. Validar rango de fechas (DateRange lanza excepción si es inválido)
         var dateRange = new DateRange(request.Start, request.End);
 
+        // ⭐ 8. Comprobar solapamientos con otras reservas
         var overlaps = await _bookingRepository.ExistsOverlappingBookingAsync(
             request.RoomId,
             dateRange.Start,
@@ -64,6 +90,7 @@ public class CreateBookingHandler : IRequestHandler<CreateBookingCommand, Bookin
         if (overlaps)
             throw new BookingOverlapException("La sala ya está reservada para las fechas seleccionadas.");
 
+        // ⭐ 9. Crear la reserva (CreatedAt se rellena automáticamente en el dominio)
         var booking = new Booking(
             room.Id,
             client.Id,
@@ -74,12 +101,13 @@ public class CreateBookingHandler : IRequestHandler<CreateBookingCommand, Bookin
 
         await _bookingRepository.AddAsync(booking, cancellationToken);
 
-        // ⭐ GUARDAR CAMBIOS
+        // ⭐ 10. Guardar cambios
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        // ⭐ PUBLICAR APPLICATION EVENT
+        // ⭐ 11. Publicar evento de dominio
         await _mediator.Publish(new BookingCreatedNotification(booking.Id), cancellationToken);
 
+        // ⭐ 12. Devolver DTO
         return new BookingDto
         {
             Id = booking.Id,
@@ -94,4 +122,3 @@ public class CreateBookingHandler : IRequestHandler<CreateBookingCommand, Bookin
         };
     }
 }
-
