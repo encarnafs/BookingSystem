@@ -21,7 +21,7 @@ public class GetRoomByIdHandler : IRequestHandler<GetRoomByIdQuery, RoomDto>
     {
         var room = await _roomRepository.GetByIdAsync(request.Id, cancellationToken);
         if (room == null)
-            throw new NotFoundException($"Sala con Id {request.Id} no encontrada.", request.Id);
+            throw new NotFoundException($"Sala con Id {request.Id} no encontrada.");
 
         return new RoomDto
         {

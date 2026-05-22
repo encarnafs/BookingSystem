@@ -2,7 +2,6 @@
 using BookingSystem.Api.Configuration;
 using BookingSystem.Api.Middleware;
 using BookingSystem.Api.Services;
-using BookingSystem.Application.Bookings.Commands.CreateBooking;
 using BookingSystem.Application.Common.Interfaces;
 using BookingSystem.Application.DependencyInjection;
 using BookingSystem.Domain.Entities;
@@ -18,6 +17,7 @@ using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Reflection;
+using System.Security.Claims;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -128,7 +128,9 @@ builder.Services
     })
     .AddJwtBearer(options =>
     {
-        // Configuración de validación del token JWT
+        // ============================
+        // VALIDACIÓN DEL TOKEN JWT
+        // ============================
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
@@ -149,58 +151,84 @@ builder.Services
             RequireExpirationTime = true
         };
 
-        // =========================
-        // RESPUESTAS PERSONALIZADAS
-        // PARA 401 Y 403
-        // =========================
-        //
-        // Por defecto, JWT devuelve:
-        // - 401 Unauthorized
-        // - 403 Forbidden
-        //
-        // con body vacío.
-        //
-        // Aquí personalizamos esas respuestas para
-        // devolver ProblemDetails en formato JSON,
-        // manteniendo una API consistente y profesional.
-        //
+        // ============================================
+        // EVENTOS JWT (VALIDACIÓN + RESPUESTAS 401/403)
+        // ============================================
         options.Events = new JwtBearerEvents
         {
-            // Se ejecuta cuando el usuario NO está autenticado
-            // o el token es inválido/expirado.
+            // Validación adicional: comprobar que el usuario sigue activo
+            OnTokenValidated = async context =>
+            {
+                var userId = context.Principal?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+                // Si el token no trae el userId, el token es inválido.
+                // Esto protege contra tokens manipulados o mal formados.
+                if (string.IsNullOrEmpty(userId))
+                {
+                    context.Fail("Token inválido: falta el ID del usuario");
+                    return;
+                }
+
+                // Obtengo el repositorio de usuarios desde el contenedor de dependencias.
+                var userRepository = context.HttpContext.RequestServices.GetRequiredService<IUserRepository>();
+
+                // Consulto la base de datos para obtener el usuario.
+                var user = await userRepository.GetByIdAsync(Guid.Parse(userId), context.HttpContext.RequestAborted);
+
+                // Valido el estado del usuario según el dominio.
+                //    - Si no existe → token inválido.
+                //    - Si está inactivo → token inválido.
+                //    - Si está marcado como eliminado → token inválido.
+                //    Esto permite revocar acceso incluso si el token sigue siendo técnicamente válido.
+                if (user == null || !user.IsActive || user.IsDeleted)
+                {
+                    context.Fail("Usuario no activo");
+                    return;
+                }
+                // Si todo está bien, no hago nada más.
+                // El token se considera válido y la petición continúa.
+            },
+
+            // Personalización del 401 Unauthorized
             OnChallenge = async context =>
             {
-                // Evita que ASP.NET Core escriba
-                // la respuesta por defecto.
                 context.HandleResponse();
 
-            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-            context.Response.ContentType = "application/problem+json";
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                context.Response.ContentType = "application/problem+json";
 
-            await context.Response.WriteAsJsonAsync(new ProblemDetails
+                // Si el contexto tiene un error personalizado, lo uso como detalle. Si no, se muestra el mensaje genérico
+                var detail = context.Error switch
+                {           
+                    "invalid_token" => "Token inválido o usuario no activo.",
+                    "missing_token" => "Falta el token de autenticación.",
+                    _ => "Se requiere autenticación para acceder a este recurso."
+                };
+
+                await context.Response.WriteAsJsonAsync(new ProblemDetails
+                {
+                    Title = "Unauthorized",
+                    Status = StatusCodes.Status401Unauthorized,
+                    Detail = detail
+                });
+            },
+
+            // Personalización del 403 Forbidden
+            OnForbidden = async context =>
             {
-                Title = "Unauthorized",
-                Status = StatusCodes.Status401Unauthorized,
-                Detail = "Se requiere autenticación para acceder a este recurso."
-            });
-        },
+                context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                context.Response.ContentType = "application/problem+json";
 
-        // Se ejecuta cuando el usuario está autenticado
-        // pero NO tiene permisos suficientes.
-        OnForbidden = async context =>
-        {
-            context.Response.StatusCode = StatusCodes.Status403Forbidden;
-            context.Response.ContentType = "application/problem+json";
+                await context.Response.WriteAsJsonAsync(new ProblemDetails
+                {
+                    Title = "Forbidden",
+                    Status = StatusCodes.Status403Forbidden,
+                    Detail = "No tienes permiso para acceder a este recurso."
+                });
+            }
+        };
+    });
 
-            await context.Response.WriteAsJsonAsync(new ProblemDetails
-            {
-                Title = "Forbidden",
-                Status = StatusCodes.Status403Forbidden,
-                Detail = "No tienes permiso para acceder a este recurso."
-            });
-        }
-     };
-     });
 
 // Authorization Policies
 builder.Services.AddAuthorizationBuilder()

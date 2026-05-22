@@ -15,5 +15,5 @@ public class RoomAvailabilityResponse
     /// <summary>
     /// Lista de reservas que entran en conflicto con la solicitud de disponibilidad.
     /// </summary>
-    public List<BookingResponse> ConflictingBookings { get; set; } = new();
+    public List<BookingResponse> ConflictingBookings { get; set; } = [];
 }
