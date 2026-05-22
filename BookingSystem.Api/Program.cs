@@ -103,6 +103,9 @@ var jwtSettingsSection = builder.Configuration.GetSection("JwtSettings");
 builder.Services.Configure<JwtSettings>(jwtSettingsSection);
 var jwtSettings = jwtSettingsSection.Get<JwtSettings>();
 
+if (jwtSettings is null || string.IsNullOrWhiteSpace(jwtSettings.Secret))
+    throw new InvalidOperationException("JWT Secret no está configurado correctamente.");
+
 if (jwtSettings.Secret.Length < 32)
     throw new InvalidOperationException("JWT Secret debe tener al menos 32 caracteres.");
 
