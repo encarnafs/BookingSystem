@@ -130,10 +130,13 @@ public class BookingsController : ControllerBase
     /// </summary>
     /// <remarks>
     /// Reglas de negocio:
-    /// 
+    ///
+    /// - La sala debe existir.
+    /// - El cliente debe existir (excepto cuando el usuario autenticado es <b>Client</b>).
     /// - Los usuarios con rol <b>Client</b> solo pueden crear reservas para sí mismos.
     /// - Los usuarios con rol <b>Admin</b> o <b>User</b> pueden crear reservas para cualquier cliente.
     /// - Si el usuario autenticado es <b>Client</b>, el campo <b>clientId</b> debe omitirse.
+    /// - El campo <b>comments</b> es opcional; si no se envía, se establece como <c>null</c>.
     /// - El estado inicial de la reserva será <b>Pending</b>.
     /// - Las fechas no pueden solaparse con reservas existentes.
     /// - La fecha de inicio debe ser anterior a la fecha de fin.
@@ -144,6 +147,7 @@ public class BookingsController : ControllerBase
     /// <response code="400">Datos inválidos (fechas incorrectas, formato inválido, etc.).</response>
     /// <response code="401">No autorizado.</response>
     /// <response code="403">Prohibido: el usuario no tiene permisos para crear esta reserva.</response>
+    /// <response code="404">La sala o el cliente no existen.</response>
     /// <response code="409">Conflicto: la sala ya está reservada en ese rango de fechas.</response>
     [Authorize(Roles = "Admin, User, Client")]
     [HttpPost]

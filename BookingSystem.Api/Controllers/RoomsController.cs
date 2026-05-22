@@ -31,10 +31,11 @@ public class RoomsController : ControllerBase
     /// <returns>La sala creada.</returns>
     /// <remarks>
     /// Solo los administradores pueden crear salas.
-    /// 
+    ///
     /// Reglas de negocio:
-    /// - El nombre de la sala debe ser único.
-    /// - La capacidad debe ser un número válido.
+    /// - El nombre es obligatorio y debe ser único.
+    /// - La descripción es obligatoria.
+    /// - La capacidad es obligatoria y debe ser mayor que 0.
     /// - Se devuelve <b>201 Created</b> con la sala recién creada.
     /// </remarks>
     [Authorize(Roles = "Admin")]
@@ -62,11 +63,13 @@ public class RoomsController : ControllerBase
     /// <returns>Sin contenido si la operación es exitosa.</returns>
     /// <remarks>
     /// Solo los administradores pueden actualizar salas.
-    /// 
+    ///
     /// Reglas de negocio:
     /// - La sala debe existir.
-    /// - El nombre debe ser único.
-    /// - La capacidad debe ser válida.
+    /// - El nombre es obligatorio y debe ser único.
+    /// - La descripción es obligatoria.
+    /// - La capacidad es obligatoria y debe ser mayor que 0.
+    /// - Si no se envía el campo <c>isActive</c>, se interpreta como <c>false</c> (la sala queda desactivada).
     /// - Devuelve <b>204 NoContent</b> si la actualización se realiza correctamente.
     /// </remarks>
     [Authorize(Roles = "Admin")]
@@ -93,9 +96,10 @@ public class RoomsController : ControllerBase
     /// <returns>Los datos de la sala solicitada.</returns>
     /// <remarks>
     /// Disponible para administradores y usuarios autenticados.
-    /// 
+    ///
     /// Reglas de negocio:
     /// - La sala debe existir.
+    /// - Requiere autenticación.
     /// - Si no existe, se devuelve <b>404 NotFound</b>.
     /// </remarks>
     [Authorize(Roles = "Admin,User")]
@@ -142,23 +146,20 @@ public class RoomsController : ControllerBase
     /// </summary>
     /// <remarks>
     /// Este endpoint permite verificar si una sala está disponible entre dos fechas.
-    /// 
+    ///
     /// - Devuelve <b>isAvailable = true</b> si no existe ninguna reserva que solape.
     /// - Devuelve <b>isAvailable = false</b> junto con la lista de reservas que causan conflicto.
     /// - Siempre devuelve <b>200 OK</b>, incluso cuando la sala no está disponible.
-    /// 
+    ///
     /// Reglas de negocio:
     /// - La sala debe existir.
     /// - Las fechas deben ser válidas (la fecha de inicio debe ser anterior a la fecha de fin).
+    /// - Requiere autenticación.
     /// - Se devuelven todas las reservas que solapan, incluyendo su estado actual.
-    /// 
+    ///
     /// <b>Comportamiento según el rol del usuario:</b>
-    /// - Los usuarios con rol <b>Client</b> reciben una respuesta reducida:
-    ///   {
-    ///     "isAvailable": true/false
-    ///   }
-    /// - Los usuarios con rol <b>Admin</b> o <b>User</b> reciben la respuesta completa,
-    ///   incluyendo las reservas que causan conflicto.
+    /// - Client → respuesta reducida.
+    /// - Admin/User → respuesta completa.
     /// </remarks>
     /// <param name="roomId">Identificador de la sala.</param>
     /// <param name="start">Fecha de inicio del rango.</param>

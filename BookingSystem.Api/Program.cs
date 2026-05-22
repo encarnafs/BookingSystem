@@ -16,6 +16,7 @@ using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
 using System.Reflection;
 using System.Security.Claims;
 using System.Text;
@@ -38,9 +39,6 @@ builder.Services.AddVersionedApiExplorer(options =>
     options.GroupNameFormat = "'v'VVV";
     options.SubstituteApiVersionInUrl = true;
 });
-
-// OpenAPI
-//builder.Services.AddOpenApi();
 
 // Swagger
 builder.Services.AddSwaggerGen(options =>
@@ -74,13 +72,6 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
-
-// Incluir comentarios XML en Swagger para mejorar la documentación de la API. Esto permite que las descripciones de los controladores, acciones y modelos aparezcan en la interfaz de Swagger UI, lo que facilita a los desarrolladores entender cómo usar la API.
-builder.Services.AddSwaggerGen(options =>
-{
-    var xmlFilename = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
-    options.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, xmlFilename));
-});
 builder.Services.ConfigureOptions<ConfigureSwaggerOptions>();
 
 builder.Services.AddTransient<ExceptionHandlingMiddleware>();
@@ -107,17 +98,15 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 // =========================
 // . CONFIGURACIÓN JWT
 // =========================
-// 1. Cargar JwtSettings (Issuer, Audience, ExpiryMinutes + Secret desde User Secrets)
-var jwtSettings = new JwtSettings();
-builder.Configuration.GetSection("JwtSettings").Bind(jwtSettings);
-
-// 2. Registrar JwtSettings para inyección
-builder.Services.Configure<JwtSettings>(
-    builder.Configuration.GetSection("JwtSettings"));
+// 1. Cargar JwtSettings
+var jwtSettingsSection = builder.Configuration.GetSection("JwtSettings");
+builder.Services.Configure<JwtSettings>(jwtSettingsSection);
+var jwtSettings = jwtSettingsSection.Get<JwtSettings>();
 
 if (jwtSettings.Secret.Length < 32)
     throw new InvalidOperationException("JWT Secret debe tener al menos 32 caracteres.");
 
+JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
 
 // 3. Configurar autenticación JWT y Authorization
 builder.Services
@@ -138,16 +127,10 @@ builder.Services
             ValidateLifetime = true,
             ClockSkew = TimeSpan.Zero,
             ValidateIssuerSigningKey = true,
-
             ValidIssuer = jwtSettings.Issuer,
             ValidAudience = jwtSettings.Audience,
-
             IssuerSigningKey = new SymmetricSecurityKey(
                 Encoding.UTF8.GetBytes(jwtSettings.Secret)),
-
-            // Solo permitir HMAC-SHA256
-            ValidAlgorithms = [SecurityAlgorithms.HmacSha256],
-
             RequireExpirationTime = true
         };
 
@@ -156,50 +139,49 @@ builder.Services
         // ============================================
         options.Events = new JwtBearerEvents
         {
-            // Validación adicional: comprobar que el usuario sigue activo
             OnTokenValidated = async context =>
             {
                 var userId = context.Principal?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                var role = context.Principal?.FindFirst(ClaimTypes.Role)?.Value?.Trim();
 
-                // Si el token no trae el userId, el token es inválido.
-                // Esto protege contra tokens manipulados o mal formados.
-                if (string.IsNullOrEmpty(userId))
+                if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(role))
                 {
-                    context.Fail("Token inválido: falta el ID del usuario");
+                    context.Fail("Token inválido");
                     return;
                 }
 
-                // Obtengo el repositorio de usuarios desde el contenedor de dependencias.
-                var userRepository = context.HttpContext.RequestServices.GetRequiredService<IUserRepository>();
-
-                // Consulto la base de datos para obtener el usuario.
-                var user = await userRepository.GetByIdAsync(Guid.Parse(userId), context.HttpContext.RequestAborted);
-
-                // Valido el estado del usuario según el dominio.
-                //    - Si no existe → token inválido.
-                //    - Si está inactivo → token inválido.
-                //    - Si está marcado como eliminado → token inválido.
-                //    Esto permite revocar acceso incluso si el token sigue siendo técnicamente válido.
-                if (user == null || !user.IsActive || user.IsDeleted)
+                if (role == "Client")
                 {
-                    context.Fail("Usuario no activo");
-                    return;
+                    var clientRepository = context.HttpContext.RequestServices.GetRequiredService<IClientRepository>();
+                    var client = await clientRepository.GetByIdAsync(Guid.Parse(userId), context.HttpContext.RequestAborted);
+
+                    if (client == null || !client.IsActive || client.IsDeleted)
+                    {
+                        context.Fail("Cliente no activo");
+                        return;
+                    }
                 }
-                // Si todo está bien, no hago nada más.
-                // El token se considera válido y la petición continúa.
+                else
+                {
+                    var userRepository = context.HttpContext.RequestServices.GetRequiredService<IUserRepository>();
+                    var user = await userRepository.GetByIdAsync(Guid.Parse(userId), context.HttpContext.RequestAborted);
+
+                    if (user == null || !user.IsActive || user.IsDeleted)
+                    {
+                        context.Fail("Usuario no activo");
+                        return;
+                    }
+                }
             },
 
-            // Personalización del 401 Unauthorized
             OnChallenge = async context =>
             {
                 context.HandleResponse();
-
                 context.Response.StatusCode = StatusCodes.Status401Unauthorized;
                 context.Response.ContentType = "application/problem+json";
 
-                // Si el contexto tiene un error personalizado, lo uso como detalle. Si no, se muestra el mensaje genérico
                 var detail = context.Error switch
-                {           
+                {
                     "invalid_token" => "Token inválido o usuario no activo.",
                     "missing_token" => "Falta el token de autenticación.",
                     _ => "Se requiere autenticación para acceder a este recurso."
@@ -213,7 +195,6 @@ builder.Services
                 });
             },
 
-            // Personalización del 403 Forbidden
             OnForbidden = async context =>
             {
                 context.Response.StatusCode = StatusCodes.Status403Forbidden;
@@ -238,7 +219,7 @@ builder.Services.AddAuthorizationBuilder()
 // Registrar el handler de autorización
 builder.Services.AddScoped<IAuthorizationHandler, CanCancelBookingHandler>();
 
-// 4. Registrar servicios de autenticación
+// Registrar servicios de autenticación
 builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();

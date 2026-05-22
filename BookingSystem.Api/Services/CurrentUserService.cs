@@ -1,5 +1,6 @@
 ﻿using System.Security.Claims;
 using BookingSystem.Application.Common.Interfaces;
+using Microsoft.IdentityModel.JsonWebTokens;
 
 namespace BookingSystem.Api.Services;
 
@@ -15,7 +16,7 @@ public class CurrentUserService : ICurrentUserService
 
         if (user?.Identity?.IsAuthenticated == true)
         {
-            var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var userIdClaim = user.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
             var emailClaim = user.FindFirst(ClaimTypes.Email)?.Value;
             var roleClaim = user.FindFirst(ClaimTypes.Role)?.Value;
 
