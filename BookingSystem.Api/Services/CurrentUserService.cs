@@ -16,7 +16,7 @@ public class CurrentUserService : ICurrentUserService
 
         if (user?.Identity?.IsAuthenticated == true)
         {
-            var userIdClaim = user.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
+            var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             var emailClaim = user.FindFirst(ClaimTypes.Email)?.Value;
             var roleClaim = user.FindFirst(ClaimTypes.Role)?.Value;
 

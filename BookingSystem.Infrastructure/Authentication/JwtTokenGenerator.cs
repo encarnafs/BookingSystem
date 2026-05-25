@@ -26,12 +26,12 @@ public class JwtTokenGenerator : IJwtTokenGenerator
     {
         var claims = new[]
         {
-            new Claim(JwtRegisteredClaimNames.Sub, userId.ToString()),
-            new Claim(JwtRegisteredClaimNames.Email, email),
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-            new Claim(ClaimTypes.Name, username),
-            new Claim("role", role)
-        };
+        new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
+        new Claim(ClaimTypes.Email, email),
+        new Claim(ClaimTypes.Name, username),
+        new Claim(ClaimTypes.Role, role),
+        new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+    };
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_settings.Secret));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
@@ -42,9 +42,6 @@ public class JwtTokenGenerator : IJwtTokenGenerator
             claims: claims,
             expires: DateTime.UtcNow.AddMinutes(_settings.ExpiryMinutes),
             signingCredentials: creds);
-
-        Console.WriteLine($"JWT Secret (first 10 chars): {_settings.Secret.Substring(0, 10)}");
-
 
         return new JwtSecurityTokenHandler().WriteToken(token);
     }

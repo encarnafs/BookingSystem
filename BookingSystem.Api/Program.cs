@@ -134,7 +134,11 @@ builder.Services
             ValidAudience = jwtSettings.Audience,
             IssuerSigningKey = new SymmetricSecurityKey(
                 Encoding.UTF8.GetBytes(jwtSettings.Secret)),
-            RequireExpirationTime = true
+            RequireExpirationTime = true,
+
+            //Si no le digo esto, seguirá usando los claims XML antiguos
+            NameClaimType = ClaimTypes.NameIdentifier,
+            RoleClaimType = ClaimTypes.Role
         };
 
         // ============================================
@@ -257,7 +261,6 @@ app.UseSwaggerUI(options =>
             description.GroupName.ToUpperInvariant());
     }
 });
-
 
 // Activar autenticación y autorización
 app.UseAuthentication();
