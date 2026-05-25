@@ -70,6 +70,9 @@ public class BookingsController : ControllerBase
 
         var booking = await _sender.Send(new GetBookingByIdQuery(id));
 
+        if (booking is null)
+            return NotFound();
+
         if (!User.IsInRole("Admin") && !User.IsInRole("User") && booking.ClientId != currentUserId)
             return Forbid();
 

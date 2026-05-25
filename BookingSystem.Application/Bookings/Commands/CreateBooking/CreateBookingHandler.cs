@@ -104,6 +104,9 @@ public class CreateBookingHandler : IRequestHandler<CreateBookingCommand, Bookin
         // ⭐ 10. Guardar cambios
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
+        // Recargar con navegación
+        var created = await _bookingRepository.GetByIdAsync(booking.Id, cancellationToken);
+
         // ⭐ 11. Publicar evento de dominio
         await _mediator.Publish(new BookingCreatedNotification(booking.Id), cancellationToken);
 
@@ -118,7 +121,9 @@ public class CreateBookingHandler : IRequestHandler<CreateBookingCommand, Bookin
             End = booking.DateRange.End,
             Comments = booking.Comments,
             Status = booking.Status.ToString(),
-            CreatedAt = booking.CreatedAt
+            CreatedAt = booking.CreatedAt,
+            RoomName = created.Room!.Name,
+            ClientFullName = created.Client!.FullName
         };
     }
 }

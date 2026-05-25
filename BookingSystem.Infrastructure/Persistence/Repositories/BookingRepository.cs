@@ -97,6 +97,8 @@ namespace BookingSystem.Infrastructure.Persistence.Repositories
         {
             return await _dbContext.Bookings
                 .AsNoTracking()
+                .Include(b => b.Room)
+                .Include(b => b.Client)
                 .ToListAsync(cancellationToken);
         }
 
