@@ -90,6 +90,9 @@ public class Booking
     {
         if (Status == BookingStatus.Cancelled)
             throw new InvalidBookingStateException("No se puede actualizar una reserva cancelada.");
+        
+        if (Status == BookingStatus.Confirmed)
+            throw new InvalidBookingStateException("No se puede actualizar una reserva confirmada.");
 
         if (newDateRange.End < DateTime.UtcNow)
             throw new InvalidBookingStateException("No se puede modificar una reserva que ya ha finalizado.");

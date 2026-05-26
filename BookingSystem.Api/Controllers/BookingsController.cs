@@ -517,7 +517,7 @@ public class BookingsController : ControllerBase
         if (!User.IsInRole("Admin") && !User.IsInRole("User") && booking.ClientId != currentUserId)
             return Forbid();
 
-        var command = request.ToCommand(booking.ClientId);
+        var command = request.ToCommand(id, booking.ClientId);
 
         await _sender.Send(command, cancellationToken);
 

@@ -40,10 +40,10 @@ public static class BookingMapper
     }
 
 
-    public static UpdateBookingCommand ToCommand(this UpdateBookingRequest request, Guid clientId)
+    public static UpdateBookingCommand ToCommand(this UpdateBookingRequest request, Guid bookingId, Guid clientId)
     {
         return new UpdateBookingCommand(
-            request.Id,
+            bookingId,
             request.RoomId,
             clientId,            // viene del booking existente
             request.Start,

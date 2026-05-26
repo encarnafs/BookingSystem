@@ -6,11 +6,6 @@
 public class UpdateBookingRequest
 {
     /// <summary>
-    /// Identificador único de la reserva que se desea actualizar.
-    /// </summary>
-    public Guid Id { get; set; }
-
-    /// <summary>
     /// Identificador de la habitación asociada a la reserva.
     /// </summary>
     public Guid RoomId { get; set; }
