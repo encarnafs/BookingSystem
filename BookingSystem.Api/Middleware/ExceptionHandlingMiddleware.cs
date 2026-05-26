@@ -31,6 +31,7 @@ public class ExceptionHandlingMiddleware : IMiddleware
                 detail: ex.Message);
 
             context.Response.StatusCode = StatusCodes.Status404NotFound;
+            context.Response.ContentType = "application/problem+json";
             await context.Response.WriteAsJsonAsync(problem);
         }
         catch (FluentValidation.ValidationException ex)
@@ -45,23 +46,15 @@ public class ExceptionHandlingMiddleware : IMiddleware
             );
 
             context.Response.StatusCode = StatusCodes.Status400BadRequest;
-            await context.Response.WriteAsJsonAsync(problem);
-        }
-        catch (InvalidBookingStateException ex)
-        {
-            var problem = _problemDetailsFactory.CreateProblemDetails(
-                context,
-                statusCode: StatusCodes.Status400BadRequest,
-                title: "Invalid booking state",
-                detail: ex.Message);
-
-            context.Response.StatusCode = StatusCodes.Status400BadRequest;
+            context.Response.ContentType = "application/problem+json";
             await context.Response.WriteAsJsonAsync(problem);
         }
         catch (Exception ex) when (
             ex is ConflictException || 
             ex is InvalidRoomNameException || 
-            ex is BookingOverlapException)
+            ex is BookingOverlapException ||
+            ex is BookingAlreadyConfirmedException ||
+            ex is InvalidBookingStateException)
         {
             var problem = _problemDetailsFactory.CreateProblemDetails(
                 context,
@@ -70,6 +63,7 @@ public class ExceptionHandlingMiddleware : IMiddleware
                 detail: ex.Message);
 
             context.Response.StatusCode = StatusCodes.Status409Conflict;
+            context.Response.ContentType = "application/problem+json";
             await context.Response.WriteAsJsonAsync(problem);
         }
         catch (UnauthorizedAccessException ex)
@@ -81,6 +75,7 @@ public class ExceptionHandlingMiddleware : IMiddleware
                 detail: ex.Message);
 
             context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            context.Response.ContentType = "application/problem+json";
             await context.Response.WriteAsJsonAsync(problem);
         }
         catch (Exception ex)
@@ -92,6 +87,7 @@ public class ExceptionHandlingMiddleware : IMiddleware
                 detail: ex.Message);
 
             context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+            context.Response.ContentType = "application/problem+json";
             await context.Response.WriteAsJsonAsync(problem);
         }
     }

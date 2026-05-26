@@ -13,6 +13,7 @@ using BookingSystem.Application.Bookings.Queries.GetBookingsByClientId;
 using BookingSystem.Application.Bookings.Queries.GetBookingsByRoomId;
 using BookingSystem.Application.Bookings.Queries.GetBookingsInDateRange;
 using BookingSystem.Application.Common.Interfaces;
+using BookingSystem.Domain.Exceptions;
 using BookingSystem.Domain.ValueObjects;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -409,6 +410,10 @@ public class BookingsController : ControllerBase
         var currentUserId = _currentUser.UserId.Value;
 
         var booking = await _sender.Send(new GetBookingByIdQuery(id), cancellationToken);
+
+        //Esto es para que en él próximo if no explote cuando se intente acceder a booking.ClientId si booking es null. De esta forma, si booking es null, se devuelve un NotFound() y no se llega al siguiente if.
+        if (booking is null)
+            return NotFound();
 
         if (!User.IsInRole("Admin") && !User.IsInRole("User") && booking.ClientId != currentUserId)
             return Forbid();

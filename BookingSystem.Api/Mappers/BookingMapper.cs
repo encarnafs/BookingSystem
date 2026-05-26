@@ -57,10 +57,10 @@ public static class BookingMapper
         return new UpdateBookingDatesCommand(id, request.Start, request.End);
     }
 
-    public static UpdateBookingCommentsCommand ToCommand(this UpdateBookingCommentsRequest request)
+    public static UpdateBookingCommentsCommand ToCommand(this UpdateBookingCommentsRequest request, Guid id)
     {
         return new UpdateBookingCommentsCommand(
-            request.Id,
+            id,
             request.Comments
         );
     }
