@@ -33,8 +33,20 @@ public class UsersController : ControllerBase
     /// </summary>
     /// <param name="request">Datos necesarios para crear el usuario.</param>
     /// <returns>El usuario creado.</returns>
-    /// <remarks>Solo los administradores pueden crear usuarios.</remarks>
+    /// <remarks>
+    /// Reglas de negocio:
+    /// - El email debe ser único.
+    /// - El rol debe ser válido.
+    /// - Solo los administradores pueden crear usuarios.
+    /// - Devuelve <b>201 Created</b> con el usuario recién creado.
+    /// </remarks>
     [HttpPost]
+    [Consumes("application/json")]
+    [Produces("application/json")]
+    [ProducesResponseType(typeof(UserResponse), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<UserResponse>> Create([FromBody] CreateUserRequest request)
     {
         var userDto = await _mediator.Send(request.ToCommand());
@@ -47,8 +59,19 @@ public class UsersController : ControllerBase
     /// <param name="id">Identificador del usuario.</param>
     /// <param name="request">Datos actualizados del usuario.</param>
     /// <returns>Sin contenido si la operación es exitosa.</returns>
-    /// <remarks>Solo los administradores pueden actualizar usuarios.</remarks>
+    /// <remarks>
+    /// Reglas de negocio:
+    /// - El usuario debe existir.
+    /// - Solo los administradores pueden actualizar usuarios.
+    /// - Devuelve <b>204 NoContent</b> si la actualización es correcta.
+    /// </remarks>
     [HttpPut("{id:guid}")]
+    [Consumes("application/json")]
+    [Produces("application/json")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateUserRequest request)
     {
         var command = request.ToCommand(id);
@@ -62,8 +85,19 @@ public class UsersController : ControllerBase
     /// <param name="id">Identificador del usuario.</param>
     /// <param name="request">Nueva contraseña del usuario.</param>
     /// <returns>Sin contenido si la operación es exitosa.</returns>
-    /// <remarks>Solo los administradores pueden cambiar contraseñas.</remarks>
+    /// <remarks>
+    /// Reglas de negocio:
+    /// - El usuario debe existir.
+    /// - La contraseña actual debe ser correcta.
+    /// - Devuelve <b>204 NoContent</b> si el cambio es exitoso.
+    /// </remarks>
     [HttpPut("{id:guid}/change-password")]
+    [Consumes("application/json")]
+    [Produces("application/json")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> ChangePassword(Guid id, [FromBody] ChangeUserPasswordRequest request)
     {
         var command = new ChangeUserPasswordCommand(id, request.CurrentPassword, request.NewPassword);
@@ -77,8 +111,19 @@ public class UsersController : ControllerBase
     /// <param name="id">Identificador del usuario.</param>
     /// <param name="request">Nuevo rol que se asignará al usuario.</param>
     /// <returns>Sin contenido si la operación es exitosa.</returns>
-    /// <remarks>Solo los administradores pueden cambiar roles.</remarks>
+    /// <remarks>
+    /// Reglas de negocio:
+    /// - El usuario debe existir.
+    /// - El rol debe ser válido.
+    /// - Devuelve <b>204 NoContent</b> si el cambio es exitoso.
+    /// </remarks>
     [HttpPut("{id:guid}/change-role")]
+    [Consumes("application/json")]
+    [Produces("application/json")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> ChangeRole(Guid id, [FromBody] ChangeUserRoleRequest request)
     {
         var command = new ChangeUserRoleCommand(id, request.NewRole);
@@ -91,8 +136,17 @@ public class UsersController : ControllerBase
     /// </summary>
     /// <param name="id">Identificador del usuario.</param>
     /// <returns>Sin contenido si la operación es exitosa.</returns>
-    /// <remarks>El usuario no podrá iniciar sesión tras ser desactivado.</remarks>
+    /// <remarks>
+    /// Reglas de negocio:
+    /// - El usuario debe existir.
+    /// - Un usuario desactivado no podrá iniciar sesión.
+    /// - Devuelve <b>204 NoContent</b> si la operación es exitosa.
+    /// </remarks>
     [HttpPut("{id:guid}/disable")]
+    [Produces("application/json")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> Disable(Guid id)
     {
         await _mediator.Send(new DisableUserCommand(id));
@@ -104,8 +158,17 @@ public class UsersController : ControllerBase
     /// </summary>
     /// <param name="id">Identificador del usuario.</param>
     /// <returns>Sin contenido si la operación es exitosa.</returns>
-    /// <remarks>El usuario podrá iniciar sesión tras ser activado.</remarks>
+    /// <remarks>
+    /// Reglas de negocio:
+    /// - El usuario debe existir.
+    /// - Un usuario activado podrá iniciar sesión.
+    /// - Devuelve <b>204 NoContent</b> si la operación es exitosa.
+    /// </remarks>
     [HttpPut("{id:guid}/enable")]
+    [Produces("application/json")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> EnableUser(Guid id)
     {
         await _mediator.Send(new EnableUserCommand(id));
@@ -117,8 +180,17 @@ public class UsersController : ControllerBase
     /// </summary>
     /// <param name="id">Identificador del usuario.</param>
     /// <returns>Sin contenido si la operación es exitosa.</returns>
-    /// <remarks>El usuario se marca como eliminado y deja de estar disponible.</remarks>
+    /// <remarks>
+    /// Reglas de negocio:
+    /// - El usuario debe existir.
+    /// - La eliminación es lógica (soft delete).
+    /// - Devuelve <b>204 NoContent</b> si la operación es exitosa.
+    /// </remarks>
     [HttpDelete("{id:guid}")]
+    [Produces("application/json")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> Delete(Guid id)
     {
         await _mediator.Send(new DeleteUserCommand(id));
@@ -129,8 +201,16 @@ public class UsersController : ControllerBase
     /// Obtiene todos los usuarios del sistema.
     /// </summary>
     /// <returns>Una colección con todos los usuarios activos y no eliminados.</returns>
-    /// <remarks>Solo los administradores pueden ver la lista completa de usuarios.</remarks>
+    /// <remarks>
+    /// Reglas de negocio:
+    /// - Solo los administradores pueden ver la lista completa de usuarios.
+    /// - Devuelve <b>200 OK</b> con la colección de usuarios.
+    /// </remarks>
     [HttpGet]
+    [Produces("application/json")]
+    [ProducesResponseType(typeof(IEnumerable<UserResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<IEnumerable<UserResponse>>> GetAll()
     {
         var result = await _mediator.Send(new GetAllUsersQuery());
@@ -142,10 +222,17 @@ public class UsersController : ControllerBase
     /// </summary>
     /// <param name="id">Identificador del usuario (GUID).</param>
     /// <returns>Objeto con los datos del usuario.</returns>
-    /// <remarks>Devuelve 404 si el usuario no existe.</remarks>
+    /// <remarks>
+    /// Reglas de negocio:
+    /// - Devuelve 404 si el usuario no existe.
+    /// - Devuelve <b>200 OK</b> si el usuario existe.
+    /// </remarks>
     [HttpGet("{id:guid}")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [Produces("application/json")]
+    [ProducesResponseType(typeof(UserResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<UserResponse>> GetById(Guid id)
     {
         var result = await _mediator.Send(new GetUserByIdQuery(id));

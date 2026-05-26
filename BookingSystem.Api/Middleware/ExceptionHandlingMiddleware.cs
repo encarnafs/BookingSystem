@@ -47,6 +47,17 @@ public class ExceptionHandlingMiddleware : IMiddleware
             context.Response.StatusCode = StatusCodes.Status400BadRequest;
             await context.Response.WriteAsJsonAsync(problem);
         }
+        catch (InvalidBookingStateException ex)
+        {
+            var problem = _problemDetailsFactory.CreateProblemDetails(
+                context,
+                statusCode: StatusCodes.Status400BadRequest,
+                title: "Invalid booking state",
+                detail: ex.Message);
+
+            context.Response.StatusCode = StatusCodes.Status400BadRequest;
+            await context.Response.WriteAsJsonAsync(problem);
+        }
         catch (Exception ex) when (
             ex is ConflictException || 
             ex is InvalidRoomNameException || 
