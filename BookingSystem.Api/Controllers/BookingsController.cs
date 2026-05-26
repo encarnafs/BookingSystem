@@ -266,8 +266,7 @@ public class BookingsController : ControllerBase
     /// Reglas de negocio:
     ///
     /// - La reserva debe existir.
-    /// - Solo el usuario con rol <b>Admin</b> o el <b>Client</b> dueño de la reserva pueden modificar las fechas.
-    /// - Los usuarios con rol <b>User</b> pueden modificar fechas únicamente si la lógica de negocio lo permite.
+    /// - Los usuarios con rol <b>Admin</b>, <b>User</b> o el <b>Client</b> dueño de la reserva pueden modificar las fechas.
     /// - No se permite modificar las fechas de reservas pertenecientes a otros clientes sin autorización.
     /// - La fecha de inicio debe ser anterior a la fecha de fin.
     /// - Las nuevas fechas no pueden solaparse con otras reservas existentes de la misma sala.

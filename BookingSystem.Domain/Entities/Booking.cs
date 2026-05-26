@@ -36,6 +36,10 @@ public class Booking
         CreatedByUserId = ValidateCreatedByUserId(createdByUserId);
         DateRange = ValidateDateRange(dateRange);
 
+        //No permitir reservas en el pasado
+        if (DateRange.Start < DateTime.UtcNow)
+            throw new InvalidBookingStateException("No se pueden crear reservas en el pasado.");
+
         Comments = comments;
         Status = BookingStatus.Pending;
         CreatedAt = DateTime.UtcNow;

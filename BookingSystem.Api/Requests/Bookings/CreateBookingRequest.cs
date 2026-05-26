@@ -1,4 +1,6 @@
-﻿namespace BookingSystem.Api.Requests.Bookings;
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace BookingSystem.Api.Requests.Bookings;
 
 /// <summary>
 /// Datos necesarios para crear una nueva reserva.
@@ -10,5 +12,10 @@ public record CreateBookingRequest(
     Guid? ClientId, //Opcional, para el Admin se enviará y para el Client no porqué ya cogerá el Id cuando se registre y loguee.
     DateTime Start,
     DateTime End,
+
+    /// <summary>
+    /// Comentarios opcionales (máximo 500 caracteres).
+    /// </summary>
+    [MaxLength(500)]
     string? Comments
 );

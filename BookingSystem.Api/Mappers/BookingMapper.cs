@@ -52,13 +52,9 @@ public static class BookingMapper
         );
     }
 
-    public static UpdateBookingDatesCommand ToCommand(this UpdateBookingDatesRequest request)
+    public static UpdateBookingDatesCommand ToCommand(this UpdateBookingDatesRequest request, Guid id)
     {
-        return new UpdateBookingDatesCommand(
-            request.Id,
-            request.Start,
-            request.End
-        );
+        return new UpdateBookingDatesCommand(id, request.Start, request.End);
     }
 
     public static UpdateBookingCommentsCommand ToCommand(this UpdateBookingCommentsRequest request)
