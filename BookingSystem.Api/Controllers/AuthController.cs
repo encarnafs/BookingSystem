@@ -31,12 +31,16 @@ public class AuthController : ControllerBase
     /// <remarks>
     /// Reglas de negocio:
     /// - El email debe ser único.
-    /// - La contraseña debe cumplir los requisitos mínimos definidos por el sistema.
+    /// - La contraseña debe cumplir los requisitos mínimos.
     /// - Devuelve <b>200 OK</b> con el token JWT del usuario recién creado.
-    /// 
+    ///
     /// Seguridad:
-    /// - Endpoint público: no requiere autenticación (AllowAnonymous).
+    /// - Endpoint público (AllowAnonymous).
     /// </remarks>
+    /// <response code="200">Usuario registrado correctamente.</response>
+    /// <response code="400">Datos inválidos.</response>
+    /// <response code="409">Conflicto: el email ya está registrado.</response>
+    /// <response code="500">Error interno del servidor.</response>
     [AllowAnonymous]
     [HttpPost("register-user")]
     [Consumes("application/json")]
@@ -62,11 +66,16 @@ public class AuthController : ControllerBase
     /// - El email debe ser único.
     /// - Los clientes autenticados no pueden registrar otros clientes.
     /// - Devuelve <b>200 OK</b> con el token JWT del cliente recién creado.
-    /// 
+    ///
     /// Seguridad:
-    /// - Endpoint público: no requiere autenticación (AllowAnonymous).
-    /// - Si el usuario está autenticado como Client, se devuelve 401 Unauthorized.
+    /// - Endpoint público (AllowAnonymous).
+    /// - Si un usuario autenticado con rol Client intenta registrar, se devuelve 401.
     /// </remarks>
+    /// <response code="200">Cliente registrado correctamente.</response>
+    /// <response code="400">Datos inválidos.</response>
+    /// <response code="401">No autorizado: un cliente autenticado no puede registrar otros clientes.</response>
+    /// <response code="409">Conflicto: el email ya está registrado.</response>
+    /// <response code="500">Error interno del servidor.</response>
     [AllowAnonymous]
     [HttpPost("register-client")]
     [Consumes("application/json")]
@@ -77,7 +86,6 @@ public class AuthController : ControllerBase
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult<AuthResponse>> RegisterClient(RegisterRequest request)
     {
-        // Si el usuario está autenticado como CLIENTE → bloquear
         if (User.Identity?.IsAuthenticated == true &&
             User.IsInRole("Client"))
         {
@@ -103,11 +111,14 @@ public class AuthController : ControllerBase
     /// Reglas de negocio:
     /// - El usuario debe existir.
     /// - La contraseña debe ser válida.
-    /// - Devuelve <b>200 OK</b> con el token JWT.
-    /// 
+    ///
     /// Seguridad:
-    /// - Endpoint público: no requiere autenticación (AllowAnonymous).
+    /// - Endpoint público (AllowAnonymous).
     /// </remarks>
+    /// <response code="200">Inicio de sesión correcto.</response>
+    /// <response code="400">Datos inválidos.</response>
+    /// <response code="401">Credenciales incorrectas.</response>
+    /// <response code="500">Error interno del servidor.</response>
     [AllowAnonymous]
     [HttpPost("login-user")]
     [Consumes("application/json")]
@@ -136,11 +147,14 @@ public class AuthController : ControllerBase
     /// Reglas de negocio:
     /// - El cliente debe existir.
     /// - La contraseña debe ser válida.
-    /// - Devuelve <b>200 OK</b> con el token JWT.
-    /// 
+    ///
     /// Seguridad:
-    /// - Endpoint público: no requiere autenticación (AllowAnonymous).
+    /// - Endpoint público (AllowAnonymous).
     /// </remarks>
+    /// <response code="200">Inicio de sesión correcto.</response>
+    /// <response code="400">Datos inválidos.</response>
+    /// <response code="401">Credenciales incorrectas.</response>
+    /// <response code="500">Error interno del servidor.</response>
     [AllowAnonymous]
     [HttpPost("login-client")]
     [Consumes("application/json")]
@@ -160,7 +174,6 @@ public class AuthController : ControllerBase
         return Ok(response);
     }
 
-
     /// <summary>
     /// Obtiene la información del usuario autenticado.
     /// </summary>
@@ -169,10 +182,12 @@ public class AuthController : ControllerBase
     /// Reglas de negocio:
     /// - Requiere un token JWT válido.
     /// - Devuelve <b>200 OK</b> con la información del usuario.
-    /// 
+    ///
     /// Seguridad:
     /// - Requiere autenticación (Authorize).
     /// </remarks>
+    /// <response code="200">Información del usuario devuelta correctamente.</response>
+    /// <response code="401">No autorizado.</response>
     [Authorize]
     [HttpGet("me")]
     [Produces("application/json")]
@@ -193,4 +208,3 @@ public class AuthController : ControllerBase
         return Ok(response);
     }
 }
-

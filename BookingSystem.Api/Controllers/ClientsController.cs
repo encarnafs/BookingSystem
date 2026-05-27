@@ -32,19 +32,19 @@ public class ClientsController : ControllerBase
     /// <param name="request">Datos necesarios para crear el cliente.</param>
     /// <returns>El cliente creado.</returns>
     /// <remarks>
+    /// Reglas de autorización:
+    /// - Solo los roles <b>Admin</b> y <b>User</b> pueden crear clientes.
+    ///
     /// Reglas de negocio:
-    /// - Solo los administradores y usuarios internos pueden crear clientes.
-    /// - El email debe ser único.
+    /// - El email es obligatorio y debe ser único.
+    /// - Se valida que los datos sean correctos.
     /// - Devuelve <b>201 Created</b> con el cliente recién creado.
-    /// 
-    /// Seguridad:
-    /// - Requiere autenticación.
-    /// - Roles permitidos: Admin, User.
     /// </remarks>
     /// <response code="201">Cliente creado correctamente.</response>
     /// <response code="400">Datos inválidos.</response>
     /// <response code="401">No autorizado.</response>
     /// <response code="403">Prohibido.</response>
+    /// <response code="409">Conflicto: el email ya está registrado.</response>
     [Authorize(Roles = "Admin, User")]
     [HttpPost]
     [Consumes("application/json")]
@@ -66,20 +66,21 @@ public class ClientsController : ControllerBase
     /// <param name="request">Datos actualizados del cliente.</param>
     /// <returns>Sin contenido si la operación es exitosa.</returns>
     /// <remarks>
+    /// Reglas de autorización:
+    /// - Admin puede actualizar cualquier cliente.
+    /// - Un cliente solo puede actualizar sus propios datos.
+    ///
     /// Reglas de negocio:
     /// - El cliente debe existir.
-    /// - Un cliente solo puede actualizar sus propios datos.
-    /// - El administrador puede actualizar cualquier cliente.
+    /// - Los datos deben ser válidos.
     /// - Devuelve <b>204 NoContent</b> si la actualización es correcta.
-    /// 
-    /// Seguridad:
-    /// - Requiere autenticación.
-    /// - Si el usuario no es Admin y no coincide su ID → 403 Forbidden.
     /// </remarks>
     /// <response code="204">Cliente actualizado correctamente.</response>
     /// <response code="400">Datos inválidos.</response>
     /// <response code="401">No autorizado.</response>
-    /// <response code="403">Prohibido.</response>
+    /// <response code="403">Prohibido: el usuario no tiene permisos para actualizar este cliente.</response>
+    /// <response code="404">Cliente no encontrado.</response>
+    /// <response code="409">Conflicto: email duplicado.</response>
     [HttpPut("{id:guid}")]
     [Consumes("application/json")]
     [Produces("application/json")]
@@ -106,13 +107,12 @@ public class ClientsController : ControllerBase
     /// </summary>
     /// <returns>Una colección con todos los clientes.</returns>
     /// <remarks>
+    /// Reglas de autorización:
+    /// - Solo Admin y User pueden ver la lista completa.
+    ///
     /// Reglas de negocio:
-    /// - Solo administradores y usuarios internos pueden ver la lista completa.
-    /// - Devuelve <b>200 OK</b> con la colección de clientes.
-    /// 
-    /// Seguridad:
-    /// - Requiere autenticación.
-    /// - Roles permitidos: Admin, User.
+    /// - Devuelve solo clientes activos/no eliminados.
+    /// - Si no hay clientes, devuelve una lista vacía.
     /// </remarks>
     /// <response code="200">Listado de clientes devuelto correctamente.</response>
     /// <response code="401">No autorizado.</response>
@@ -135,15 +135,17 @@ public class ClientsController : ControllerBase
     /// <param name="id">Identificador del cliente.</param>
     /// <returns>Los datos del cliente solicitado.</returns>
     /// <remarks>
-    /// Reglas de negocio:
+    /// Reglas de autorización:
+    /// - Admin puede ver cualquier cliente.
     /// - Un cliente solo puede ver sus propios datos.
-    /// - El administrador puede ver cualquier cliente.
-    /// - Devuelve <b>200 OK</b> si el cliente existe.
-    /// - Devuelve <b>404 NotFound</b> si no existe.
-    /// 
+    ///
     /// Seguridad:
-    /// - Requiere autenticación.
-    /// - Si el usuario no es Admin y no coincide su ID → 403 Forbidden.
+    /// - Si el usuario no tiene permiso, se devuelve <b>403 Forbidden</b>
+    ///   incluso si el cliente no existe, para no revelar información.
+    ///
+    /// Reglas de negocio:
+    /// - Devuelve <b>200 OK</b> si el cliente existe.
+    /// - Devuelve <b>404 NotFound</b> solo cuando el usuario tiene permiso para ver el recurso.
     /// </remarks>
     /// <response code="200">Cliente encontrado.</response>
     /// <response code="401">No autorizado.</response>
@@ -163,7 +165,7 @@ public class ClientsController : ControllerBase
         var currentUserId = _currentUser.UserId.Value;
 
         if (!User.IsInRole("Admin") && currentUserId != id)
-            return Forbid();  //Si no existe en vez de devolver 404 devuelvo 403 para no revelar la existencia del recurso, por seguridad
+            return Forbid(); // Seguridad: no revelar existencia del recurso
 
         var dto = await _mediator.Send(new GetClientByIdQuery(id));
         return Ok(dto.ToResponse());

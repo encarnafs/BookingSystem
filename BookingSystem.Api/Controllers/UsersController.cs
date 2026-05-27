@@ -38,14 +38,16 @@ public class UsersController : ControllerBase
     /// - Solo los administradores pueden crear usuarios.
     ///  
     /// Reglas de negocio:
-    /// - El email debe ser único.
-    /// - El rol debe ser válido.
+    /// - El email es obligatorio y debe ser único.
+    /// - El rol debe ser válido (Admin, User, Client).
+    /// - Si el email ya existe, se devuelve 409 Conflict.
     /// </remarks>
     /// <b>Respuestas:</b>
     /// <response code="201">Usuario creado correctamente.</response>
     /// <response code="400">Datos inválidos.</response>
     /// <response code="401">No autorizado.</response>
     /// <response code="403">Prohibido.</response>
+    /// <response code="409">Conflicto: el email ya está registrado.</response>
     [HttpPost]
     [Consumes("application/json")]
     [Produces("application/json")]
@@ -53,6 +55,7 @@ public class UsersController : ControllerBase
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<UserResponse>> Create([FromBody] CreateUserRequest request)
     {
         var userDto = await _mediator.Send(request.ToCommand());
@@ -71,12 +74,18 @@ public class UsersController : ControllerBase
     ///
     /// Reglas de negocio:
     /// - El usuario debe existir.
+    /// - El email es obligatorio y debe ser único.
+    /// - El rol debe ser válido (Admin, User, Client).
+    /// - Si el usuario no existe, se devuelve 404 NotFound.
+    /// - Si el email ya está registrado por otro usuario, se devuelve 409 Conflict..
     /// </remarks>
     /// <b>Respuestas:</b>
     /// <response code="204">Usuario actualizado correctamente.</response>
     /// <response code="400">Datos inválidos.</response>
     /// <response code="401">No autorizado.</response>
     /// <response code="403">Prohibido.</response>
+    /// <response code="404">Usuario no encontrado.</response>
+    /// <response code="409">Conflicto: el email ya está registrado.</response>
     [HttpPut("{id:guid}")]
     [Consumes("application/json")]
     [Produces("application/json")]
@@ -84,6 +93,8 @@ public class UsersController : ControllerBase
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateUserRequest request)
     {
         var command = request.ToCommand(id);
@@ -101,12 +112,17 @@ public class UsersController : ControllerBase
     /// Reglas de negocio:
     /// - El usuario debe existir.
     /// - La contraseña actual debe ser correcta.
+    /// - La nueva contraseña debe cumplir los requisitos mínimos.
+    /// - Si el usuario no existe, se devuelve 404 NotFound.
+    /// - Si la contraseña actual no coincide, se devuelve 409 Conflict.
     /// </remarks>
     /// <b>Respuestas:</b>
     /// <response code="204">Contraseña cambiada correctamente.</response>
     /// <response code="400">Datos inválidos.</response>
     /// <response code="401">No autorizado.</response>
     /// <response code="403">Prohibido.</response>
+    /// <response code="404">Usuario no encontrado.</response>
+    /// <response code="409">La contraseña actual no es correcta.</response>
     [HttpPut("{id:guid}/change-password")]
     [Consumes("application/json")]
     [Produces("application/json")]
@@ -114,6 +130,8 @@ public class UsersController : ControllerBase
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public async Task<IActionResult> ChangePassword(Guid id, [FromBody] ChangeUserPasswordRequest request)
     {
         var command = new ChangeUserPasswordCommand(id, request.CurrentPassword, request.NewPassword);
@@ -124,19 +142,26 @@ public class UsersController : ControllerBase
     /// <summary>
     /// Cambia el rol de un usuario.
     /// </summary>
+    /// <param name="id">Identificador del usuario.</param>
+    /// <param name="request">Nuevo rol del usuario.</param>
+    /// <returns>Sin contenido si la operación es exitosa.</returns>
     /// <remarks>
     /// Reglas de autorización:
     /// - Solo administradores.
     ///
     /// Reglas de negocio:
     /// - El usuario debe existir.
-    /// - El rol debe ser válido.
+    /// - El rol debe ser válido (Admin, User, Client).
+    /// - Si el usuario no existe, se devuelve 404 NotFound.
+    /// - Si el rol es igual al actual, se devuelve 409 Conflict.
     /// </remarks>
     /// <b>Respuestas:</b>
     /// <response code="204">Rol cambiado correctamente.</response>
     /// <response code="400">Datos inválidos.</response>
     /// <response code="401">No autorizado.</response>
     /// <response code="403">Prohibido.</response>
+    /// <response code="404">Usuario no encontrado.</response>
+    /// <response code="409">El rol ya coincide con el actual.</response>
     [HttpPut("{id:guid}/change-role")]
     [Consumes("application/json")]
     [Produces("application/json")]
@@ -144,6 +169,8 @@ public class UsersController : ControllerBase
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public async Task<IActionResult> ChangeRole(Guid id, [FromBody] ChangeUserRoleRequest request)
     {
         var command = new ChangeUserRoleCommand(id, request.NewRole);
@@ -154,22 +181,31 @@ public class UsersController : ControllerBase
     /// <summary>
     /// Desactiva un usuario (IsActive = false).
     /// </summary>
+    /// <param name="id">Identificador del usuario.</param>
+    /// <returns>Sin contenido si la operación es exitosa.</returns>
     /// <remarks>
     /// Reglas de autorización:
     /// - Solo administradores.
     ///
     /// Reglas de negocio:
     /// - El usuario debe existir.
+    /// - El usuario debe estar activo para poder desactivarlo.
+    /// - Si el usuario no existe, se devuelve 404 NotFound.
+    /// - Si el usuario ya está desactivado, se devuelve 409 Conflict.
     /// </remarks>
     /// <b>Respuestas:</b>
     /// <response code="204">Usuario desactivado correctamente.</response>
     /// <response code="401">No autorizado.</response>
     /// <response code="403">Prohibido.</response>
+    /// <response code="404">Usuario no encontrado.</response>
+    /// <response code="409">El usuario ya está desactivado.</response>
     [HttpPut("{id:guid}/disable")]
     [Produces("application/json")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public async Task<IActionResult> Disable(Guid id)
     {
         await _mediator.Send(new DisableUserCommand(id));
@@ -179,22 +215,31 @@ public class UsersController : ControllerBase
     /// <summary>
     /// Activa un usuario (IsActive = true).
     /// </summary>
+    /// <param name="id">Identificador del usuario.</param>
+    /// <returns>Sin contenido si la operación es exitosa.</returns>
     /// <remarks>
     /// Reglas de autorización:
     /// - Solo administradores.
     ///
     /// Reglas de negocio:
     /// - El usuario debe existir.
+    /// - El usuario debe estar desactivado para poder activarlo.
+    /// - Si el usuario no existe, se devuelve 404 NotFound.
+    /// - Si el usuario ya está activo, se devuelve 409 Conflict.
     /// </remarks>
     /// <b>Respuestas:</b>
     /// <response code="204">Usuario activado correctamente.</response>
     /// <response code="401">No autorizado.</response>
     /// <response code="403">Prohibido.</response>
+    /// <response code="404">Usuario no encontrado.</response>
+    /// <response code="409">El usuario ya está activo.</response>
     [HttpPut("{id:guid}/enable")]
     [Produces("application/json")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public async Task<IActionResult> EnableUser(Guid id)
     {
         await _mediator.Send(new EnableUserCommand(id));
@@ -204,23 +249,32 @@ public class UsersController : ControllerBase
     /// <summary>
     /// Elimina un usuario del sistema (soft delete).
     /// </summary>
+    /// <param name="id">Identificador del usuario.</param>
+    /// <returns>Sin contenido si la operación es exitosa.</returns>
     /// <remarks>
     /// Reglas de autorización:
     /// - Solo administradores.
     ///
     /// Reglas de negocio:
     /// - El usuario debe existir.
-    /// - La eliminación es lógica.
+    /// - La eliminación es lógica (soft delete).
+    /// - El usuario debe estar activo/no eliminado para poder eliminarlo.
+    /// - Si el usuario no existe, se devuelve 404 NotFound.
+    /// - Si el usuario ya está eliminado, se devuelve 409 Conflict.
     /// </remarks>
     /// <b>Respuestas:</b>
     /// <response code="204">Usuario eliminado correctamente.</response>
     /// <response code="401">No autorizado.</response>
     /// <response code="403">Prohibido.</response>
+    /// <response code="404">Usuario no encontrado.</response>
+    /// <response code="409">El usuario ya está eliminado.</response>
     [HttpDelete("{id:guid}")]
     [Produces("application/json")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public async Task<IActionResult> Delete(Guid id)
     {
         await _mediator.Send(new DeleteUserCommand(id));
@@ -234,14 +288,19 @@ public class UsersController : ControllerBase
     /// <remarks>
     /// Reglas de autorización:
     /// - Solo administradores.
+    ///
+    /// Notas:
+    /// - Si no existen usuarios, se devuelve una lista vacía con código 200.
     /// </remarks>
     /// <b>Respuestas:</b>
     /// <response code="200">Listado devuelto correctamente.</response>
+    /// <response code="400">Parámetros inválidos.</response>
     /// <response code="401">No autorizado.</response>
     /// <response code="403">Prohibido.</response>
     [HttpGet]
     [Produces("application/json")]
     [ProducesResponseType(typeof(IEnumerable<UserResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<IEnumerable<UserResponse>>> GetAll()
@@ -264,15 +323,17 @@ public class UsersController : ControllerBase
     /// </remarks>
     /// <b>Respuestas:</b>
     /// <response code="200">Usuario encontrado.</response>
+    /// <response code="400">Parámetros inválidos.</response>
     /// <response code="401">No autorizado.</response>
     /// <response code="403">Prohibido.</response>
     /// <response code="404">Usuario no encontrado.</response>
     [HttpGet("{id:guid}")]
     [Produces("application/json")]
     [ProducesResponseType(typeof(UserResponse), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<UserResponse>> GetById(Guid id)
     {
         var result = await _mediator.Send(new GetUserByIdQuery(id));

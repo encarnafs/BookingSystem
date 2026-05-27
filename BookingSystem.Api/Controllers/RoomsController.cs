@@ -37,6 +37,7 @@ public class RoomsController : ControllerBase
     /// - El nombre es obligatorio y debe ser único.
     /// - La descripción es obligatoria.
     /// - La capacidad es obligatoria y debe ser mayor que 0.
+    /// - Si el nombre ya existe, se devuelve 409 Conflict.
     /// </remarks>
     /// <b>Respuestas:</b>
     /// <response code="201">Sala creada correctamente.</response>
@@ -47,7 +48,6 @@ public class RoomsController : ControllerBase
     [Authorize(Roles = "Admin")]
     [HttpPost]
     [Consumes("application/json")]
-    //// CAMBIO: Añadido para homogeneizar con BookingsController
     [Produces("application/json")]
     [ProducesResponseType(typeof(RoomResponse), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
@@ -78,7 +78,7 @@ public class RoomsController : ControllerBase
     /// - El nombre es obligatorio y debe ser único.
     /// - La descripción es obligatoria.
     /// - La capacidad debe ser mayor que 0.
-    /// - Si no se envía <c>isActive</c>, se interpreta como <c>false</c>.
+    /// - Si el nombre ya existe en otra sala, se devuelve 409 Conflict.
     /// </remarks>
     /// <b>Respuestas:</b>
     /// <response code="204">Actualizada correctamente.</response>
@@ -90,7 +90,6 @@ public class RoomsController : ControllerBase
     [Authorize(Roles = "Admin")]
     [HttpPut("{id:guid}")]
     [Consumes("application/json")]
-    //// CAMBIO: Añadido para homogeneizar con BookingsController
     [Produces("application/json")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -139,7 +138,7 @@ public class RoomsController : ControllerBase
     /// <summary>
     /// Obtiene todas las salas del sistema.
     /// </summary>
-    /// <returns>Una colección con todas las salas.</returns>
+    /// <returns>Una colección con todas las salas activas.</returns>
     /// <remarks>
     /// Reglas de autorización:
     /// - Roles permitidos: Admin, User, Client.
@@ -186,18 +185,19 @@ public class RoomsController : ControllerBase
     /// <response code="200">Consulta realizada correctamente.</response>
     /// <response code="400">Fechas inválidas.</response>
     /// <response code="401">No autorizado.</response>
+    /// <response code="404">Sala no encontrada.</response>
     [Authorize(Roles = "Admin, User, Client")]
     [HttpGet("{roomId:guid}/availability")]
     [Produces("application/json")]
     [ProducesResponseType(typeof(RoomAvailabilityResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult> CheckAvailability(
         Guid roomId,
         [FromQuery] DateTime start,
         [FromQuery] DateTime end)
     {
-        //// CAMBIO: Validación mínima igual que en BookingsController
         if (start == default || end == default)
             return BadRequest("Las fechas no pueden estar vacías.");
 
