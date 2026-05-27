@@ -12,7 +12,9 @@ using BookingSystem.Application.Bookings.Queries.GetBookingById;
 using BookingSystem.Application.Bookings.Queries.GetBookingsByClientId;
 using BookingSystem.Application.Bookings.Queries.GetBookingsByRoomId;
 using BookingSystem.Application.Bookings.Queries.GetBookingsInDateRange;
+using BookingSystem.Application.Clients.Queries.GetClientById;
 using BookingSystem.Application.Common.Interfaces;
+using BookingSystem.Application.Rooms.Queries.GetRoomById;
 using BookingSystem.Domain.Exceptions;
 using BookingSystem.Domain.ValueObjects;
 using MediatR;
@@ -42,12 +44,12 @@ public class BookingsController : ControllerBase
     /// Obtiene una reserva por su identificador único.
     /// </summary>
     /// <remarks>
-    /// Reglas de negocio:
+    /// Reglas de autorización:
+    /// - Los roles <b>Admin</b> y <b>User</b> pueden acceder a cualquier reserva.
+    /// - El rol <b>Client</b> solo puede acceder a sus propias reservas.
     ///
+    /// Reglas de negocio:
     /// - La reserva debe existir.
-    /// - Solo el usuario con rol <b>Admin</b> o el <b>Client</b> dueño de la reserva pueden acceder a ella.
-    /// - Los usuarios con rol <b>User</b> pueden consultar reservas únicamente si la lógica de negocio lo permite.
-    /// - No se permite acceder a reservas de otros clientes sin autorización.
     /// </remarks>
     /// <param name="id">Identificador único de la reserva (GUID).</param>
     /// <returns>Los datos de la reserva solicitada.</returns>
@@ -106,6 +108,11 @@ public class BookingsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<IEnumerable<BookingResponse>>> GetByRoom(Guid roomId)
     {
+        // Validación de existencia de la habitación
+        var room = await _sender.Send(new GetRoomByIdQuery(roomId));
+        if (room is null)
+            return NotFound();
+
         var result = await _sender.Send(new GetBookingsByRoomIdQuery(roomId));
         return Ok(result.Select(b => b.ToResponse()));
     }
@@ -141,6 +148,12 @@ public class BookingsController : ControllerBase
 
         var currentUserId = _currentUser.UserId.Value;
 
+        // Validación de existencia del cliente
+        var client = await _sender.Send(new GetClientByIdQuery(clientId));
+        if (client is null)
+            return NotFound();
+
+        // Autorización: Admin y User pueden ver cualquier cliente; Client solo el suyo
         if (!User.IsInRole("Admin") && !User.IsInRole("User") && clientId != currentUserId)
             return Forbid();
 
@@ -170,6 +183,14 @@ public class BookingsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<IEnumerable<BookingResponse>>> GetAll()
     {
+        // Validación manual de autenticación
+        if (_currentUser.UserId is null)
+            return Unauthorized();
+
+        // Validación manual de autorización
+        if (!User.IsInRole("Admin") && !User.IsInRole("User"))
+            return Forbid();
+
         var result = await _sender.Send(new GetAllBookingsQuery());
         return Ok(result.Select(b => b.ToResponse()));
     }
@@ -204,6 +225,18 @@ public class BookingsController : ControllerBase
         [FromQuery] DateTime start,
         [FromQuery] DateTime end)
     {
+        // Validación manual de autenticación
+        if (_currentUser.UserId is null)
+            return Unauthorized();
+
+        // Validación manual de autorización
+        if (!User.IsInRole("Admin") && !User.IsInRole("User"))
+            return Forbid();
+
+        // Validación del rango de fechas
+        if (start >= end)
+            return BadRequest("La fecha de inicio debe ser anterior a la fecha de fin.");
+
         var result = await _sender.Send(new GetBookingsInDateRangeQuery(start, end));
         return Ok(result.Select(b => b.ToResponse()));
     }
@@ -248,7 +281,13 @@ public class BookingsController : ControllerBase
 
         var createdByUserId = _currentUser.UserId.Value;
 
-        if (!User.IsInRole("Admin") && !User.IsInRole("User") && request.ClientId is not null && request.ClientId != createdByUserId)
+        // Validación mínima: un Client no debe enviar clientId
+        if (User.IsInRole("Client") && request.ClientId is not null)
+            return BadRequest("Los usuarios con rol Client no deben enviar el campo clientId.");
+
+        // Validación de autorización: Client solo puede crear para sí mismo
+        if (!User.IsInRole("Admin") && !User.IsInRole("User") &&
+            request.ClientId is not null && request.ClientId != createdByUserId)
             return Forbid();
 
         var clientId = request.ClientId ?? createdByUserId;
@@ -298,20 +337,27 @@ public class BookingsController : ControllerBase
         UpdateBookingDatesRequest request,
         CancellationToken cancellationToken)
     {
+        // Autenticación
         if (_currentUser.UserId is null)
             return Unauthorized();
 
         var currentUserId = _currentUser.UserId.Value;
 
+        // Validación mínima del rango de fechas
+        if (request.Start >= request.End)
+            return BadRequest("La fecha de inicio debe ser anterior a la fecha de fin.");
+
+        // Obtener reserva
         var booking = await _sender.Send(new GetBookingByIdQuery(id), cancellationToken);
 
-        //Esto es para que en él próximo if no explote cuando se intente acceder a booking.ClientId si booking es null. De esta forma, si booking es null, se devuelve un NotFound() y no se llega al siguiente if.
         if (booking is null)
             return NotFound();
 
+        // Autorización
         if (!User.IsInRole("Admin") && !User.IsInRole("User") && booking.ClientId != currentUserId)
             return Forbid();
 
+        // Ejecutar comando
         var command = new UpdateBookingDatesCommand(id, request.Start, request.End);
 
         await _sender.Send(command, cancellationToken);
@@ -320,24 +366,23 @@ public class BookingsController : ControllerBase
     }
 
     /// <summary>
-    /// Actualiza los comentarios de una reserva.
+    /// Actualiza los comentarios de una reserva existente.
     /// </summary>
     /// <remarks>
     /// Reglas de negocio:
     ///
     /// - La reserva debe existir.
-    /// - Solo el usuario con rol <b>Admin</b> o el <b>Client</b> dueño de la reserva pueden modificar los comentarios.
-    /// - Los usuarios con rol <b>User</b> pueden modificar comentarios únicamente si la lógica de negocio lo permite.
-    /// - No se permite modificar los comentarios de reservas pertenecientes a otros clientes sin autorización.
-    /// - El campo <b>comments</b> es opcional; si se envía <c>null</c>, los comentarios se eliminan.
-    /// - Solo se actualiza el campo de comentarios; el resto de la reserva permanece sin cambios.
+    /// - Los usuarios con rol <b>Admin</b>, <b>User</b> o el <b>Client</b> dueño de la reserva pueden modificar los comentarios.
+    /// - No se permite modificar reservas de otros clientes sin autorización.
+    /// - El campo <b>comments</b> puede ser <c>null</c> o una cadena vacía.
+    /// - El dominio valida el formato y las reglas adicionales.
     /// </remarks>
     /// <param name="id">Identificador único de la reserva.</param>
-    /// <param name="request">Nuevos comentarios de la reserva.</param>
+    /// <param name="request">Nuevos comentarios.</param>
     /// <param name="cancellationToken">Token de cancelación.</param>
     /// <returns>Sin contenido si la operación es exitosa.</returns>
     /// <response code="204">Comentarios actualizados correctamente.</response>
-    /// <response code="400">Datos inválidos (formato incorrecto, etc.).</response>
+    /// <response code="400">Datos inválidos.</response>
     /// <response code="401">No autorizado.</response>
     /// <response code="403">Prohibido: el usuario no tiene permisos para modificar esta reserva.</response>
     /// <response code="404">La reserva no existe.</response>
@@ -355,20 +400,27 @@ public class BookingsController : ControllerBase
         UpdateBookingCommentsRequest request,
         CancellationToken cancellationToken)
     {
+        // Autenticación
         if (_currentUser.UserId is null)
             return Unauthorized();
 
         var currentUserId = _currentUser.UserId.Value;
 
+        // Validación mínima del campo comments
+        if (request.Comments is not null && string.IsNullOrWhiteSpace(request.Comments))
+            return BadRequest("El campo comments no puede contener solo espacios en blanco.");
+
+        // Obtener reserva
         var booking = await _sender.Send(new GetBookingByIdQuery(id), cancellationToken);
 
-        //Esto es para que en él próximo if no explote cuando se intente acceder a booking.ClientId si booking es null. De esta forma, si booking es null, se devuelve un NotFound() y no se llega al siguiente if.
         if (booking is null)
             return NotFound();
 
+        // Autorización
         if (!User.IsInRole("Admin") && !User.IsInRole("User") && booking.ClientId != currentUserId)
             return Forbid();
 
+        // Ejecutar comando
         var command = new UpdateBookingCommentsCommand(id, request.Comments);
 
         await _sender.Send(command, cancellationToken);
@@ -380,28 +432,34 @@ public class BookingsController : ControllerBase
     /// Confirma una reserva existente.
     /// </summary>
     /// <remarks>
-    /// Reglas de negocio:
+    /// Reglas de autorización:
+    /// - Los roles <b>Admin</b> y <b>User</b> pueden confirmar cualquier reserva.
+    /// - El rol <b>Client</b> solo puede confirmar sus propias reservas.
     ///
+    /// Reglas de negocio:
     /// - La reserva debe existir.
-    /// - Solo el usuario con rol <b>Admin</b> o el <b>Client</b> dueño de la reserva pueden confirmarla.
-    /// - Los usuarios con rol <b>User</b> pueden confirmar reservas únicamente si la lógica de negocio lo permite.
-    /// - No se permite confirmar reservas pertenecientes a otros clientes sin autorización.
-    /// - La confirmación puede cambiar el estado de la reserva según la lógica definida en el dominio.
+    /// - Las validaciones de negocio (estado no válido, ya confirmada, etc.)
+    ///   se gestionan en el dominio y se devuelven como <c>ProblemDetails</c>
+    ///   mediante el middleware de excepciones.
     /// </remarks>
     /// <param name="id">Identificador único de la reserva.</param>
     /// <param name="cancellationToken">Token de cancelación.</param>
     /// <returns>Sin contenido si la operación es exitosa.</returns>
     /// <response code="204">Reserva confirmada correctamente.</response>
+    /// <response code="400">Datos inválidos o estado no válido.</response>
     /// <response code="401">No autorizado.</response>
     /// <response code="403">Prohibido: el usuario no tiene permisos para confirmar esta reserva.</response>
     /// <response code="404">La reserva no existe.</response>
+    /// <response code="409">Conflicto: la reserva no puede confirmarse en su estado actual.</response>
     [Authorize(Roles = "Admin, User, Client")]
     [HttpPost("{id:guid}/confirm")]
     [Produces("application/json")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> Confirm(Guid id, CancellationToken cancellationToken)
     {
         if (_currentUser.UserId is null)
@@ -410,13 +468,16 @@ public class BookingsController : ControllerBase
         var currentUserId = _currentUser.UserId.Value;
 
         var booking = await _sender.Send(new GetBookingByIdQuery(id), cancellationToken);
-
-        //Esto es para que en él próximo if no explote cuando se intente acceder a booking.ClientId si booking es null. De esta forma, si booking es null, se devuelve un NotFound() y no se llega al siguiente if.
         if (booking is null)
             return NotFound();
 
-        if (!User.IsInRole("Admin") && !User.IsInRole("User") && booking.ClientId != currentUserId)
+        // Autorización unificada (igual que en UpdateDates y UpdateComments)
+        if (!User.IsInRole("Admin") &&
+            !User.IsInRole("User") &&
+            booking.ClientId != currentUserId)
+        {
             return Forbid();
+        }
 
         await _sender.Send(new ConfirmBookingCommand(id), cancellationToken);
 
@@ -430,36 +491,43 @@ public class BookingsController : ControllerBase
     /// Reglas de negocio:
     ///
     /// - La reserva debe existir.
-    /// - La autorización se gestiona mediante la policy <b>CanCancelBooking</b>.
-    /// - Solo los usuarios que cumplan dicha policy pueden cancelar la reserva.
-    /// - Normalmente, esto implica que el usuario debe ser <b>Admin</b> o el <b>Client</b> dueño de la reserva,
-    ///   aunque la lógica exacta depende de la configuración de la policy.
-    /// - La cancelación puede cambiar el estado de la reserva según la lógica definida en el dominio.
+    /// - Los usuarios con rol <b>Admin</b>, <b>User</b> o el <b>Client</b> dueño de la reserva pueden cancelarla.
+    /// - No se permite cancelar reservas de otros clientes sin autorización.
+    /// - El dominio valida el estado actual de la reserva.
     /// </remarks>
     /// <param name="id">Identificador único de la reserva.</param>
+    /// <param name="cancellationToken">Token de cancelación.</param>
     /// <returns>Sin contenido si la operación es exitosa.</returns>
     /// <response code="204">Reserva cancelada correctamente.</response>
     /// <response code="401">No autorizado.</response>
-    /// <response code="403">Prohibido: el usuario no cumple la policy <b>CanCancelBooking</b>.</response>
+    /// <response code="403">Prohibido: el usuario no tiene permisos para cancelar esta reserva.</response>
     /// <response code="404">La reserva no existe.</response>
-    [HttpPost("{id:guid}/cancel")]
+    /// <response code="409">Conflicto: la reserva no puede cancelarse debido a su estado actual.</response>
+    [Authorize(Roles = "Admin, User, Client")]
+    [HttpPatch("{id:guid}/cancel")]
     [Produces("application/json")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> Cancel(Guid id)
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> Cancel(Guid id, CancellationToken cancellationToken)
     {
-        var authorizationResult = await _authorizationService.AuthorizeAsync(
-            User,
-            id,
-            "CanCancelBooking"
-        );
+        if (_currentUser.UserId is null)
+            return Unauthorized();
 
-        if (!authorizationResult.Succeeded)
+        var currentUserId = _currentUser.UserId.Value;
+
+        var booking = await _sender.Send(new GetBookingByIdQuery(id), cancellationToken);
+
+        if (booking is null)
+            return NotFound();
+
+        if (!User.IsInRole("Admin") && !User.IsInRole("User") && booking.ClientId != currentUserId)
             return Forbid();
 
-        await _sender.Send(new CancelBookingCommand(id));
+        await _sender.Send(new CancelBookingCommand(id), cancellationToken);
+
         return NoContent();
     }
 
@@ -467,23 +535,21 @@ public class BookingsController : ControllerBase
     /// Actualiza una reserva existente.
     /// </summary>
     /// <remarks>
-    /// Reglas de negocio:
+    /// Reglas de autorización:
+    /// - Los roles <b>Admin</b> y <b>User</b> pueden actualizar cualquier reserva.
+    /// - El rol <b>Client</b> solo puede actualizar sus propias reservas.
     ///
+    /// Reglas de negocio:
     /// - La reserva debe existir.
-    /// - Solo el usuario con rol <b>Admin</b> o el <b>Client</b> dueño de la reserva pueden modificarla.
-    /// - Los usuarios con rol <b>User</b> pueden actualizar reservas si tienen permisos explícitos definidos por la lógica de negocio.
-    /// - No se permite modificar una reserva de otro cliente sin autorización.
-    /// - Las fechas no pueden solaparse con otras reservas existentes de la misma sala.
-    /// - La fecha de inicio debe ser anterior a la fecha de fin.
-    /// - El campo <b>comments</b> es opcional; si no se envía, se mantiene el valor actual.
-    /// - El estado de la reserva puede cambiar según la lógica de aprobación o revisión definida en el dominio.
+    /// - Las validaciones de negocio (solapamientos, estados no válidos, etc.)
+    ///   se gestionan en el dominio y se devuelven como <c>ProblemDetails</c>
+    ///   mediante el middleware de excepciones.
     /// </remarks>
     /// <param name="id">Identificador único de la reserva a actualizar.</param>
     /// <param name="request">Datos actualizados de la reserva.</param>
-    /// <param name="cancellationToken">Token de cancelación.</param>
     /// <returns>Sin contenido si la operación es exitosa.</returns>
     /// <response code="204">Reserva actualizada correctamente.</response>
-    /// <response code="400">Datos inválidos (fechas incorrectas, formato inválido, etc.).</response>
+    /// <response code="400">Datos inválidos.</response>
     /// <response code="401">No autorizado.</response>
     /// <response code="403">Prohibido: el usuario no tiene permisos para modificar esta reserva.</response>
     /// <response code="404">La reserva no existe.</response>
@@ -498,7 +564,6 @@ public class BookingsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
-
     public async Task<IActionResult> Update(Guid id, UpdateBookingRequest request, CancellationToken cancellationToken)
     {
         if (_currentUser.UserId is null)
@@ -508,12 +573,9 @@ public class BookingsController : ControllerBase
 
         var booking = await _sender.Send(new GetBookingByIdQuery(id), cancellationToken);
 
-        //Esto es para que en él próximo if no explote cuando se intente acceder a booking.ClientId si booking es null. De esta forma, si booking es null, se devuelve un NotFound() y no se llega al siguiente if.
         if (booking is null)
             return NotFound();
 
-        // Solo Admin y User pueden modificar cualquier reserva.
-        // Client solo puede modificar la suya.
         if (!User.IsInRole("Admin") && !User.IsInRole("User") && booking.ClientId != currentUserId)
             return Forbid();
 

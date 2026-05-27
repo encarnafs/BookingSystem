@@ -1,5 +1,4 @@
-﻿using BookingSystem.Api.Authorization;
-using BookingSystem.Api.Configuration;
+﻿using BookingSystem.Api.Configuration;
 using BookingSystem.Api.Middleware;
 using BookingSystem.Api.Services;
 using BookingSystem.Application.Common.Interfaces;
@@ -219,12 +218,12 @@ builder.Services
 
 
 // Authorization Policies
-builder.Services.AddAuthorizationBuilder()
-    .AddPolicy("CanCancelBooking", policy =>
-        policy.Requirements.Add(new CanCancelBookingRequirement()));
+//builder.Services.AddAuthorizationBuilder()
+//    .AddPolicy("CanCancelBooking", policy =>
+//        policy.Requirements.Add(new CanCancelBookingRequirement()));
 
 // Registrar el handler de autorización
-builder.Services.AddScoped<IAuthorizationHandler, CanCancelBookingHandler>();
+//builder.Services.AddScoped<IAuthorizationHandler, CanCancelBookingHandler>();
 
 // Registrar servicios de autenticación
 builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
