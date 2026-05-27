@@ -320,6 +320,7 @@ public class BookingsController : ControllerBase
     /// </remarks>
     /// <param name="id">Identificador de la reserva.</param>
     /// <param name="request">Nuevas fechas.</param>
+    /// <param name="cancellationToken">Token de cancelación para la operación asíncrona.</param>
     /// <returns>Sin contenido.</returns>
     /// <response code="204">Fechas actualizadas correctamente.</response>
     /// <response code="400">Fechas inválidas.</response>
@@ -385,6 +386,7 @@ public class BookingsController : ControllerBase
     /// </remarks>
     /// <param name="id">Identificador de la reserva.</param>
     /// <param name="request">Nuevos comentarios.</param>
+    /// <param name="cancellationToken">Token de cancelación para la operación asíncrona.</param>
     /// <returns>Sin contenido.</returns>
     /// <response code="204">Comentarios actualizados correctamente.</response>
     /// <response code="400">Datos inválidos.</response>
@@ -446,6 +448,7 @@ public class BookingsController : ControllerBase
     /// - El dominio valida estados no válidos y reglas adicionales.
     /// </remarks>
     /// <param name="id">Identificador de la reserva.</param>
+    /// <param name="cancellationToken">Token de cancelación para la operación asíncrona.</param>
     /// <returns>Sin contenido.</returns>
     /// <response code="204">Reserva confirmada correctamente.</response>
     /// <response code="400">Estado no válido.</response>
@@ -499,6 +502,7 @@ public class BookingsController : ControllerBase
     /// - El dominio valida estados no válidos.
     /// </remarks>
     /// <param name="id">Identificador de la reserva.</param>
+    /// <param name="cancellationToken">Token de cancelación para la operación asíncrona.</param>
     /// <returns>Sin contenido.</returns>
     /// <response code="204">Reserva cancelada correctamente.</response>
     /// <response code="401">No autorizado.</response>
@@ -547,6 +551,7 @@ public class BookingsController : ControllerBase
     /// </remarks>
     /// <param name="id">Identificador de la reserva.</param>
     /// <param name="request">Datos actualizados.</param>
+    /// <param name="cancellationToken">Token de cancelación para la operación asíncrona.</param>
     /// <returns>Sin contenido.</returns>
     /// <response code="204">Reserva actualizada correctamente.</response>
     /// <response code="400">Datos inválidos.</response>
