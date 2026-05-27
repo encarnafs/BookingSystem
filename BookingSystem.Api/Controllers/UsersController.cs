@@ -34,11 +34,18 @@ public class UsersController : ControllerBase
     /// <param name="request">Datos necesarios para crear el usuario.</param>
     /// <returns>El usuario creado.</returns>
     /// <remarks>
-    /// Reglas de negocio:
+    /// <b>Reglas de autorización:</b>
+    /// - Solo los administradores pueden crear usuarios.
+    ///
+    /// <b>Reglas de negocio:</b>
     /// - El email debe ser único.
     /// - El rol debe ser válido.
-    /// - Solo los administradores pueden crear usuarios.
-    /// - Devuelve <b>201 Created</b> con el usuario recién creado.
+    ///
+    /// <b>Respuestas:</b>
+    /// <response code="201">Usuario creado correctamente.</response>
+    /// <response code="400">Datos inválidos.</response>
+    /// <response code="401">No autorizado.</response>
+    /// <response code="403">Prohibido.</response>
     /// </remarks>
     [HttpPost]
     [Consumes("application/json")]
@@ -60,10 +67,17 @@ public class UsersController : ControllerBase
     /// <param name="request">Datos actualizados del usuario.</param>
     /// <returns>Sin contenido si la operación es exitosa.</returns>
     /// <remarks>
-    /// Reglas de negocio:
-    /// - El usuario debe existir.
+    /// <b>Reglas de autorización:</b>
     /// - Solo los administradores pueden actualizar usuarios.
-    /// - Devuelve <b>204 NoContent</b> si la actualización es correcta.
+    ///
+    /// <b>Reglas de negocio:</b>
+    /// - El usuario debe existir.
+    ///
+    /// <b>Respuestas:</b>
+    /// <response code="204">Usuario actualizado correctamente.</response>
+    /// <response code="400">Datos inválidos.</response>
+    /// <response code="401">No autorizado.</response>
+    /// <response code="403">Prohibido.</response>
     /// </remarks>
     [HttpPut("{id:guid}")]
     [Consumes("application/json")]
@@ -82,14 +96,19 @@ public class UsersController : ControllerBase
     /// <summary>
     /// Cambia la contraseña de un usuario.
     /// </summary>
-    /// <param name="id">Identificador del usuario.</param>
-    /// <param name="request">Nueva contraseña del usuario.</param>
-    /// <returns>Sin contenido si la operación es exitosa.</returns>
     /// <remarks>
-    /// Reglas de negocio:
+    /// <b>Reglas de autorización:</b>
+    /// - Solo administradores.
+    ///
+    /// <b>Reglas de negocio:</b>
     /// - El usuario debe existir.
     /// - La contraseña actual debe ser correcta.
-    /// - Devuelve <b>204 NoContent</b> si el cambio es exitoso.
+    ///
+    /// <b>Respuestas:</b>
+    /// <response code="204">Contraseña cambiada correctamente.</response>
+    /// <response code="400">Datos inválidos.</response>
+    /// <response code="401">No autorizado.</response>
+    /// <response code="403">Prohibido.</response>
     /// </remarks>
     [HttpPut("{id:guid}/change-password")]
     [Consumes("application/json")]
@@ -108,14 +127,19 @@ public class UsersController : ControllerBase
     /// <summary>
     /// Cambia el rol de un usuario.
     /// </summary>
-    /// <param name="id">Identificador del usuario.</param>
-    /// <param name="request">Nuevo rol que se asignará al usuario.</param>
-    /// <returns>Sin contenido si la operación es exitosa.</returns>
     /// <remarks>
-    /// Reglas de negocio:
+    /// <b>Reglas de autorización:</b>
+    /// - Solo administradores.
+    ///
+    /// <b>Reglas de negocio:</b>
     /// - El usuario debe existir.
     /// - El rol debe ser válido.
-    /// - Devuelve <b>204 NoContent</b> si el cambio es exitoso.
+    ///
+    /// <b>Respuestas:</b>
+    /// <response code="204">Rol cambiado correctamente.</response>
+    /// <response code="400">Datos inválidos.</response>
+    /// <response code="401">No autorizado.</response>
+    /// <response code="403">Prohibido.</response>
     /// </remarks>
     [HttpPut("{id:guid}/change-role")]
     [Consumes("application/json")]
@@ -134,13 +158,17 @@ public class UsersController : ControllerBase
     /// <summary>
     /// Desactiva un usuario (IsActive = false).
     /// </summary>
-    /// <param name="id">Identificador del usuario.</param>
-    /// <returns>Sin contenido si la operación es exitosa.</returns>
     /// <remarks>
-    /// Reglas de negocio:
+    /// <b>Reglas de autorización:</b>
+    /// - Solo administradores.
+    ///
+    /// <b>Reglas de negocio:</b>
     /// - El usuario debe existir.
-    /// - Un usuario desactivado no podrá iniciar sesión.
-    /// - Devuelve <b>204 NoContent</b> si la operación es exitosa.
+    ///
+    /// <b>Respuestas:</b>
+    /// <response code="204">Usuario desactivado correctamente.</response>
+    /// <response code="401">No autorizado.</response>
+    /// <response code="403">Prohibido.</response>
     /// </remarks>
     [HttpPut("{id:guid}/disable")]
     [Produces("application/json")]
@@ -156,13 +184,17 @@ public class UsersController : ControllerBase
     /// <summary>
     /// Activa un usuario (IsActive = true).
     /// </summary>
-    /// <param name="id">Identificador del usuario.</param>
-    /// <returns>Sin contenido si la operación es exitosa.</returns>
     /// <remarks>
-    /// Reglas de negocio:
+    /// <b>Reglas de autorización:</b>
+    /// - Solo administradores.
+    ///
+    /// <b>Reglas de negocio:</b>
     /// - El usuario debe existir.
-    /// - Un usuario activado podrá iniciar sesión.
-    /// - Devuelve <b>204 NoContent</b> si la operación es exitosa.
+    ///
+    /// <b>Respuestas:</b>
+    /// <response code="204">Usuario activado correctamente.</response>
+    /// <response code="401">No autorizado.</response>
+    /// <response code="403">Prohibido.</response>
     /// </remarks>
     [HttpPut("{id:guid}/enable")]
     [Produces("application/json")]
@@ -178,13 +210,18 @@ public class UsersController : ControllerBase
     /// <summary>
     /// Elimina un usuario del sistema (soft delete).
     /// </summary>
-    /// <param name="id">Identificador del usuario.</param>
-    /// <returns>Sin contenido si la operación es exitosa.</returns>
     /// <remarks>
-    /// Reglas de negocio:
+    /// <b>Reglas de autorización:</b>
+    /// - Solo administradores.
+    ///
+    /// <b>Reglas de negocio:</b>
     /// - El usuario debe existir.
-    /// - La eliminación es lógica (soft delete).
-    /// - Devuelve <b>204 NoContent</b> si la operación es exitosa.
+    /// - La eliminación es lógica.
+    ///
+    /// <b>Respuestas:</b>
+    /// <response code="204">Usuario eliminado correctamente.</response>
+    /// <response code="401">No autorizado.</response>
+    /// <response code="403">Prohibido.</response>
     /// </remarks>
     [HttpDelete("{id:guid}")]
     [Produces("application/json")]
@@ -202,9 +239,13 @@ public class UsersController : ControllerBase
     /// </summary>
     /// <returns>Una colección con todos los usuarios activos y no eliminados.</returns>
     /// <remarks>
-    /// Reglas de negocio:
-    /// - Solo los administradores pueden ver la lista completa de usuarios.
-    /// - Devuelve <b>200 OK</b> con la colección de usuarios.
+    /// <b>Reglas de autorización:</b>
+    /// - Solo administradores.
+    ///
+    /// <b>Respuestas:</b>
+    /// <response code="200">Listado devuelto correctamente.</response>
+    /// <response code="401">No autorizado.</response>
+    /// <response code="403">Prohibido.</response>
     /// </remarks>
     [HttpGet]
     [Produces("application/json")]
@@ -223,9 +264,17 @@ public class UsersController : ControllerBase
     /// <param name="id">Identificador del usuario (GUID).</param>
     /// <returns>Objeto con los datos del usuario.</returns>
     /// <remarks>
-    /// Reglas de negocio:
+    /// <b>Reglas de autorización:</b>
+    /// - Solo administradores.
+    ///
+    /// <b>Reglas de negocio:</b>
     /// - Devuelve 404 si el usuario no existe.
-    /// - Devuelve <b>200 OK</b> si el usuario existe.
+    ///
+    /// <b>Respuestas:</b>
+    /// <response code="200">Usuario encontrado.</response>
+    /// <response code="401">No autorizado.</response>
+    /// <response code="403">Prohibido.</response>
+    /// <response code="404">Usuario no encontrado.</response>
     /// </remarks>
     [HttpGet("{id:guid}")]
     [Produces("application/json")]

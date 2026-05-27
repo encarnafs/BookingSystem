@@ -30,17 +30,26 @@ public class RoomsController : ControllerBase
     /// <param name="request">Datos necesarios para crear la sala.</param>
     /// <returns>La sala creada.</returns>
     /// <remarks>
-    /// Solo los administradores pueden crear salas.
+    /// <b>Reglas de autorización:</b>
+    /// - Solo los administradores pueden crear salas.
     ///
-    /// Reglas de negocio:
+    /// <b>Reglas de negocio:</b>
     /// - El nombre es obligatorio y debe ser único.
     /// - La descripción es obligatoria.
     /// - La capacidad es obligatoria y debe ser mayor que 0.
-    /// - Se devuelve <b>201 Created</b> con la sala recién creada.
+    ///
+    /// <b>Respuestas:</b>
+    /// <response code="201">Sala creada correctamente.</response>
+    /// <response code="400">Datos inválidos.</response>
+    /// <response code="401">No autorizado.</response>
+    /// <response code="403">Prohibido.</response>
+    /// <response code="409">Conflicto: nombre duplicado.</response>
     /// </remarks>
     [Authorize(Roles = "Admin")]
     [HttpPost]
     [Consumes("application/json")]
+    //// CAMBIO: Añadido para homogeneizar con BookingsController
+    [Produces("application/json")]
     [ProducesResponseType(typeof(RoomResponse), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
@@ -62,19 +71,29 @@ public class RoomsController : ControllerBase
     /// <param name="request">Datos actualizados de la sala.</param>
     /// <returns>Sin contenido si la operación es exitosa.</returns>
     /// <remarks>
-    /// Solo los administradores pueden actualizar salas.
+    /// <b>Reglas de autorización:</b>
+    /// - Solo los administradores pueden actualizar salas.
     ///
-    /// Reglas de negocio:
+    /// <b>Reglas de negocio:</b>
     /// - La sala debe existir.
     /// - El nombre es obligatorio y debe ser único.
     /// - La descripción es obligatoria.
-    /// - La capacidad es obligatoria y debe ser mayor que 0.
-    /// - Si no se envía el campo <c>isActive</c>, se interpreta como <c>false</c> (la sala queda desactivada).
-    /// - Devuelve <b>204 NoContent</b> si la actualización se realiza correctamente.
+    /// - La capacidad debe ser mayor que 0.
+    /// - Si no se envía <c>isActive</c>, se interpreta como <c>false</c>.
+    ///
+    /// <b>Respuestas:</b>
+    /// <response code="204">Actualizada correctamente.</response>
+    /// <response code="400">Datos inválidos.</response>
+    /// <response code="401">No autorizado.</response>
+    /// <response code="403">Prohibido.</response>
+    /// <response code="404">Sala no encontrada.</response>
+    /// <response code="409">Conflicto: nombre duplicado.</response>
     /// </remarks>
     [Authorize(Roles = "Admin")]
     [HttpPut("{id:guid}")]
     [Consumes("application/json")]
+    //// CAMBIO: Añadido para homogeneizar con BookingsController
+    [Produces("application/json")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -95,12 +114,17 @@ public class RoomsController : ControllerBase
     /// <param name="id">Identificador de la sala.</param>
     /// <returns>Los datos de la sala solicitada.</returns>
     /// <remarks>
-    /// Disponible para administradores y usuarios autenticados.
+    /// <b>Reglas de autorización:</b>
+    /// - Roles permitidos: Admin, User.
     ///
-    /// Reglas de negocio:
+    /// <b>Reglas de negocio:</b>
     /// - La sala debe existir.
-    /// - Requiere autenticación.
-    /// - Si no existe, se devuelve <b>404 NotFound</b>.
+    ///
+    /// <b>Respuestas:</b>
+    /// <response code="200">Sala encontrada.</response>
+    /// <response code="401">No autorizado.</response>
+    /// <response code="403">Prohibido.</response>
+    /// <response code="404">Sala no encontrada.</response>
     /// </remarks>
     [Authorize(Roles = "Admin,User")]
     [HttpGet("{id:guid}")]
@@ -120,12 +144,17 @@ public class RoomsController : ControllerBase
     /// </summary>
     /// <returns>Una colección con todas las salas.</returns>
     /// <remarks>
-    /// Disponible para administradores, usuarios y clientes autenticados.
-    /// 
-    /// Reglas de negocio:
-    /// - Devuelve todas las salas activas del sistema.
-    /// - Si no hay salas registradas, devuelve una lista vacía.
-    /// - Requiere autenticación.
+    /// <b>Reglas de autorización:</b>
+    /// - Roles permitidos: Admin, User, Client.
+    ///
+    /// <b>Reglas de negocio:</b>
+    /// - Devuelve solo salas activas.
+    /// - Si no hay salas, devuelve una lista vacía.
+    ///
+    /// <b>Respuestas:</b>
+    /// <response code="200">Listado devuelto correctamente.</response>
+    /// <response code="401">No autorizado.</response>
+    /// <response code="403">Prohibido.</response>
     /// </remarks>
     [Authorize(Roles = "Admin,User,Client")]
     [HttpGet]
@@ -145,29 +174,23 @@ public class RoomsController : ControllerBase
     /// Comprueba la disponibilidad de una sala en un rango de fechas.
     /// </summary>
     /// <remarks>
-    /// Este endpoint permite verificar si una sala está disponible entre dos fechas.
+    /// <b>Reglas de autorización:</b>
+    /// - Roles permitidos: Admin, User, Client.
     ///
-    /// - Devuelve <b>isAvailable = true</b> si no existe ninguna reserva que solape.
-    /// - Devuelve <b>isAvailable = false</b> junto con la lista de reservas que causan conflicto.
-    /// - Siempre devuelve <b>200 OK</b>, incluso cuando la sala no está disponible.
-    ///
-    /// Reglas de negocio:
+    /// <b>Reglas de negocio:</b>
     /// - La sala debe existir.
-    /// - Las fechas deben ser válidas (la fecha de inicio debe ser anterior a la fecha de fin).
-    /// - Requiere autenticación.
-    /// - Se devuelven todas las reservas que solapan, incluyendo su estado actual.
+    /// - La fecha de inicio debe ser anterior a la fecha de fin.
+    /// - Devuelve isAvailable y, si aplica, las reservas que solapan.
     ///
-    /// <b>Comportamiento según el rol del usuario:</b>
+    /// <b>Comportamiento según rol:</b>
     /// - Client → respuesta reducida.
     /// - Admin/User → respuesta completa.
-    /// </remarks>
-    /// <param name="roomId">Identificador de la sala.</param>
-    /// <param name="start">Fecha de inicio del rango.</param>
-    /// <param name="end">Fecha de fin del rango.</param>
-    /// <returns>Información de disponibilidad y reservas en conflicto.</returns>
+    ///
+    /// <b>Respuestas:</b>
     /// <response code="200">Consulta realizada correctamente.</response>
-    /// <response code="400">Datos inválidos (fechas incorrectas, formato inválido, etc.).</response>
+    /// <response code="400">Fechas inválidas.</response>
     /// <response code="401">No autorizado.</response>
+    /// </remarks>
     [Authorize(Roles = "Admin, User, Client")]
     [HttpGet("{roomId:guid}/availability")]
     [Produces("application/json")]
@@ -179,9 +202,15 @@ public class RoomsController : ControllerBase
         [FromQuery] DateTime start,
         [FromQuery] DateTime end)
     {
+        //// CAMBIO: Validación mínima igual que en BookingsController
+        if (start == default || end == default)
+            return BadRequest("Las fechas no pueden estar vacías.");
+
+        if (start >= end)
+            return BadRequest("La fecha de inicio debe ser anterior a la fecha de fin.");
+
         var dto = await _mediator.Send(new CheckRoomAvailabilityQuery(roomId, start, end));
 
-        // Si es Client → respuesta reducida
         if (User.IsInRole("Client"))
         {
             return Ok(new RoomAvailabilityClientResponse
@@ -190,8 +219,6 @@ public class RoomsController : ControllerBase
             });
         }
 
-        // Si es Admin o User → respuesta completa
         return Ok(dto.ToResponse());
     }
-
 }
