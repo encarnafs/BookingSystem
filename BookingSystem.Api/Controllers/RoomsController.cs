@@ -30,21 +30,20 @@ public class RoomsController : ControllerBase
     /// <param name="request">Datos necesarios para crear la sala.</param>
     /// <returns>La sala creada.</returns>
     /// <remarks>
-    /// <b>Reglas de autorización:</b>
+    /// Reglas de autorización:
     /// - Solo los administradores pueden crear salas.
     ///
-    /// <b>Reglas de negocio:</b>
+    /// Reglas de negocio:
     /// - El nombre es obligatorio y debe ser único.
     /// - La descripción es obligatoria.
     /// - La capacidad es obligatoria y debe ser mayor que 0.
-    ///
+    /// </remarks>
     /// <b>Respuestas:</b>
     /// <response code="201">Sala creada correctamente.</response>
     /// <response code="400">Datos inválidos.</response>
     /// <response code="401">No autorizado.</response>
     /// <response code="403">Prohibido.</response>
     /// <response code="409">Conflicto: nombre duplicado.</response>
-    /// </remarks>
     [Authorize(Roles = "Admin")]
     [HttpPost]
     [Consumes("application/json")]
@@ -71,16 +70,16 @@ public class RoomsController : ControllerBase
     /// <param name="request">Datos actualizados de la sala.</param>
     /// <returns>Sin contenido si la operación es exitosa.</returns>
     /// <remarks>
-    /// <b>Reglas de autorización:</b>
+    /// Reglas de autorización:
     /// - Solo los administradores pueden actualizar salas.
     ///
-    /// <b>Reglas de negocio:</b>
+    /// Reglas de negocio:
     /// - La sala debe existir.
     /// - El nombre es obligatorio y debe ser único.
     /// - La descripción es obligatoria.
     /// - La capacidad debe ser mayor que 0.
     /// - Si no se envía <c>isActive</c>, se interpreta como <c>false</c>.
-    ///
+    /// </remarks>
     /// <b>Respuestas:</b>
     /// <response code="204">Actualizada correctamente.</response>
     /// <response code="400">Datos inválidos.</response>
@@ -88,7 +87,6 @@ public class RoomsController : ControllerBase
     /// <response code="403">Prohibido.</response>
     /// <response code="404">Sala no encontrada.</response>
     /// <response code="409">Conflicto: nombre duplicado.</response>
-    /// </remarks>
     [Authorize(Roles = "Admin")]
     [HttpPut("{id:guid}")]
     [Consumes("application/json")]
@@ -114,18 +112,17 @@ public class RoomsController : ControllerBase
     /// <param name="id">Identificador de la sala.</param>
     /// <returns>Los datos de la sala solicitada.</returns>
     /// <remarks>
-    /// <b>Reglas de autorización:</b>
+    /// Reglas de autorización:
     /// - Roles permitidos: Admin, User.
     ///
-    /// <b>Reglas de negocio:</b>
+    /// Reglas de negocio:
     /// - La sala debe existir.
-    ///
+    /// </remarks>
     /// <b>Respuestas:</b>
     /// <response code="200">Sala encontrada.</response>
     /// <response code="401">No autorizado.</response>
     /// <response code="403">Prohibido.</response>
     /// <response code="404">Sala no encontrada.</response>
-    /// </remarks>
     [Authorize(Roles = "Admin,User")]
     [HttpGet("{id:guid}")]
     [Produces("application/json")]
@@ -144,18 +141,17 @@ public class RoomsController : ControllerBase
     /// </summary>
     /// <returns>Una colección con todas las salas.</returns>
     /// <remarks>
-    /// <b>Reglas de autorización:</b>
+    /// Reglas de autorización:
     /// - Roles permitidos: Admin, User, Client.
     ///
-    /// <b>Reglas de negocio:</b>
+    /// Reglas de negocio:
     /// - Devuelve solo salas activas.
     /// - Si no hay salas, devuelve una lista vacía.
-    ///
+    /// </remarks>
     /// <b>Respuestas:</b>
     /// <response code="200">Listado devuelto correctamente.</response>
     /// <response code="401">No autorizado.</response>
     /// <response code="403">Prohibido.</response>
-    /// </remarks>
     [Authorize(Roles = "Admin,User,Client")]
     [HttpGet]
     [Produces("application/json")]
@@ -174,23 +170,22 @@ public class RoomsController : ControllerBase
     /// Comprueba la disponibilidad de una sala en un rango de fechas.
     /// </summary>
     /// <remarks>
-    /// <b>Reglas de autorización:</b>
+    /// Reglas de autorización:
     /// - Roles permitidos: Admin, User, Client.
     ///
-    /// <b>Reglas de negocio:</b>
+    /// Reglas de negocio:
     /// - La sala debe existir.
     /// - La fecha de inicio debe ser anterior a la fecha de fin.
     /// - Devuelve isAvailable y, si aplica, las reservas que solapan.
     ///
-    /// <b>Comportamiento según rol:</b>
+    /// Comportamiento según rol:
     /// - Client → respuesta reducida.
     /// - Admin/User → respuesta completa.
-    ///
+    /// </remarks>
     /// <b>Respuestas:</b>
     /// <response code="200">Consulta realizada correctamente.</response>
     /// <response code="400">Fechas inválidas.</response>
     /// <response code="401">No autorizado.</response>
-    /// </remarks>
     [Authorize(Roles = "Admin, User, Client")]
     [HttpGet("{roomId:guid}/availability")]
     [Produces("application/json")]

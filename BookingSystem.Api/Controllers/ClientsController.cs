@@ -41,6 +41,10 @@ public class ClientsController : ControllerBase
     /// - Requiere autenticación.
     /// - Roles permitidos: Admin, User.
     /// </remarks>
+    /// <response code="201">Cliente creado correctamente.</response>
+    /// <response code="400">Datos inválidos.</response>
+    /// <response code="401">No autorizado.</response>
+    /// <response code="403">Prohibido.</response>
     [Authorize(Roles = "Admin, User")]
     [HttpPost]
     [Consumes("application/json")]
@@ -72,6 +76,10 @@ public class ClientsController : ControllerBase
     /// - Requiere autenticación.
     /// - Si el usuario no es Admin y no coincide su ID → 403 Forbidden.
     /// </remarks>
+    /// <response code="204">Cliente actualizado correctamente.</response>
+    /// <response code="400">Datos inválidos.</response>
+    /// <response code="401">No autorizado.</response>
+    /// <response code="403">Prohibido.</response>
     [HttpPut("{id:guid}")]
     [Consumes("application/json")]
     [Produces("application/json")]
@@ -106,6 +114,9 @@ public class ClientsController : ControllerBase
     /// - Requiere autenticación.
     /// - Roles permitidos: Admin, User.
     /// </remarks>
+    /// <response code="200">Listado de clientes devuelto correctamente.</response>
+    /// <response code="401">No autorizado.</response>
+    /// <response code="403">Prohibido.</response>
     [Authorize(Roles = "Admin, User")]
     [HttpGet]
     [Produces("application/json")]
@@ -134,6 +145,10 @@ public class ClientsController : ControllerBase
     /// - Requiere autenticación.
     /// - Si el usuario no es Admin y no coincide su ID → 403 Forbidden.
     /// </remarks>
+    /// <response code="200">Cliente encontrado.</response>
+    /// <response code="401">No autorizado.</response>
+    /// <response code="403">Prohibido.</response>
+    /// <response code="404">Cliente no encontrado.</response>
     [HttpGet("{id:guid}")]
     [Produces("application/json")]
     [ProducesResponseType(typeof(ClientResponse), StatusCodes.Status200OK)]
@@ -148,7 +163,7 @@ public class ClientsController : ControllerBase
         var currentUserId = _currentUser.UserId.Value;
 
         if (!User.IsInRole("Admin") && currentUserId != id)
-            return Forbid();
+            return Forbid();  //Si no existe en vez de devolver 404 devuelvo 403 para no revelar la existencia del recurso, por seguridad
 
         var dto = await _mediator.Send(new GetClientByIdQuery(id));
         return Ok(dto.ToResponse());
