@@ -41,7 +41,7 @@ public class AuthController : ControllerBase
     /// <response code="400">Datos inválidos.</response>
     /// <response code="409">Conflicto: el email ya está registrado.</response>
     /// <response code="500">Error interno del servidor.</response>
-    [AllowAnonymous]
+    [Authorize(Roles = "Admin")]
     [HttpPost("register-user")]
     [Consumes("application/json")]
     [Produces("application/json")]
