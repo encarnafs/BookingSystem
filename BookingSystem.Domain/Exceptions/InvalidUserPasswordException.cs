@@ -4,5 +4,8 @@ using BookingSystem.Domain.Exceptions;
 namespace BookingSystem.Domain.Exceptions;
 public class InvalidUserPasswordException : DomainException
 {
-    public InvalidUserPasswordException(string message) : base(message) { }
+    public InvalidUserPasswordException(string password)
+        : base($"La contraseña proporcionada no es válida.")
+    {
+    }
 }

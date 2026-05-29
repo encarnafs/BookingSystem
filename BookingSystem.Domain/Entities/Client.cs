@@ -74,11 +74,17 @@ public class Client
 
     public void Disable()
     {
+        if (!IsActive)
+            throw new InvalidClientStateException("Inactive");
+
         IsActive = false;
     }
 
     public void MarkAsDeleted()
     {
+        if (IsDeleted)
+            throw new InvalidClientStateException("Deleted");
+
         IsActive = false;
         IsDeleted = true;
     }
@@ -89,12 +95,12 @@ public class Client
     private static string NormalizeName(string name)
     {
         if (string.IsNullOrWhiteSpace(name))
-            throw new InvalidClientNameException("El nombre del cliente no puede estar vacío.");
+            throw new InvalidClientNameException(name);
 
         var normalized = name.Trim();
 
         if (normalized.Length < 2)
-            throw new InvalidClientNameException("El nombre del cliente es demasiado corto.");
+            throw new InvalidClientNameException(normalized);
 
         return normalized;
     }
@@ -102,24 +108,24 @@ public class Client
     private static Email ValidateEmail(Email email)
     {
         if (email is null)
-            throw new InvalidClientStateException("El email no puede ser nulo.");
+            throw new InvalidClientStateException("null");
         return email;
     }
 
     private static PhoneNumber ValidatePhoneNumber(PhoneNumber phoneNumber)
     {
         if (phoneNumber is null)
-            throw new InvalidClientStateException("El teléfono no puede ser nulo.");
+            throw new InvalidClientStateException("null");
         return phoneNumber;
     }
 
     private static string ValidatePasswordHash(string hash)
     {
         if (string.IsNullOrWhiteSpace(hash))
-            throw new InvalidClientStateException("El hash no puede ser nulo.");
+            throw new InvalidClientStateException(hash);
 
         if (hash.Length < 20)
-            throw new InvalidClientStateException("El hash no es válido.");
+            throw new InvalidClientStateException(hash);
 
         return hash;
     }

@@ -2,5 +2,8 @@
 
 public class InvalidRoomNameException : DomainException
 {
-    public InvalidRoomNameException(string message) : base(message) { }
+    public InvalidRoomNameException(string name)
+        : base($"El nombre de sala '{name}' no es válido.")
+    {
+    }
 }

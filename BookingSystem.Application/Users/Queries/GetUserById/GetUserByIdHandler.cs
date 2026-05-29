@@ -22,7 +22,7 @@ public class GetUserByIdHandler : IRequestHandler<GetUserByIdQuery, UserDto>
         var user = await _userRepository.GetByIdAsync(request.Id, cancellationToken);
 
         if (user == null)
-            throw new NotFoundException($"Usuario con Id {request.Id} no encontrado.", request.Id);
+            throw new NotFoundException("User", request.Id);
 
         return new UserDto
         {

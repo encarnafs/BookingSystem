@@ -32,18 +32,15 @@ public class DeleteUserHandler : IRequestHandler<DeleteUserCommand, UserDto>
 
         // Solo un Admin puede borrar usuarios
         if (_currentUser.Role != "Admin")
-            throw new ForbiddenAccessException("Sólo los administradores pueden eliminar usuarios");
+            throw new ForbiddenAccessException(_currentUser.Role!);
 
         // Un Admin no puede borrarse a sí mismo
         if (Guid.TryParse(_currentUser.UserId?.ToString(), out var currentUserId) && currentUserId == user.Id)
-            throw new ConflictException("Un administrador no puede borrarse a sí mismo");
+            throw new ConflictException(user.Id.ToString());
 
         // Un Admin no puede borrar a otro Admin
         if (user.Role == "Admin")
-            throw new ConflictException("Los usuarios Admin no pueden ser eliminados");
-        // Si ya está eliminado → 409
-        if (user.IsDeleted)
-            throw new ConflictException("El usuario ya está eliminado");
+            throw new ConflictException(user.Role);
 
         var oldValues = new { IsDeleted = user.IsDeleted };
 

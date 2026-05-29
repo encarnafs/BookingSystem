@@ -2,5 +2,8 @@
 
 public class InvalidRoomCapacityException : DomainException
 {
-    public InvalidRoomCapacityException(string message) : base(message) { }
+    public InvalidRoomCapacityException(int capacity)
+       : base($"La capacidad '{capacity}' no es válida para una sala.")
+    {
+    }
 }

@@ -2,4 +2,4 @@
 
 namespace BookingSystem.Application.Bookings.Events;
 
-public record BookingDatesUpdatedNotification(Guid BookingId) : INotification;
+public record BookingDatesUpdatedNotification(Guid BookingId, string Email) : INotification;

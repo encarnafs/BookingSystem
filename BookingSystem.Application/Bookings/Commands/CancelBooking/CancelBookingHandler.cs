@@ -27,17 +27,28 @@ public class CancelBookingHandler : IRequestHandler<CancelBookingCommand>
         var booking = await _bookingRepository.GetByIdAsync(request.Id, cancellationToken)
             ?? throw new NotFoundException("Booking", request.Id);
 
-        // 2. Cancelar la reserva (regla de dominio)
-        booking.Cancel();
+        // 2. Guardar valores anteriores para el evento de auditoría
+        var oldValues = new
+        {
+            Status = booking.Status
+        };
 
-        // 3. Actualizar
-        await _bookingRepository.UpdateAsync(booking, cancellationToken);
+        // 3. Cancelar la reserva (regla de dominio)
+        booking.Cancel();
 
         // 4. Guardar cambios
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         // 5. Publicar Application Event
-        await _mediator.Publish(new BookingCancelledNotification(booking.Id), cancellationToken);
+        await _mediator.Publish(new BookingCancelledNotification(booking.Id, booking.Client.Email.ToString()), cancellationToken);
+
+        // 6. Evento de auditoría
+        await _mediator.Publish(
+            new BookingUpdatedNotification(                                   
+                booking.Id,
+                oldValues,
+                new { Status = booking.Status }),
+            cancellationToken);
     }
 }
 

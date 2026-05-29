@@ -1,4 +1,5 @@
 ﻿using BookingSystem.Application.Clients.Dtos;
+using BookingSystem.Application.Common.Exceptions;
 using BookingSystem.Application.Common.Interfaces;
 using BookingSystem.Domain.Entities;
 using MediatR;
@@ -19,11 +20,8 @@ public class GetClientByIdHandler : IRequestHandler<GetClientByIdQuery, ClientDt
     }
     public async Task<ClientDto?> Handle(GetClientByIdQuery request, CancellationToken cancellationToken)
     {
-        var client = await _clientRepository.GetByIdAsync(request.Id, cancellationToken);
-
-        // Soy más explícita enviando null en vez de una excepción, ya que el cliente no existe, no es un error del sistema.
-        if (client is null) 
-            return null;
+        var client = await _clientRepository.GetByIdAsync(request.Id, cancellationToken)
+            ?? throw new NotFoundException("Client", request.Id);
 
         return new ClientDto
         {

@@ -40,10 +40,10 @@ public class CreateClientHandler : IRequestHandler<CreateClientCommand, ClientDt
 
         // 2️⃣ Validar duplicados
         if (await _clientRepository.ExistsByEmailAsync(email, cancellationToken))
-            throw new ConflictException("Ya existe un cliente con este email.");
+            throw new ConflictException(request.Email);
 
         if (await _clientRepository.ExistsByPhoneAsync(phone, cancellationToken))
-            throw new ConflictException("Ya existe un cliente con este teléfono.");
+            throw new ConflictException(request.PhoneNumber);
 
         // 3️⃣ Crear entidad Client (sin contraseña)
         var client = new Client(request.FullName, email, phone);

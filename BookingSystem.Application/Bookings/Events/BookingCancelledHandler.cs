@@ -21,12 +21,10 @@ public class BookingCancelledHandler : INotificationHandler<BookingCancelledNoti
     {
         _logger.LogInformation("Procesando cancelación de reserva {BookingId}", notification.BookingId);
 
-        _logger.LogInformation("Iniciando envío de email por cancelación de reserva {BookingId}", notification.BookingId);
-
         await _emailService.SendAsync(
-            to: "encarnifs@gmail.com",
+            to: notification.Email, // ← cambiar cuando quieras usar el email real
             subject: "Reserva cancelada",
-            body: $"La reserva con ID {notification.BookingId} ha sido cancelada.");
+            body: $"Tu reserva con ID {notification.BookingId} ha sido cancelada correctamente.");
 
         _logger.LogInformation("Email enviado por cancelación de reserva {BookingId}", notification.BookingId);
     }

@@ -2,5 +2,8 @@
 
 public class InvalidUserRoleException : DomainException
 {
-    public InvalidUserRoleException(string message) : base(message) { }
+    public InvalidUserRoleException(string role)
+        : base($"El rol '{role}' no es válido.")
+    {
+    }
 }

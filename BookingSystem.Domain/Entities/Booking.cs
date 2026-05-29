@@ -51,10 +51,10 @@ public class Booking
     public void UpdateDates(DateRange newDateRange)
     {
         if (Status == BookingStatus.Cancelled)
-            throw new InvalidBookingStateException("No se pueden modificar fechas de una reserva cancelada.");
+            throw new InvalidBookingStateException("Cancelled");
 
         if (newDateRange.End < DateTime.UtcNow)
-            throw new InvalidBookingStateException("No se puede modificar una reserva que ya ha finalizado.");
+            throw new InvalidBookingStateException("PastEndDate");
 
         DateRange = ValidateDateRange(newDateRange);
     }
@@ -62,7 +62,7 @@ public class Booking
     public void UpdateComments(string? comments)
     {
         if (Status == BookingStatus.Cancelled)
-            throw new InvalidBookingStateException("No se pueden modificar comentarios de una reserva cancelada.");
+            throw new InvalidBookingStateException("Cancelled");
 
         Comments = comments;
     }
@@ -78,7 +78,7 @@ public class Booking
     public void Confirm()
     {
         if (Status == BookingStatus.Cancelled)
-            throw new InvalidBookingStateException("No se puede confirmar una reserva cancelada.");
+            throw new InvalidBookingStateException("Cancelled");
 
         if (Status == BookingStatus.Confirmed)
             throw new BookingAlreadyConfirmedException(Id);
@@ -89,13 +89,13 @@ public class Booking
     public void Update(Guid roomId, Guid clientId, DateRange newDateRange, string? comments)
     {
         if (Status == BookingStatus.Cancelled)
-            throw new InvalidBookingStateException("No se puede actualizar una reserva cancelada.");
+            throw new InvalidBookingStateException("Cancelled");
         
         if (Status == BookingStatus.Confirmed)
-            throw new InvalidBookingStateException("No se puede actualizar una reserva confirmada.");
+            throw new InvalidBookingStateException("Confirmed");
 
         if (newDateRange.End < DateTime.UtcNow)
-            throw new InvalidBookingStateException("No se puede modificar una reserva que ya ha finalizado.");
+            throw new InvalidBookingStateException("PastEndDate");
 
         RoomId = ValidateRoomId(roomId);
         ClientId = ValidateClientId(clientId);
@@ -109,28 +109,28 @@ public class Booking
     private static Guid ValidateRoomId(Guid roomId)
     {
         if (roomId == Guid.Empty)
-            throw new InvalidBookingStateException("El RoomId no puede estar vacío.");
+            throw new InvalidBookingStateException(roomId.ToString());
         return roomId;
     }
 
     private static Guid ValidateClientId(Guid clientId)
     {
         if (clientId == Guid.Empty)
-            throw new InvalidBookingStateException("El ClientId no puede estar vacío.");
+            throw new InvalidBookingStateException(clientId.ToString());
         return clientId;
     }
 
     private static Guid ValidateCreatedByUserId(Guid createdByUserId)
     {
         if (createdByUserId == Guid.Empty)
-            throw new InvalidBookingStateException("El CreatedByUserId no puede estar vacío.");
+            throw new InvalidBookingStateException(createdByUserId.ToString());
         return createdByUserId;
     }
 
     private static DateRange ValidateDateRange(DateRange dateRange)
     {
         if (dateRange is null)
-            throw new InvalidBookingStateException("El DateRange no puede ser nulo.");
+            throw new InvalidBookingStateException("null");
         return dateRange;
     }
 }

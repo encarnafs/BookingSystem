@@ -49,23 +49,6 @@ public class ExceptionHandlingMiddleware : IMiddleware
             context.Response.ContentType = "application/problem+json";
             await context.Response.WriteAsJsonAsync(problem);
         }
-        catch (Exception ex) when (
-            ex is ConflictException || 
-            ex is InvalidRoomNameException || 
-            ex is BookingOverlapException ||
-            ex is BookingAlreadyConfirmedException ||
-            ex is InvalidBookingStateException)
-        {
-            var problem = _problemDetailsFactory.CreateProblemDetails(
-                context,
-                statusCode: StatusCodes.Status409Conflict,
-                title: "Conflict error",
-                detail: ex.Message);
-
-            context.Response.StatusCode = StatusCodes.Status409Conflict;
-            context.Response.ContentType = "application/problem+json";
-            await context.Response.WriteAsJsonAsync(problem);
-        }
         catch (UnauthorizedAccessException ex)
         {
                 var problem = _problemDetailsFactory.CreateProblemDetails(
@@ -75,6 +58,18 @@ public class ExceptionHandlingMiddleware : IMiddleware
                 detail: ex.Message);
 
             context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            context.Response.ContentType = "application/problem+json";
+            await context.Response.WriteAsJsonAsync(problem);
+        }
+        catch (DomainException ex)
+        {
+            var problem = _problemDetailsFactory.CreateProblemDetails(
+                context,
+                statusCode: StatusCodes.Status409Conflict,
+                title: "Domain error",
+                detail: ex.Message);
+
+            context.Response.StatusCode = StatusCodes.Status409Conflict;
             context.Response.ContentType = "application/problem+json";
             await context.Response.WriteAsJsonAsync(problem);
         }

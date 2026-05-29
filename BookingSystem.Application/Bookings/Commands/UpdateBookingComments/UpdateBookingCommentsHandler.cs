@@ -27,17 +27,28 @@ public class UpdateBookingCommentsHandler : IRequestHandler<UpdateBookingComment
         var booking = await _bookingRepository.GetByIdAsync(request.Id, cancellationToken)
             ?? throw new NotFoundException("Booking", request.Id);
 
-        // 2. Actualizar comentarios (regla de dominio)
-        booking.UpdateComments(request.Comments);
+        // 2. Guardar valores antiguos para Auditoría
+        var oldValues = new
+        {
+            booking.Comments
+        };
 
-        // 3. Actualizar repositorio
-        await _bookingRepository.UpdateAsync(booking, cancellationToken);
+        // 3. Actualizar comentarios (regla de dominio)
+        booking.UpdateComments(request.Comments);
 
         // 4. Guardar cambios
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         // 5. Publicar Application Event
-        await _mediator.Publish(new BookingCommentsUpdatedNotification(booking.Id), cancellationToken);
+        await _mediator.Publish(new BookingCommentsUpdatedNotification(booking.Id, booking.Client.Email.ToString()), cancellationToken);
+
+        // 6.Auditoría
+        await _mediator.Publish(
+        new BookingUpdatedNotification(
+            booking.Id,
+            oldValues,
+            new { booking.Comments }),
+        cancellationToken);
     }
 }
 

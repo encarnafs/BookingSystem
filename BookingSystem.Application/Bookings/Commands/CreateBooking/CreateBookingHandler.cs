@@ -88,7 +88,9 @@ public class CreateBookingHandler : IRequestHandler<CreateBookingCommand, Bookin
         );
 
         if (overlaps)
-            throw new BookingOverlapException("La sala ya está reservada para las fechas seleccionadas.");
+            throw new OverlappingBookingException(request.RoomId);
+
+        var oldValues = new { };
 
         // ⭐ 9. Crear la reserva (CreatedAt se rellena automáticamente en el dominio)
         var booking = new Booking(
@@ -108,7 +110,21 @@ public class CreateBookingHandler : IRequestHandler<CreateBookingCommand, Bookin
         var created = await _bookingRepository.GetByIdAsync(booking.Id, cancellationToken);
 
         // ⭐ 11. Publicar evento de dominio
-        await _mediator.Publish(new BookingCreatedNotification(booking.Id), cancellationToken);
+        await _mediator.Publish(new BookingCreatedNotification(booking.Id, booking.Client.Email.ToString()), cancellationToken);
+
+        await _mediator.Publish(
+        new BookingUpdatedNotification(
+            booking.Id,
+            oldValues,
+            new
+            {
+                booking.RoomId,
+                booking.ClientId,
+                Start = booking.DateRange.Start,
+                End = booking.DateRange.End,
+                booking.Comments
+            }),
+        cancellationToken);
 
         // ⭐ 12. Devolver DTO
         return new BookingDto

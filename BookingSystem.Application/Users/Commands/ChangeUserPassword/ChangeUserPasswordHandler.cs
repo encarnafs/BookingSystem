@@ -3,6 +3,7 @@ using BookingSystem.Application.Common.Interfaces;
 using BookingSystem.Application.Users.Dtos;
 using BookingSystem.Application.Users.Events;
 using BookingSystem.Domain.Entities;
+using BookingSystem.Domain.Exceptions;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 
@@ -40,7 +41,7 @@ public class ChangeUserPasswordHandler : IRequestHandler<ChangeUserPasswordComma
         );
 
         if (verifyResult == PasswordVerificationResult.Failed)
-            throw new UnauthorizedAccessException("La contraseña actual no es correcta.");
+            throw new InvalidUserPasswordException(request.CurrentPassword);
 
         // 2️⃣ Generar nuevo hash
         var newHash = _passwordHasher.HashPassword(user, request.NewPassword);

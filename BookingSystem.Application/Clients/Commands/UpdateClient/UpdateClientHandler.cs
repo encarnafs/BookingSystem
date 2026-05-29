@@ -29,7 +29,6 @@ public class UpdateClientHandler : IRequestHandler<UpdateClientCommand, ClientDt
         var client = await _clientRepository.GetByIdAsync(request.Id, cancellationToken)
             ?? throw new NotFoundException("Client", request.Id);
 
-
         // 2. Guardar valores antiguos para auditoría
         var oldValues = new
         {
@@ -37,7 +36,6 @@ public class UpdateClientHandler : IRequestHandler<UpdateClientCommand, ClientDt
             Email = client.Email.Value,
             PhoneNumber = client.PhoneNumber.Value
         };
-
         
         // 3. Crear Value Objects
         var email = Email.Create(request.Email);
@@ -46,11 +44,11 @@ public class UpdateClientHandler : IRequestHandler<UpdateClientCommand, ClientDt
         // 4. Validar duplicados solo si cambian
         if (client.Email.Value != request.Email &&
             await _clientRepository.ExistsByEmailAsync(email, cancellationToken))
-            throw new ConflictException("Ya existe un cliente con este email.");
+            throw new ConflictException(request.Email);
 
         if (client.PhoneNumber.Value != request.PhoneNumber &&
             await _clientRepository.ExistsByPhoneAsync(phone, cancellationToken))
-            throw new ConflictException("Ya existe un cliente con este teléfono.");
+            throw new ConflictException(request.PhoneNumber);
 
         // 5. Actualizar usando el método de dominio
         client.Update(request.FullName, email, phone);

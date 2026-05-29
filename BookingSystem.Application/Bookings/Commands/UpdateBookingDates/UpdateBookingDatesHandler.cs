@@ -29,10 +29,17 @@ public class UpdateBookingDatesHandler : IRequestHandler<UpdateBookingDatesComma
         var booking = await _bookingRepository.GetByIdAsync(request.Id, cancellationToken)
             ?? throw new NotFoundException("Booking", request.Id);
 
-        // 2. Crear el nuevo rango de fechas
+        // 2. Guardar los valores antiguos
+        var oldValues = new
+        {
+            Start = booking.DateRange.Start,
+            End = booking.DateRange.End
+        };
+
+        // 3. Crear el nuevo rango de fechas
         var newDateRange = new DateRange(request.Start, request.End);
 
-        // 3. Validar solapamientos excluyendo la propia reserva
+        // 4. Validar solapamientos excluyendo la propia reserva
         var hasOverlap = await _bookingRepository.ExistsOverlappingBookingAsync(
             booking.RoomId,
             newDateRange.Start,
@@ -42,18 +49,27 @@ public class UpdateBookingDatesHandler : IRequestHandler<UpdateBookingDatesComma
         );
 
         if (hasOverlap)
-            throw new BookingOverlapException("Las nuevas fechas se solapan con otra reserva existente.");
+            throw new OverlappingBookingException(booking.RoomId);
 
-        // 4. Actualizar la entidad
+        // 5. Actualizar la entidad
         booking.UpdateDates(newDateRange);
-
-        // 5. Actualizar repositorio
-        await _bookingRepository.UpdateAsync(booking, cancellationToken);
 
         // 6. Guardar cambios
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         // 7. Publicar Application Event
-        await _mediator.Publish(new BookingDatesUpdatedNotification(booking.Id), cancellationToken);
+        await _mediator.Publish(new BookingDatesUpdatedNotification(booking.Id, booking.Client.Email.ToString()), cancellationToken);
+
+        // 8. Auditoría: Publicar evento con valores antiguos y nuevos
+        await _mediator.Publish(
+            new BookingUpdatedNotification(
+                booking.Id,
+                oldValues,
+                new
+                {
+                    Start = booking.DateRange.Start,
+                    End = booking.DateRange.End
+                }),
+            cancellationToken);
     }
 }

@@ -30,11 +30,7 @@ public class DisableUserHandler : IRequestHandler<DisableUserCommand, UserDto>
 
         // No permitir desactivar un Admin
         if (user.Role == "Admin")
-            throw new ConflictException("El usuario Admin no puede ser desactivado");
-
-        // Si ya está desactivado → lanzar ConflictException
-        if (!user.IsActive)
-            throw new ConflictException("Usuario ya está desactivado");
+            throw new ConflictException(user.Role);
 
         var oldValues = new { IsActive = user.IsActive };
 

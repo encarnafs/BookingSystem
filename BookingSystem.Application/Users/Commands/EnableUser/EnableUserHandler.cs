@@ -33,15 +33,23 @@ public class EnableUserCommandHandler
         var user = await _userRepository.GetByIdAsync(request.UserId, cancellationToken)
             ?? throw new NotFoundException("User", request.UserId);
 
-        if (user.IsActive)
-            throw new ConflictException("El usuario ya está habilitado");
+        var oldValues = new { IsActive = user.IsActive };
 
+        // Activar usuario (el dominio valida estado)
         user.Enable();
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         await _mediator.Publish(new UserEnabledNotification(user.Id), cancellationToken);
-        
+
+        // Auditoría (simétrico a DisableUser)
+        await _mediator.Publish(
+            new UserUpdatedNotification(
+                user.Id,
+                oldValues,
+                new { IsActive = user.IsActive }),
+            cancellationToken);
+
         return new UserDto
         {
             Id = user.Id,

@@ -26,18 +26,15 @@ public class DeleteClientHandler : IRequestHandler<DeleteClientCommand, Unit>
         var client = await _clientRepository.GetByIdAsync(request.ClientId, cancellationToken)
             ?? throw new NotFoundException("Client", request.ClientId);
 
-        if (client.IsDeleted)
-            return Unit.Value; // ya está eliminado
-
         var oldValues = new
         {
             client.IsActive,
             client.IsDeleted
         };
 
-        client.Disable();
+        // El dominio valida si ya está eliminado
+        client.MarkAsDeleted();
 
-        await _clientRepository.UpdateAsync(client, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         await _mediator.Publish(

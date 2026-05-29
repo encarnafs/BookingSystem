@@ -2,5 +2,8 @@
 
 public class InvalidUserStateException : DomainException
 {
-    public InvalidUserStateException(string message) : base(message) { }
+    public InvalidUserStateException(string state)
+        : base($"El estado de usuario '{state}' no es válido.")
+    {
+    }
 }

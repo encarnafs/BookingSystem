@@ -2,5 +2,8 @@
 
 public class InvalidPhoneNumberException : DomainException
 {
-    public InvalidPhoneNumberException(string message) : base(message) { }
+    public InvalidPhoneNumberException(string phoneNumber)
+        : base($"El número de teléfono '{phoneNumber}' no es válido.")
+    {
+    }
 }

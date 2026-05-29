@@ -35,10 +35,10 @@ public class CreateUserHandler : IRequestHandler<CreateUserCommand, UserDto>
 
         // 2️. Validar duplicados
         if (await _userRepository.ExistsByEmailAsync(email, cancellationToken))
-            throw new ConflictException("El email ya está registrado.");
+            throw new ConflictException(request.Email);
 
         if (await _userRepository.ExistsByUsernameAsync(request.Username, cancellationToken))
-            throw new ConflictException("El nombre de usuario ya existe.");
+            throw new ConflictException(request.Username);
 
         // 3️. Crear entidad User sin contraseña
         var user = new User(

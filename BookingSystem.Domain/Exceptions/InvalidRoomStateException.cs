@@ -2,5 +2,8 @@
 
 public class InvalidRoomStateException : DomainException
 {
-    public InvalidRoomStateException(string message) : base(message) { }
+    public InvalidRoomStateException(string state)
+        : base($"El estado de la sala '{state}' no es válido.")
+    {
+    }
 }

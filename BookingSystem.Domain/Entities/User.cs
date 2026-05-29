@@ -44,11 +44,17 @@ public class User
     }
     public void Disable()
     {
+        if (!IsActive)
+            throw new InvalidUserStateException("Inactive");
+
         IsActive = false;
     }
 
     public void Enable()
     {
+        if (IsActive)
+            throw new InvalidUserStateException("Active");
+
         IsActive = true;
     }
 
@@ -68,6 +74,9 @@ public class User
 
     public void MarkAsDeleted()
     {
+        if (IsDeleted)
+            throw new InvalidUserStateException("Deleted");
+
         IsDeleted = true;
     }
 
@@ -77,19 +86,20 @@ public class User
     private static Email ValidateEmail(Email email)
     {
         if (email is null)
-            throw new InvalidUserStateException("El email no puede ser nulo.");
+            throw new InvalidUserStateException("null");
+
         return email;
     }
 
     private static string NormalizeUsername(string username)
     {
         if (string.IsNullOrWhiteSpace(username))
-            throw new InvalidUserNameException("El nombre de usuario no puede estar vacío.");
+            throw new InvalidUserNameException(username);
 
         var normalized = username.Trim();
 
         if (normalized.Length < 3)
-            throw new InvalidUserNameException("El nombre de usuario es demasiado corto.");
+            throw new InvalidUserNameException(normalized);
 
         return normalized;
     }
@@ -97,7 +107,7 @@ public class User
     private static string NormalizeRole(string role)
     {
         if (string.IsNullOrWhiteSpace(role))
-            throw new InvalidUserRoleException("El rol no puede estar vacío.");
+            throw new InvalidUserRoleException(role);
 
         return role.Trim();
     }
@@ -105,10 +115,10 @@ public class User
     private static string ValidatePasswordHash(string hash)
     {
         if (string.IsNullOrWhiteSpace(hash))
-            throw new InvalidUserPasswordException("El hash de la contraseña no puede estar vacío.");
+            throw new InvalidUserPasswordException(hash);
 
         if (hash.Length < 20)
-            throw new InvalidUserPasswordException("El hash de la contraseña no es válido.");
+            throw new InvalidUserPasswordException(hash);
 
         return hash;
     }

@@ -26,21 +26,26 @@ public class DisableClientHandler : IRequestHandler<DisableClientCommand, Unit>
         var client = await _clientRepository.GetByIdAsync(request.ClientId, cancellationToken)
             ?? throw new NotFoundException("Client", request.ClientId);
 
-        if (!client.IsActive)
-            return Unit.Value; // ya está deshabilitado, no hacemos nada
-
         var oldValues = new
         {
             client.IsActive
         };
 
+        // El dominio valida si ya está deshabilitado
         client.Disable();
 
-        await _clientRepository.UpdateAsync(client, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         await _mediator.Publish(
             new ClientDisabledNotification(
+                client.Id,
+                oldValues,
+                new { client.IsActive }),
+            cancellationToken);
+
+        // Auditoría
+        await _mediator.Publish(
+            new ClientUpdatedNotification(
                 client.Id,
                 oldValues,
                 new { client.IsActive }),

@@ -2,5 +2,8 @@
 
 public class InvalidUserEmailException : DomainException
 {
-    public InvalidUserEmailException(string message) : base(message) { }
+    public InvalidUserEmailException(string email)
+        : base($"El email de usuario '{email}' no es válido.")
+    {
+    }
 }

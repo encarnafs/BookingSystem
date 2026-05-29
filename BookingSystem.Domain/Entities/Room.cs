@@ -42,7 +42,7 @@ public class Room
     public void Activate()
     {
         if (IsActive)
-            throw new InvalidRoomStateException("La sala ya está activa.");
+            throw new InvalidRoomStateException("Active");
 
         IsActive = true;
     }
@@ -50,7 +50,7 @@ public class Room
     public void Deactivate()
     {
         if (!IsActive)
-            throw new InvalidRoomStateException("La sala ya está inactiva.");
+            throw new InvalidRoomStateException("Inactive");
 
         IsActive = false;
     }
@@ -58,12 +58,12 @@ public class Room
     private static string NormalizeName(string name)
     {
         if (string.IsNullOrWhiteSpace(name))
-            throw new InvalidRoomNameException("El nombre de la sala no puede estar vacío.");
+            throw new InvalidRoomNameException(name);
 
         var normalized = name.Trim();
 
         if (normalized.Length < 2)
-            throw new InvalidRoomNameException("El nombre de la sala es demasiado corto.");
+            throw new InvalidRoomNameException(normalized);
 
         return normalized;
     }
@@ -71,7 +71,7 @@ public class Room
     private static int ValidateCapacity(int capacity)
     {
         if (capacity <= 0)
-            throw new InvalidRoomCapacityException("La capacidad debe ser mayor que cero.");
+            throw new InvalidRoomCapacityException(capacity);
 
         return capacity;
     }

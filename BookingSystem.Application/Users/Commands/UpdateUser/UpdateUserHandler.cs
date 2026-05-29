@@ -33,7 +33,7 @@ public class UpdateUserHandler : IRequestHandler<UpdateUserCommand, UserDto>
         if (user.Email.Value != request.Email &&
             await _userRepository.ExistsByEmailAsync(Email.Create(request.Email), cancellationToken))
         {
-            throw new ConflictException("El email ya está registrado.");
+            throw new ConflictException($"Email:{request.Email}");
         }
 
         var oldValues = new
