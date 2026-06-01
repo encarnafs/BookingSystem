@@ -1,3 +1,19 @@
+📘 BookingSystem API
+
+API para la gestión de reservas de salas de reuniones, desarrollada con .NET 9, siguiendo los principios de Clean Architecture, Domain-Driven Design (DDD) y CQRS.
+
+El objetivo del proyecto es construir un backend escalable, mantenible y extensible, aplicando patrones modernos como:
+
+    CQRS + MediatR
+
+    Value Objects
+
+    Repositorios
+
+    Validaciones
+
+    EF Core con Owned Types
+    
 
 📘 BookingSystem API
 
