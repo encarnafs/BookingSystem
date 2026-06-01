@@ -137,44 +137,49 @@ Exposición de endpoints REST usando:
 
 📅 Casos de Uso Implementados
 
-| Tipo    | Caso de uso                 |
-|---------|------------------------------|
-|             QUERIES                    |
-| Query   | CheckAvailability            |
-| Query   | GetAllRooms                  |
-| Query   | GetRoomById                  |
-| Query   | GetAllBookings               |
-| Query   | GetBookingById               |
-| Query   | GetBookingsByRoomId          |
-| Query   | GetBookingsByClientId        |
-| Query   | GetBookingsInDateRange       |
-| Query   | GetAllClients                |
-| Query   | GetClientById                |
-| Query   | GetAllUsers                  |
-| Query   | GetUserById                  |
-|             COMMANDS                   |
-| Command | LoginClient                  |
-| Command | LoginUser                    |
-| Command | RegisterClient               |
-| Command | RegisterUser                 |
-| Command | CreateRoom                   |
-| Command | UpdateRoom                   |
-| Command | CreateBooking                |
-| Command | UpdateBooking                |
-| Command | UpdateBookingDates           |
-| Command | UpdateBookingComments        |
-| Command | ConfirmBooking               |
-| Command | CancelBooking                |
-| Command | CreateClient                 |
-| Command | DeleteClient                 |
-| Command | DisableClient                |
-| Command | UpdateClient                 |
-| Command | CreateUser                   |
-| Command | DeleteUser                   |
-| Command | DisableUser                  |
-| Command | EnableUser                   |
-| Command | UpdateUser                   |
-| Command | ChangeUserRole               |
+Queries
+
+| Tipo  | Caso de uso               |
+|-------|----------------------------|
+| Query | CheckAvailability          |
+| Query | GetAllRooms                |
+| Query | GetRoomById                |
+| Query | GetAllBookings             |
+| Query | GetBookingById             |
+| Query | GetBookingsByRoomId        |
+| Query | GetBookingsByClientId      |
+| Query | GetBookingsInDateRange     |
+| Query | GetAllClients              |
+| Query | GetClientById              |
+| Query | GetAllUsers                |
+| Query | GetUserById                |
+
+Commands
+
+| Tipo    | Caso de uso        |
+|---------|---------------------|
+| Command | LoginClient         |
+| Command | LoginUser           |
+| Command | RegisterClient      |
+| Command | RegisterUser        |
+| Command | CreateRoom          |
+| Command | UpdateRoom          |
+| Command | CreateBooking       |
+| Command | UpdateBooking       |
+| Command | UpdateBookingDates  |
+| Command | UpdateBookingComments |
+| Command | ConfirmBooking      |
+| Command | CancelBooking       |
+| Command | CreateClient        |
+| Command | DeleteClient        |
+| Command | DisableClient       |
+| Command | UpdateClient        |
+| Command | CreateUser          |
+| Command | DeleteUser          |
+| Command | DisableUser         |
+| Command | EnableUser          |
+| Command | UpdateUser          |
+| Command | ChangeUserRole      |
 
 🧠 Reglas de Negocio Principales
 
@@ -206,19 +211,19 @@ Este proyecto utiliza User Secrets para almacenar la cadena de conexión durante
 
 📦 Próximos pasos
 
-    Añadir Serilog para logging estructurado
+- Añadir Serilog para logging estructurado
 
-    Completar funcionalidades pendientes en Controllers
+- Completar funcionalidades pendientes en Controllers (Clients, Users)
 
-    Añadir tests de integración (Bookings, Clients, Auth)
+- Añadir tests de integración (Bookings, Clients, Users, Rooms, Auth)
 
-    Añadir tests unitarios en Application (validadores, handlers)
+- Añadir tests unitarios en Application (validadores, handlers)
 
-    Añadir Docker para despliegue
+- Añadir Docker para despliegue
 
-    Añadir CI/CD con GitHub Actions
+- Añadir CI/CD con GitHub Actions
 
-    Añadir versionado completo de API
+- Añadir versionado completo de API
     
 🤝 Contribuciones
 
