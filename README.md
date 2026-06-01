@@ -45,12 +45,6 @@ src/
 ├── BookingSystem.Domain          # Entidades, Value Objects, reglas de negocio
 └── BookingSystem.Infrastructure  # EF Core, repositorios, persistencia
 
-src/
-├── BookingSystem.Api             # Capa de presentación - endpoints
-├── BookingSystem.Application     # Casos de uso - Commands, Queries, Handlers
-├── BookingSystem.Domain          # Entidades, Value Objects, reglas de negocio
-└── BookingSystem.Infrastructure  # EF Core, repositorios, persistencia
-
 
 📦 Capas del Proyecto
 
