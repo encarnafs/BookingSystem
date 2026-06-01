@@ -40,11 +40,15 @@ El objetivo del proyecto es construir un backend escalable, mantenible y extensi
 El proyecto sigue la estructura clásica de Clean Architecture:
 
 src/
-├── BookingSystem.Api             # Capa de presentación - endpoints
-├── BookingSystem.Application     # Casos de uso - Commands, Queries, Handlers
-├── BookingSystem.Domain          # Entidades, Value Objects, reglas de negocio
-└── BookingSystem.Infrastructure  # EF Core, repositorios, persistencia
 
+    BookingSystem.Api → Capa de presentación – endpoints
+
+    BookingSystem.Application → Casos de uso – Commands, Queries, Handlers
+
+    BookingSystem.Domain → Entidades, Value Objects, reglas de negocio
+
+    BookingSystem.Infrastructure → EF Core, repositorios, persistencia
+    
 
 📦 Capas del Proyecto
 
