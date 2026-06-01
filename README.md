@@ -47,6 +47,7 @@ src/
 
 
 📦 Capas del Proyecto
+
 ✔️ Domain
 
 Contiene la lógica de negocio pura:
