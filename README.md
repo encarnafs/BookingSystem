@@ -14,12 +14,6 @@ El objetivo del proyecto es construir un backend escalable, mantenible y extensi
 
     EF Core con Owned Types
     
-
-📘 BookingSystem API
-
-API para la gestión de reservas de salas de reuniones, desarrollada con .NET 9, siguiendo los principios de Clean Architecture y Domain-Driven Design (DDD).
-
-El objetivo del proyecto es construir un backend escalable, mantenible y extensible, aplicando patrones modernos como CQRS, MediatR, Value Objects, Repositorios, Validaciones y EF Core con Owned Types.
 🚀 Tecnologías
 
     .NET 9
@@ -39,6 +33,7 @@ El objetivo del proyecto es construir un backend escalable, mantenible y extensi
     FluentValidation
 
     Minimal APIs / Controllers
+   
 
 🏛️ Arquitectura del Proyecto
 
@@ -130,7 +125,7 @@ dotnet ef database update
 
 ✔️ API
 
-Expondrá los endpoints REST usando:
+Exposición de endpoints REST usando:
 
     Minimal APIs o Controllers
 
@@ -138,22 +133,58 @@ Expondrá los endpoints REST usando:
 
     Manejo global de excepciones
 
-    Documentación con Swagger (pendiente)
+    Documentación con Swagger
 
 📅 Casos de Uso Implementados
 
 | Tipo    | Caso de uso                 |
 |---------|------------------------------|
+|             QUERIES                    |
+
+| Query   | CheckAvailability            |
+| Query   | GetAllRooms                  |
+| Query   | GetRoomById                  |
+
+| Query   | GetAllBookings               |
 | Query   | GetBookingById               |
 | Query   | GetBookingsByRoomId          |
 | Query   | GetBookingsByClientId        |
 | Query   | GetBookingsInDateRange       |
+
+| Query   | GetAllClients                |
+| Query   | GetClientById                |
+
+| Query   | GetAllUsers                  |
+| Query   | GetUserById                  |
+
+|             COMMANDS                   |
+
+| Command | LoginClient                  |
+| Command | LoginUser                    |
+| Command | RegisterClient               |
+| Command | RegisterUser                 |
+
+| Command | CreateRoom                   |
+| Command | UpdateRoom                   |
+
 | Command | CreateBooking                |
+| Command | UpdateBooking                |
 | Command | UpdateBookingDates           |
 | Command | UpdateBookingComments        |
 | Command | ConfirmBooking               |
 | Command | CancelBooking                |
 
+| Command | CreateClient                 |
+| Command | DeleteClient                 |
+| Command | DisableClient                |
+| Command | UpdateClient                 |
+
+| Command | CreateUser                   |
+| Command | DeleteUser                   |
+| Command | DisableUser                  |
+| Command | EnableUser                   |
+| Command | UpdateUser                   |
+| Command | ChangeUserRole               |
 
 🧠 Reglas de Negocio Principales
 
@@ -185,18 +216,20 @@ Este proyecto utiliza User Secrets para almacenar la cadena de conexión durante
 
 📦 Próximos pasos
 
-    Crear los endpoints en la API
+    Añadir Serilog para logging estructurado
 
-    Añadir autenticación con JWT
+    Completar funcionalidades pendientes en Controllers
+
+    Añadir tests de integración (Bookings, Clients, Auth)
+
+    Añadir tests unitarios en Application (validadores, handlers)
 
     Añadir Docker para despliegue
 
-    Añadir tests de integración
+    Añadir CI/CD con GitHub Actions
 
-    Añadir Swagger profesional
-
-    Añadir CI/CD (GitHub Actions)
-
+    Añadir versionado completo de API
+    
 🤝 Contribuciones
 
 Proyecto en desarrollo activo.
