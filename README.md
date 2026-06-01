@@ -140,45 +140,35 @@ Exposición de endpoints REST usando:
 | Tipo    | Caso de uso                 |
 |---------|------------------------------|
 |             QUERIES                    |
-
 | Query   | CheckAvailability            |
 | Query   | GetAllRooms                  |
 | Query   | GetRoomById                  |
-
 | Query   | GetAllBookings               |
 | Query   | GetBookingById               |
 | Query   | GetBookingsByRoomId          |
 | Query   | GetBookingsByClientId        |
 | Query   | GetBookingsInDateRange       |
-
 | Query   | GetAllClients                |
 | Query   | GetClientById                |
-
 | Query   | GetAllUsers                  |
 | Query   | GetUserById                  |
-
 |             COMMANDS                   |
-
 | Command | LoginClient                  |
 | Command | LoginUser                    |
 | Command | RegisterClient               |
 | Command | RegisterUser                 |
-
 | Command | CreateRoom                   |
 | Command | UpdateRoom                   |
-
 | Command | CreateBooking                |
 | Command | UpdateBooking                |
 | Command | UpdateBookingDates           |
 | Command | UpdateBookingComments        |
 | Command | ConfirmBooking               |
 | Command | CancelBooking                |
-
 | Command | CreateClient                 |
 | Command | DeleteClient                 |
 | Command | DisableClient                |
 | Command | UpdateClient                 |
-
 | Command | CreateUser                   |
 | Command | DeleteUser                   |
 | Command | DisableUser                  |
