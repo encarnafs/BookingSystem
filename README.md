@@ -229,7 +229,20 @@ Este proyecto utiliza User Secrets para almacenar la cadena de conexión durante
 - Añadir CI/CD con GitHub Actions
 
 - Añadir versionado completo de API
-    
+
+📦 Documentación del Proyecto
+
+Este proyecto incluye una documentación completa elaborada siguiendo estándares profesionales:
+
+    Documento A – Análisis funcional
+
+    Documento B – Arquitectura funcional (MVP)
+
+    Documento C – Especificaciones técnicas
+
+Estos documentos describen en detalle el dominio, las reglas de negocio, la arquitectura, los casos de uso y las decisiones técnicas del sistema.
+Si algún reclutador o perfil técnico desea revisarlos, puedo compartirlos bajo solicitud.
+
 🤝 Contribuciones
 
 Proyecto en desarrollo activo.
