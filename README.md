@@ -241,7 +241,6 @@ Este proyecto incluye una documentación completa elaborada siguiendo estándare
     Documento C – Especificaciones técnicas
 
 Estos documentos describen en detalle el dominio, las reglas de negocio, la arquitectura, los casos de uso y las decisiones técnicas del sistema.
-Si algún reclutador o perfil técnico desea revisarlos, puedo compartirlos bajo solicitud.
 
 🤝 Contribuciones
 
