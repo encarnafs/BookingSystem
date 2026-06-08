@@ -23,9 +23,21 @@ using System.Text;
 var builder = WebApplication.CreateBuilder(args);
 
 // =========================
-// 1. CONFIGURACIÓN DE SERVICIOS
+// 1. SERVICIOS BASE DEL FRAMEWORK
 // =========================
-//Versionado
+
+// ProblemDetails (RFC 7807) — necesario para el middleware global de errores
+builder.Services.AddProblemDetails();
+
+//Servicio que permite acceder al HttpContext desde clases que NO son controladores. Sin esto, sólo los controladores tendrían acceso a HttpContext.User, HttpContext.Request, etc. Al registrar IHttpContextAccessor, podemos inyectar ICurrentUserService en cualquier clase (como handlers de MediatR) para obtener información del usuario actual sin acoplar esa clase a ASP.NET Core.
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
+
+
+// =========================
+// 2. VERSIONADO DE API
+// =========================
+
 builder.Services.AddApiVersioning(options =>
 {
     options.DefaultApiVersion = new ApiVersion(1, 0);
@@ -39,7 +51,9 @@ builder.Services.AddVersionedApiExplorer(options =>
     options.SubstituteApiVersionInUrl = true;
 });
 
-// Swagger
+// =========================
+// 3. SWAGGER (después del versionado)
+// =========================
 builder.Services.AddSwaggerGen(options =>
 {
     var xmlFilename = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
@@ -71,21 +85,26 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
+// Lo dejo preparado por si un día creo la clase ConfigureSwaggerOptions.
 builder.Services.ConfigureOptions<ConfigureSwaggerOptions>();
 
+// =========================
+// 4. MIDDLEWARES REGISTRADOS COMO SERVICIOS
+// =========================
+// Middleware para manejo global de excepciones. Al registrar este middleware, cualquier excepción no controlada que ocurra durante el procesamiento de una solicitud HTTP será capturada por este middleware, lo que permite devolver una respuesta con formato ProblemDetails en lugar de una respuesta de error genérica. Esto mejora la consistencia y la claridad de las respuestas de error para los clientes que consumen la API.
 builder.Services.AddTransient<ExceptionHandlingMiddleware>();
 
-//Servicio que permite acceder al HttpContext desde clases que NO son controladores. Sin esto, sólo los controladores tendrían acceso a HttpContext.User, HttpContext.Request, etc. Al registrar IHttpContextAccessor, podemos inyectar ICurrentUserService en cualquier clase (como handlers de MediatR) para obtener información del usuario actual sin acoplar esa clase a ASP.NET Core.
-builder.Services.AddHttpContextAccessor();
-builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
-
-builder.Services.AddProblemDetails();
-
+// =========================
+// 5. SERVICIOS DE APLICACIÓN E INFRAESTRUCTURA
+// =========================
 // Registrar servicios de aplicación (handlers, validadores, etc.)
 builder.Services.AddApplication();
 // Registrar servicios de infraestructura (repositorios, servicios, etc.)
 builder.Services.AddInfrastructure(builder.Configuration);
 
+// =========================
+// 6. BASE DE DATOS
+// =========================
 // DbContext con cadena de conexión segura
 var connectionString =
     builder.Configuration.GetConnectionString("DefaultConnection")
@@ -95,7 +114,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
 
 // =========================
-// . CONFIGURACIÓN JWT
+// 7. AUTENTICACIÓN Y AUTORIZACIÓN (JWT)
 // =========================
 // 1. Cargar JwtSettings
 var jwtSettingsSection = builder.Configuration.GetSection("JwtSettings");
@@ -216,22 +235,18 @@ builder.Services
         };
     });
 
-
-// Authorization Policies
-//builder.Services.AddAuthorizationBuilder()
-//    .AddPolicy("CanCancelBooking", policy =>
-//        policy.Requirements.Add(new CanCancelBookingRequirement()));
-
-// Registrar el handler de autorización
-//builder.Services.AddScoped<IAuthorizationHandler, CanCancelBookingHandler>();
-
+// =========================
+// 8. SERVICIOS DE AUTENTICACIÓN
+// =========================
 // Registrar servicios de autenticación
 builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 builder.Services.AddScoped<IPasswordHasher<Client>, PasswordHasher<Client>>();
 
-// Controllers / Minimal APIs
+// =========================
+// 9. CONTROLLERS
+// =========================
 builder.Services.AddControllers();
 
 var app = builder.Build();
