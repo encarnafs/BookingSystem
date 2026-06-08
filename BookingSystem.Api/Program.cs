@@ -89,7 +89,7 @@ builder.Services.AddSwaggerGen(options =>
 builder.Services.ConfigureOptions<ConfigureSwaggerOptions>();
 
 // =========================
-// 4. MIDDLEWARES REGISTRADOS COMO SERVICIOS
+// 4. MIDDLEWARES GLOBAL DE EXCEPCIONES
 // =========================
 // Middleware para manejo global de excepciones. Al registrar este middleware, cualquier excepción no controlada que ocurra durante el procesamiento de una solicitud HTTP será capturada por este middleware, lo que permite devolver una respuesta con formato ProblemDetails en lugar de una respuesta de error genérica. Esto mejora la consistencia y la claridad de las respuestas de error para los clientes que consumen la API.
 builder.Services.AddTransient<ExceptionHandlingMiddleware>();
@@ -121,6 +121,7 @@ var jwtSettingsSection = builder.Configuration.GetSection("JwtSettings");
 builder.Services.Configure<JwtSettings>(jwtSettingsSection);
 var jwtSettings = jwtSettingsSection.Get<JwtSettings>();
 
+// 2. Validar JwtSettings
 if (jwtSettings is null || string.IsNullOrWhiteSpace(jwtSettings.Secret))
     throw new InvalidOperationException("JWT Secret no está configurado correctamente.");
 
@@ -252,7 +253,7 @@ builder.Services.AddControllers();
 var app = builder.Build();
 
 // =========================
-// 2. PIPELINE HTTP
+// 10. PIPELINE HTTP
 // =========================
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
