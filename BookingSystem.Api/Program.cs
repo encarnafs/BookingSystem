@@ -256,8 +256,6 @@ var app = builder.Build();
 // 10. PIPELINE HTTP
 // =========================
 
-app.UseMiddleware<ExceptionHandlingMiddleware>();
-
 // OpenAPI 
 //app.MapOpenApi();
 
@@ -280,6 +278,8 @@ app.UseSwaggerUI(options =>
 // Activar autenticación y autorización
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 // Middleware para manejar errores y devolver respuestas con formato ProblemDetails en caso de códigos de estado 4xx o 5xx. Esto mejora la consistencia de las respuestas de error y facilita el manejo de errores en el cliente.
 app.UseStatusCodePages(async context =>
