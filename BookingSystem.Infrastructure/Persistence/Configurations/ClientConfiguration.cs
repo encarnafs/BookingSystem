@@ -40,6 +40,8 @@ public class ClientConfiguration : IEntityTypeConfiguration<Client>
 
         builder.Property(c => c.IsDeleted)
                .IsRequired();
+
+        builder.HasQueryFilter(c => !c.IsDeleted);
     }
 }
 

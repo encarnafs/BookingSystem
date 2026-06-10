@@ -62,17 +62,21 @@ public class AuthService : IAuthService
     // -----------------------------
     public async Task<User?> ValidateUserAsync(string email, string password, CancellationToken cancellationToken)
     {
+        // 1. Busca el usuario por email
         var user = await _context.Users
             .FirstOrDefaultAsync(u => u.Email.Value == email, cancellationToken);
 
+        // 2. Si el usuario fue Deleted, aquí llegaría null, porque el filtro global de borrado lógico (UserConfiguration.cs) lo excluye automáticamente.
         if (user is null)
             return null;
 
+        // 3. Verificar la contraseña hasheada. Si la contraseña no coincide, se devuelve null.
         var result = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, password);
 
         if (result == PasswordVerificationResult.Failed)
             return null;
 
+        // 4. Si todo es correcto, se devuelve el usuario autenticado
         return user;
     }
 
@@ -82,26 +86,20 @@ public class AuthService : IAuthService
     public async Task<Client?> ValidateClientAsync(string email, string password, CancellationToken cancellationToken)
     {
         // 1. Buscar el cliente por email
-        //    Si no existe, devolvemos null directamente.
         var client = await _context.Clients
             .FirstOrDefaultAsync(c => c.Email.Value == email, cancellationToken);
 
+        // 2. Si el cliente fue Deleted, aquí llegaría null, porque el filtro global de borrado lógico (ClientConfiguration.cs) lo excluye automáticamente.
         if (client is null)
             return null;
 
-        // 2. Bloquear login si el cliente está eliminado (borrado lógico)
-        //    Esto evita que un cliente con IsDeleted = true pueda autenticarse.
-        if (client.IsDeleted)
-            return null;
-
-        // 3. Verificar la contraseña hasheada
-        //    Si la contraseña no coincide, devolvemos null.
+        // 3. Verificar la contraseña hasheada. Si no coincide, se devuelve null.
         var result = _clientPasswordHasher.VerifyHashedPassword(client, client.PasswordHash, password);
 
         if (result == PasswordVerificationResult.Failed)
             return null;
 
-        // 4. Si todo es correcto, devolvemos el cliente autenticado
+        // 4. Si todo es correcto, se devuelve el cliente autenticado
         return client;
     }
 

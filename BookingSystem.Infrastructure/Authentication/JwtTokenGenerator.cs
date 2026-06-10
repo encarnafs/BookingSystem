@@ -31,7 +31,7 @@ public class JwtTokenGenerator : IJwtTokenGenerator
         new Claim(ClaimTypes.Name, username),
         new Claim(ClaimTypes.Role, role),
         new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-    };
+        };
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_settings.Secret));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
