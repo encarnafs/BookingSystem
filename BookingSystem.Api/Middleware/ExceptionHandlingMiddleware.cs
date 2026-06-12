@@ -49,6 +49,19 @@ public class ExceptionHandlingMiddleware : IMiddleware
             context.Response.ContentType = "application/problem+json";
             await context.Response.WriteAsJsonAsync(problem);
         }
+        catch (BookingSystem.Application.Common.Exceptions.ValidationException ex)
+        {
+            var problem = _problemDetailsFactory.CreateProblemDetails(
+                context,
+                statusCode: StatusCodes.Status400BadRequest,
+                title: "Application validation error",
+                detail: ex.Message
+            );
+
+            context.Response.StatusCode = StatusCodes.Status400BadRequest;
+            context.Response.ContentType = "application/problem+json";
+            await context.Response.WriteAsJsonAsync(problem);
+        }
         catch (UnauthorizedAccessException ex)
         {
                 var problem = _problemDetailsFactory.CreateProblemDetails(
@@ -70,6 +83,32 @@ public class ExceptionHandlingMiddleware : IMiddleware
                 detail: ex.Message);
 
             context.Response.StatusCode = StatusCodes.Status409Conflict;
+            context.Response.ContentType = "application/problem+json";
+            await context.Response.WriteAsJsonAsync(problem);
+        }
+        catch (ConflictException ex)
+        {
+            var problem = _problemDetailsFactory.CreateProblemDetails(
+                context,
+                statusCode: StatusCodes.Status409Conflict,
+                title: "Conflict error",
+                detail: ex.Message
+            );
+
+            context.Response.StatusCode = StatusCodes.Status409Conflict;
+            context.Response.ContentType = "application/problem+json";
+            await context.Response.WriteAsJsonAsync(problem);
+        }
+        catch (ForbiddenAccessException ex)
+        {
+            var problem = _problemDetailsFactory.CreateProblemDetails(
+                context,
+                statusCode: StatusCodes.Status403Forbidden,
+                title: "Forbidden",
+                detail: ex.Message
+            );
+
+            context.Response.StatusCode = StatusCodes.Status403Forbidden;
             context.Response.ContentType = "application/problem+json";
             await context.Response.WriteAsJsonAsync(problem);
         }
